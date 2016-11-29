@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+Color_Off='\e[0m'
+BIWhite='\e[1;97m'
+DATE="$(date +%Y%m%d)"
+
+while [ "${*}" != "" ] ; do
+	
+	#name $INPUT as the first arugment sent to script
+	INPUT="${1}"
+	
+	#name target as the filename of $INPUT
+	TARGET=$(basename "${INPUT}")
+
+	#run md5deep
+	if [ -d "${INPUT}" ] ; then
+		#set .md5 file to $OUTPUT
+		OUTPUT="${INPUT}"/"${TARGET}_${DATE}_checksums.md5"
+		echo -e "${BIWhite}""${TARGET}" 'is a directory, making checksum of all files in' "${TARGET}"	"${Color_Off}"
+		md5deep -bre "${INPUT}" >> "${OUTPUT}"
+	fi
+	if [ -f "${INPUT}" ] ; then
+		echo
+		#set .md5 file to $OUTPUT
+		OUTPUT=$(dirname "${INPUT}")/"${TARGET}_${DATE}_checksums.md5"
+		echo -e "${BIWhite}""${TARGET}" 'is a file, making checksum of' "${TARGET}" 'in' "${OUTPUT}""${Color_Off}"
+		md5deep -bre "${INPUT}" >> "${OUTPUT}"
+		
+	fi
+	#sort $OUTPUT
+	echo
+	echo -e "${BIWhite}"'Sorting' $(basename "${OUTPUT}")
+	sort -k 2  -o "${OUTPUT}" "${OUTPUT}"
+	echo
+	echo -e 'Finished making checksums for' "${INPUT}". 'Moving to next job.'"${Color_Off}" 
+	
+	shift
+done

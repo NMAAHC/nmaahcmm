@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+	INPUT1="${1}"
+	INPUT2="${2}"
+
+	diff -y --suppress-common-lines <(cat "${INPUT1}" | cut -d, -f 6) <(cat "${INPUT2}" | cut -d, -f 6)

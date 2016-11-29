@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+BIWhite='\e[1;97m'
+BIRed='\e[1;91m'
+Color_Off='\e[0m'
+RELATIVEPATH="youtube"
+SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
+EXTENSION="mp4"
+
+while [ "${*}" != "" ] ; do
+
+	#set $INPUT as the first arugment sent to script
+	INPUT="${1}"
+	
+	if [[ -f "${INPUT}" ]] ; then
+		#statements
+		OUTPUT_DIR="${INPUT%%.*}/${RELATIVEPATH}"
+    elif [[ -d "${INPUT}" ]]; then
+    	#statements
+    	OUTPUT_DIR="${INPUT}/${RELATIVEPATH}"
+    fi
+    echo -e output directory is: "${BIWhite}${OUTPUT_DIR}${Color_Off}"
+    mkdir -p "${OUTPUT_DIR}"
+    PARENTDIR="$(dirname "${OUTPUT_DIR}")"
+    echo -e  parent directory is: "${BIWhite}${PARENTDIR}${Color_Off}"
+    #mv -v "${INPUT}" "${PARENTDIR}"
+
+	#set $MEDIAID to basename of $INPUT with extension stripped
+	MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
+ 	echo -e  MEDIAID is: "${BIWhite}$(basename "${INPUT}" | cut -d. -f1)${Color_Off}"
+	
+	#set $OUTPUT
+	OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
+	echo -e  OUTPUT is: "${BIWhite}${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}${Color_Off}"
+	
+	#check to see if $OUTPUT exists
+	if [ -s "${OUTPUT}" ] ; then
+			echo -e "${BIRed}WARNING ${OUTPUT} already exists, skipping transcode${Color_Off}"
+		fi
+	echo
+cat <<-EOF	
+	A CRF value needs specified.
+	The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
+	A lower value is a higher quality and a subjectively sane range is 18-28.
+	Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input but it is not technically lossless.
+EOF
+	echo
+	echo -e "${BIWhite}"Please enter a CRF value:"${Color_Off}"
+	read CRFVALUE
+	echo
+cat <<-EOF
+	A preset encoding speed needs specified.
+	A preset is a collection of options that will provide a certain encoding speed to compression ratio. 
+	A slower preset will provide better compression (compression is quality per filesize). 
+	This means that, for example, if you target a certain file size or constant bit rate, 
+	you will achieve better quality with a slower preset. 
+	Similarly, for constant quality encoding, you will simply save bitrate by choosing a slower preset.
+	The general guideline is to use the slowest preset that you have patience for. 
+	Current presets in descending order of speed are:
+EOF
+echo -e "${BIRed}"ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow"${Color_Off}"
+cat <<-EOF	
+	The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate. 
+	General usage is to choose the highest CRF value that still provides an acceptable quality. 
+	If the output looks good, then try a higher value and if it looks bad then choose a lower value.
+EOF
+	echo
+	echo -e "${BIWhite}"Please enter a preset speed:"${Color_Off}"
+	read PRESETSPEED
+	
+	#have script say what is about to do
+	echo -e "${BIWhite}making .mp4 derivative of ${MEDIAID}${Color_Off}"
+
+	#run ffmpeg command on $INPUT and set output to $OUTPUT
+	if [[ -f "${INPUT}" ]]; then
+		#statements
+		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+		mv -v -n "${INPUT}" "${PARENTDIR}"
+	elif [[ -d "${INPUT}" ]]; then
+		#statements
+		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+	fi
+	
+	echo -e "${BIWhite}"'renaming' $(basename "${OUTPUT}${Color_Off}") '(if needed)'
+	#rename file to indcate YouTube derivative
+	cd "${OUTPUT_DIR}"
+	rename 's/PM/YT/' *.mp4
+	cd ~
+ 		
+	echo 'done. moving to next file.'
+
+	shift
+done

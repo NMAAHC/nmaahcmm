@@ -1,0 +1,44 @@
+#!/bin/bash
+# This file is part of Archivematica.
+#
+# Copyright 2010-2013 Artefactual Systems Inc. <http://artefactual.com>
+#
+# Archivematica is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Archivematica is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
+
+# @package Archivematica
+# @subpackage SIPCreationTools
+# @author Joseph Perry <joseph@artefactual.com>
+# @version svn: $Id: 9e1ecac84215aaafd740d15eb0cbdc4c17b7fa1e $
+
+while [ "${*}" != "" ] ; do
+    # get context about the input
+    TARGET="${1}"
+    shift
+    if [ -d "${TARGET}" ]; then
+        mkdir "${TARGET}/objects"
+        mv $(find "${TARGET}" -mindepth 1 -maxdepth 1 ! -name "objects") "${TARGET}objects/"
+        #mkdir -p "${TARGET}/metadata/fileMeta"
+        #mkdir -p "${TARGET}/metadata/logs"
+    elif [ -f "${TARGET}" -a ! -d "$(dirname "${TARGET}")/$(basename "${TARGET%.*}")" ] ; then
+        MEDIAID=$(basename "${TARGET}" | cut -d. -f1 )
+        mkdir -p "$(dirname "${TARGET}")/${MEDIAID}/objects"
+        mv "${TARGET}" "$(dirname "${TARGET}")/${MEDIAID}/objects/"
+        #mkdir -p "$(dirname "${TARGET}")/${MEDIAID}/metadata/fileMeta"
+        #LOGDIR="$(dirname "${TARGET}")/${MEDIAID}/metadata/logs"
+        #mkdir -p "${LOGDIR}"
+    else
+        echo Error: Needs SIP directory or file as argument 1>&2
+        exit 1
+    fi
+done

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+mkdir -p ~/foo/fooYes/
+touch ~/foo/fooYes/fooYes.txt
+OUTPUT=~/foo/fooYes/fooYes.txt
+echo $OUTPUT
+PARENTDIR=$(dirname $OUTPUT)
+echo $PARENTDIR
+cd $PARENTDIR
+rename 's/fooYes/FooNo/' *.txt
+cd ~
+shift
