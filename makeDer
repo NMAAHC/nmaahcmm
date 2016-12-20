@@ -154,11 +154,11 @@ EOF
 	#run ffmpeg command on $INPUT and set output to $OUTPUT
 	if [[ -f "${INPUT}" ]]; then
 		#statements
-		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate 800k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
 		#mv -v -n "${INPUT}" "${PARENTDIR}"
 	elif [[ -d "${INPUT}" ]]; then
 		#statements
-		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate 800k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
 	fi
 
 	echo -e "${BIWhite}"'renaming' $(basename "${OUTPUT}${Color_Off}") '(if needed)'
