@@ -9,7 +9,13 @@ while [ "${*}" != "" ] ; do
 
 	tree -I "*.dpx" -h --du -U "${DRIVE}" > /Users/medialab/Desktop/05_DriveContents_TXT/"${DRIVE}"_contents_"${DATE}".txt
 
-	echo 'done. moving to next drive.'
+	if ?=0 then;
+			echo 'done. moving to next drive.'
+
+		else
+			echo 'error'
+
+	fi
 
 	shift
 
