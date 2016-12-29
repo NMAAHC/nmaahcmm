@@ -7,7 +7,7 @@ while [ "${*}" != "" ] ; do
 	#set $DRIVE as the first arugment sent to script
 	DRIVE="${1}"
 
-	tree -I "*.dpx" -h --du -U "${DRIVE}" >> /Users/medialab/Desktop/05_DriveContents_TXT/"${DRIVE}"_contents_"${DATE}".txt
+	tree -I "*.dpx" -h --du -U "${DRIVE}" > /Users/medialab/Desktop/05_DriveContents_TXT/"${DRIVE}"_contents_"${DATE}".txt
 
 	echo 'done. moving to next drive.'
 
