@@ -6,8 +6,8 @@ while [ "${*}" != "" ] ; do
 
 	#set $DRIVE as the first arugment sent to script
 	DRIVE="${1}"
-  OUTPUT="/Users/medialab/Desktop/05_DriveContents_TXT/"${DRIVE}"_contents_"${DATE}".txt"
-	touch "${OUTPUT}"
+  OUTPUT="/Users/medialab/Desktop/05_DriveContents_TXT/$(basename "${DRIVE}")_contents_"${DATE}".txt"
+
 	tree -I "*.dpx" -h --du -U "${DRIVE}" >> "${OUTPUT}"
 
 #	if ?=0; then
