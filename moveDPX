@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+BIWhite='\e[1;97m'
+BIRed='\e[1;91m'
+Color_Off='\e[0m'
 
-echo
 while [ "${*}" != "" ] ; do
 
 	INPUT="${1}"
@@ -10,33 +12,27 @@ while [ "${*}" != "" ] ; do
 	echo
 	for file in "${DPX_FOLDER}"/*DPX*/* ; do
 		if [ -f "${TARGET_FOLDER}"/*.dpx ] ; then
-			echo $(basename "$file") exists, verifying checksum
+			echo -e "${BIWhite}"$(basename "$file") exists, verifying checksum
 			rsync -aPhic "$file" "${TARGET_FOLDER}"
 		else rsync -aPhi "$file" "${TARGET_FOLDER}"
-		echo MOVED: $(basename "$file") 
-		echo TO DIRECTORY: "${TARGET_FOLDER}"
+		echo -e MOVED: $(basename "$file")
+		echo -e TO DIRECTORY: "${TARGET_FOLDER}" "${Color_Off}"
 		fi
 		break 1
 	done
-		echo
 	for md5 in "${DPX_FOLDER}"/*.md5 ; do
 		if [ -f "${TARGET_FOLDER}"/*.md5 ] ; then
-			echo $(basename "$md5") exists, verifying checksum
+			echo -e "${BIWhite}" $(basename "$md5") exists, verifying checksum
 			rsync -aPhic "$md5" "${TARGET_FOLDER}"
 		else
-			rsync -aPhi "$md5" "${TARGET_FOLDER}" 
-		echo MOVED: $(basename "$md5")
-		echo TO DIRECTORY: "${TARGET_FOLDER}"
+			rsync -aPhi "$md5" "${TARGET_FOLDER}"
+		echo -e MOVED: $(basename "$md5")
+		echo -e TO DIRECTORY: "${TARGET_FOLDER}" "${Color_Off}"
 		fi
 	done
-
 	shift
-	echo
-	echo
-	echo
-
 done
 
-echo changed permissions on the following files in directory $(basename "${CHMOD_FOLDER}") to 777:
+echo -e "${BIWhite}"changed permissions on the following files in directory $(basename "${CHMOD_FOLDER}") to 777:
 CHMOD_FOLDER="/Users/medialab/Desktop/07_DPX_checksums"
 chmod -vR 777 "${CHMOD_FOLDER}"
