@@ -19,7 +19,7 @@ while [ "${*}" != "" ] ; do
 			rsync -aPhic "$file" "${TARGET_FOLDER}"
 		else rsync -aPhi "$file" "${TARGET_FOLDER}"
 		RSYNC_ERR_1="$?"
-		echo rsync exited with "${RSYNC_ERR_1}"
+		echo -e "rsync exited with "${RSYNC_ERR_1}""
 		fi
 		echo -e "${BIWhite}"exit status is: "${RSYNC_ERR_1}""${Color_Off}"
 		if [[ "${RSYNC_ERR_1}" == 0 ]]; then
@@ -39,7 +39,7 @@ while [ "${*}" != "" ] ; do
 			rsync -aPhic "$md5" "${TARGET_FOLDER}"
 		else rsync -aPhi "$md5" "${TARGET_FOLDER}"
 		RSYNC_ERR_2="$?"
-		echo rsync exited with "${RSYNC_ERR_2}"
+		echo -e "rsync exited with "${RSYNC_ERR_2}""
 		fi
 		echo -e "${BIWhite}"exit status is: "${RSYNC_ERR_2}""${Color_Off}"
 	 	if [[ "${RSYNC_ERR_2}" == 0 ]]; then
