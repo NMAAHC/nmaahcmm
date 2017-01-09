@@ -9,8 +9,10 @@ while [ "${*}" != "" ] ; do
 	DPX_FOLDER="${INPUT}"
 	TARGET_FOLDER="/Users/medialab/Desktop/07_DPX_checksums"/$(basename "${DPX_FOLDER}")
 	mkdir -p "${TARGET_FOLDER}"
+	if [ ! -d "${TARGET_FOLDER}" ] ; then
 	echo -e "${BIWhite}"Creating "${TARGET_FOLDER}" "${Color_Off}"
 	echo
+	fi
 	for file in "${DPX_FOLDER}"/*DPX*/* ; do
 		if [ -f "${TARGET_FOLDER}"/*.dpx ] ; then
 			echo -e "${BIWhite}"$(basename "$file") exists, verifying checksum"${Color_Off}"
@@ -49,7 +51,9 @@ while [ "${*}" != "" ] ; do
 				echo -e "${BIRed}"ERRORS"${Color_Off}"
 		fi
 	done
+	echo -e "moving on"
 	shift
+
 done
 echo
 echo -e "${BIWhite}"changed permissions on the following files in directory $(basename "${CHMOD_FOLDER}") to 777:
