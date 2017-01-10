@@ -1,38 +1,55 @@
 #!/usr/bin/env bash
 
-Color_Off='\e[0m'
-BIWhite='\e[1;97m'
-DATE="$(date +%Y%m%d)"
+#a script to create md5 checksums of all files in a directory or a single file and save it to a .md5 file
 
+### CONSTANTS
+
+color_off='\e[0m'
+biwhite='\e[1;97m'
+date="$(date +%Y%m%d)"
+
+### FUNCTIONS
+
+makechecksum ()
+
+{
 while [ "${*}" != "" ] ; do
-	
-	#name $INPUT as the first arugment sent to script
-	INPUT="${1}"
-	
-	#name target as the filename of $INPUT
-	TARGET=$(basename "${INPUT}")
 
-	#run md5deep
-	if [ -d "${INPUT}" ] ; then
-		#set .md5 file to $OUTPUT
-		OUTPUT="${INPUT}"/"${TARGET}_${DATE}_checksums.md5"
-		echo -e "${BIWhite}""${TARGET}" 'is a directory, making checksum of all files in' "${TARGET}"	"${Color_Off}"
-		md5deep -bre "${INPUT}" >> "${OUTPUT}"
+	#name $input as the first arugment sent to script
+	input="${1}"
+
+	#name target as the filename of $input
+	target=$(basename "${input}")
+
+	#if argment is a directory, run md5deep
+	if [ -d "${input}" ] ; then
+		#set .md5 file to $output
+		output="${input}"/"${target}_${date}_checksums.md5"
+		echo -e "${biwhite}""${target}" 'is a directory, making checksum of all files in' "${target}"	"${color_off}"
+		md5deep -bre "${input}" >> "${output}"
 	fi
-	if [ -f "${INPUT}" ] ; then
-		echo
-		#set .md5 file to $OUTPUT
-		OUTPUT=$(dirname "${INPUT}")/"${TARGET}_${DATE}_checksums.md5"
-		echo -e "${BIWhite}""${TARGET}" 'is a file, making checksum of' "${TARGET}" 'in' "${OUTPUT}""${Color_Off}"
-		md5deep -bre "${INPUT}" >> "${OUTPUT}"
-		
+
+	#if argment is a file, run md5deep
+	if [ -f "${input}" ] ; then
+		#set .md5 file to $output
+		output=$(dirname "${input}")/"${target}_${date}_checksums.md5"
+		echo -e "${biwhite}""${target}" 'is a file, making checksum of' "${target}" 'in' "${output}" "${color_off}"
+		md5deep -bre "${input}" >> "${output}"
 	fi
-	#sort $OUTPUT
+
+	#sort $output
 	echo
-	echo -e "${BIWhite}"'Sorting' $(basename "${OUTPUT}")
-	sort -k 2  -o "${OUTPUT}" "${OUTPUT}"
+	echo -e "${biwhite}"'Sorting' $(basename "${output}")
+	sort -k 2 -o "${output}" "${output}"
 	echo
-	echo -e 'Finished making checksums for' "${INPUT}". 'Moving to next job.'"${Color_Off}" 
-	
+	echo -e 'Finished making checksums for' "${input}". 'Moving to next job.'"${color_off}"
+
 	shift
 done
+}
+
+#call the function(s)
+
+makechecksum "@"
+
+exit $?

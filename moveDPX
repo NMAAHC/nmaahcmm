@@ -9,19 +9,23 @@ while [ "${*}" != "" ] ; do
 	DPX_FOLDER="${INPUT}"
 	TARGET_FOLDER="/Users/medialab/Desktop/07_DPX_checksums"/$(basename "${DPX_FOLDER}")
 	mkdir -p "${TARGET_FOLDER}"
+
 	if [ ! -d "${TARGET_FOLDER}" ] ; then
-	echo -e "${BIWhite}"Creating "${TARGET_FOLDER}" "${Color_Off}"
-	echo
+		echo -e "${BIWhite}"Creating "${TARGET_FOLDER}" "${Color_Off}"
+		echo
 	fi
+
 	for file in "${DPX_FOLDER}"/*DPX*/* ; do
 		if [ -f "${TARGET_FOLDER}"/*.dpx ] ; then
 			echo -e "${BIWhite}"$(basename "$file") exists, verifying checksum"${Color_Off}"
 			rsync -aPhic "$file" "${TARGET_FOLDER}"
-		else rsync -aPhi "$file" "${TARGET_FOLDER}"
-		RSYNC_ERR_1="$?"
-		echo -e "rsync exited with "${RSYNC_ERR_1}""
+			RSYNC_ERR_1="$?"
+		else
+			rsync -aPhi "$file" "${TARGET_FOLDER}"
+			RSYNC_ERR_1="$?"
 		fi
-		echo -e "${BIWhite}"exit status is: "${RSYNC_ERR_1}""${Color_Off}"
+		echo -e "${BIWhite}"rsync exit status is: "${RSYNC_ERR_1}""${Color_Off}"
+
 		if [[ "${RSYNC_ERR_1}" == 0 ]]; then
 			#statements
 			echo -e "${BIWhite}"MOVED: $(basename "$file")
@@ -37,18 +41,20 @@ while [ "${*}" != "" ] ; do
 		if [ -f "${TARGET_FOLDER}"/*.md5 ] ; then
 			echo -e "${BIWhite}"$(basename "$md5") exists, verifying checksum"${Color_Off}"
 			rsync -aPhic "$md5" "${TARGET_FOLDER}"
-		else rsync -aPhi "$md5" "${TARGET_FOLDER}"
-		RSYNC_ERR_2="$?"
-		echo -e "rsync exited with "${RSYNC_ERR_2}""
+			RSYNC_ERR_2="$?"
+		else
+			rsync -aPhi "$md5" "${TARGET_FOLDER}"
+			RSYNC_ERR_2="$?"
 		fi
-		echo -e "${BIWhite}"exit status is: "${RSYNC_ERR_2}""${Color_Off}"
+			echo -e "${BIWhite}"rsync exit status is: "${RSYNC_ERR_2}""${Color_Off}"
+
 	 	if [[ "${RSYNC_ERR_2}" == 0 ]]; then
-	 			#statements
-				echo -e "${BIWhite}"MOVED: $(basename "$md5")
-				echo -e TO DIRECTORY: "${TARGET_FOLDER}""${Color_Off}"
-				echo
-			else
-				echo -e "${BIRed}"ERRORS"${Color_Off}"
+	 		#statements
+			echo -e "${BIWhite}"MOVED: $(basename "$md5")
+			echo -e TO DIRECTORY: "${TARGET_FOLDER}""${Color_Off}"
+			echo
+		else
+			echo -e "${BIRed}"ERRORS"${Color_Off}"
 		fi
 	done
 	echo -e "moving on"

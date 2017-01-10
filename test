@@ -1,22 +1,9 @@
 #!/usr/bin/env bash
 
-#BIWhite='\e[1;97m'
-#RELATIVEPATH="access/youtube"
-#SUFFIX=""
-#EXTENSION="mp4"
+funky ()
+{ # This is about as simple as functions get.
+  echo "This is a funky function."
+  echo "Now exiting funky function."
+} # Function declaration must precede call.
 
-#while [ "${*}" != "" ] ; do
-
-	#set $INPUT as the first arugment sent to script
-	INPUT="${1}"
-	
-	if [[ -z "${INPUT}" ]] ; then
-	
-	#OUTPUTDIR=$(dirname "${INPUT}")"/${RELATIVEPATH}"
-    
-    echo hello
-    
-    fi
-
-    #echo "${OUTPUTDIR}"
-    echo hello
+funky

@@ -1,22 +1,41 @@
 #!/usr/bin/env bash
 
-DATE="$(date +%Y%m%d)"
+# a script to write the contents of a directory in tree form and save it to a .txt file
 
-while [ "${*}" != "" ] ; do
+### CONSTANTS
 
-	#set $DRIVE as the first arugment sent to script
-	DRIVE="${1}"
-	#set $OUTPUT
-	OUTPUT="/Users/medialab/Desktop/05_DriveContents_TXT/$(basename "${DRIVE}")_contents_"${DATE}".txt"
+date="$(date +%Y%m%d)"
 
-	tree -I "*.dpx" --si --du -U -o "${OUTPUT}" "${DRIVE}"
+### FUNCTIONS
 
-#	if ?=0; then
-		echo 'done. moving to next drive.'
-#		else
-#			echo 'error'
-#	fi
+makedrivetree ()
 
-	shift
+{
+	while [ "${*}" != "" ] ; do
 
-done
+		#set $DRIVE as the first arugment sent to script
+		drive="${1}"
+		#set $OUTPUT
+		output="/Users/medialab/Desktop/05_DriveContents_TXT/$(basename "${drive}")_contents_"${date}".txt"
+		#run tree
+		tree --filelimit 30 --si --du -U -Q -o "${output}" "${drive}"
+
+		#check $? for errors
+		if [ "$?" -eq "0" ] ; then
+			echo 'done. moving to next drive.'
+		else
+			echo 'error'
+		fi
+
+		shift
+
+	done
+}
+
+#call the function(s)
+
+makedrivetree "$@"
+
+echo 'makedrivetree exited with status' $?
+
+exit
