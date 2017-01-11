@@ -50,6 +50,6 @@ done
 
 #call the function(s)
 
-makechecksum "@"
+makechecksum "$@"
 
 exit $?
