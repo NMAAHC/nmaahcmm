@@ -25,7 +25,7 @@ while [ "${*}" != "" ] ; do
 	if [ -d "${input}" ] ; then
 		#set .md5 file to $output
 		output="${input}"/"${target}_${date}_checksums.md5"
-		echo -e "${biwhite}""${target}" 'is a directory, making checksum of all files in' "${target}"	"${color_off}"
+		printf "${biwhite}""${target}" 'is a directory, making checksum of all files in' "${target}"	"${color_off}"
 		md5deep -bre "${input}" >> "${output}"
 	fi
 
@@ -33,16 +33,16 @@ while [ "${*}" != "" ] ; do
 	if [ -f "${input}" ] ; then
 		#set .md5 file to $output
 		output=$(dirname "${input}")/"${target}_${date}_checksums.md5"
-		echo -e "${biwhite}""${target}" 'is a file, making checksum of' "${target}" 'in' "${output}" "${color_off}"
+		printf "${biwhite}""${target}" 'is a file, making checksum of' "${target}" 'in' "${output}" "${color_off}"
 		md5deep -bre "${input}" >> "${output}"
 	fi
 
 	#sort $output
 	echo
-	echo -e "${biwhite}"'Sorting' $(basename "${output}")
+	printf "${biwhite}"'Sorting' $(basename "${output}")
 	sort -k 2 -o "${output}" "${output}"
 	echo
-	echo -e 'Finished making checksums for' "${input}". 'Moving to next job.'"${color_off}"
+	printf 'Finished making checksums for' "${input}". 'Moving to next job.'"${color_off}"
 
 	shift
 done

@@ -23,7 +23,7 @@ makedrivetree()
 #					echo "error" >&2
 #			fi
 #	else
-#		echo -e $bired'Error' $drive 'does not exist.'$color_off
+#		printf $bired'Error' $drive 'does not exist.'$color_off
 #	fi
 #done
 # }
@@ -39,7 +39,7 @@ makedrivetree()
 		if [ -d $drive ] ; then
 			tree --filelimit 30 --si --du -U -Q -o "${output}" "${drive}"
 		else
-			echo -e $bired'Error' $drive 'does not exist.'$color_off
+			printf $bired'Error' $drive 'does not exist.'$color_off
 		fi
 
 		#check $? for errors

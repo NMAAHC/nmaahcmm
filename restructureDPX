@@ -13,20 +13,21 @@ color_off='\e[0m'
 restructureDPX ()
 
 {
-echo -e "${biwhite}"'Please enter the number of reels your DPX package has: '
+printf "${biwhite}"'Please enter the number of reels your DPX package has: '
+
 read reelnumber
 
 case "$reelnumber" in
 	1 )
-	echo -e "${biwhite}"'Please enter DPX Object ID Number with underscores:'"${color_off}"
-	echo -e "${biwhite}"'ex. 2015_167_10_1'"${color_off}"
+	printf "${biwhite}"'Please enter DPX Object ID Number with underscores:'"${color_off}"
+	printf "${biwhite}"'ex. 2015_167_10_1'"${color_off}"
 	read dpxid
 
-	echo -e "${biwhite}"Please enter DPX Object title with underscores:"${color_off}"
-	echo -e "${biwhite}"ex. Juke_Joint"${color_off}"
+	printf "${biwhite}"Please enter DPX Object title with underscores:"${color_off}"
+	printf "${biwhite}"ex. Juke_Joint"${color_off}"
 	read title
 
-	echo -e "${biwhite}"Please enter destination for directory tree to be created:"${color_off}"
+	printf "${biwhite}"Please enter destination for directory tree to be created:"${color_off}"
 	read dest
 
 	destination=("${dest}"/"${dpxid}"__"${title}")
@@ -43,17 +44,17 @@ case "$reelnumber" in
 	dpx=("${destination}"/"${dpxid}"__"${title}"/"${dpxid}"__"${title}"_DPX)
 	mkdir "${destination}"/"${dpxid}"__"${title}"/"${dpxid}"__"${title}"_DPX
 
-	echo -e "${biwhite}"Please enter directory to be worked with:"${color_off}"
+	printf "${biwhite}"Please enter directory to be worked with:"${color_off}"
 	read input
 	echo
-	echo -e "${biwhite}"Moving files from "${input}" "${color_off}"
+	printf "${biwhite}"Moving files from "${input}" "${color_off}"
 
 	find "${input}" -name "*.wav" -exec mv -vi {} "${aud}" \;
 	find "${input}" -name "*.mov" -exec mv -vi {} "${der}" \;
 	find "${input}" -name "*.dpx" -exec mv -vi {} "${dpx}" \;
 
 	echo
-	echo -e "${biwhite}"Removing "${input}" "${color_off}"
+	printf "${biwhite}"Removing "${input}" "${color_off}"
 	rm -vri "${input}"
 
 	find "${destination}" -name "*.wav" -exec mv -vi {} "${aud}"/"${dpxid}"_AUD.wav \;
@@ -62,15 +63,15 @@ case "$reelnumber" in
 	;;
 
 	2 )
-	echo -e "${biwhite}"Please enter DPX Object ID Number with underscores:"${color_off}"
-	echo -e "${biwhite}"ex. 2015_167_10_1"${color_off}"
+	printf "${biwhite}"Please enter DPX Object ID Number with underscores:"${color_off}"
+	printf "${biwhite}"ex. 2015_167_10_1"${color_off}"
 	read dpxid
 
-	echo -e "${biwhite}"Please enter DPX Object title with underscores:"${color_off}"
-	echo -e "${biwhite}"ex. Juke_Joint"${color_off}"
+	printf "${biwhite}"Please enter DPX Object title with underscores:"${color_off}"
+	printf "${biwhite}"ex. Juke_Joint"${color_off}"
 	read title
 
-	echo -e "${biwhite}"Please enter destination for directory tree to be created:"${color_off}"
+	printf "${biwhite}"Please enter destination for directory tree to be created:"${color_off}"
 	read dest
 
 	destination=("${dest}"/"${dpxid}"__"${title}")
@@ -99,10 +100,10 @@ case "$reelnumber" in
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX
 
 
-	echo -e "${biwhite}"Please enter directory to be worked with:"${color_off}"
+	printf "${biwhite}"Please enter directory to be worked with:"${color_off}"
 	read input
 	echo
-	echo -e "${biwhite}"Moving files from "${input}" "${color_off}"
+	printf "${biwhite}"Moving files from "${input}" "${color_off}"
 asdf
 	find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
 	find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
@@ -113,7 +114,7 @@ asdf
 	find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
 
 	echo
-	echo -e "${biwhite}"Removing "${input}" "${color_off}"
+	printf "${biwhite}"Removing "${input}" "${color_off}"
 	rm -vri "${input}"
 
 	find "${destination}" -name "*R1*.wav" -exec mv -vi {} "${audR1}"/"${dpxid}"_R1_AUD.wav \;
@@ -125,7 +126,7 @@ asdf
 	;;
 
 	*	)
-	echo -e "${bired}"ERROR. Presently, this script can only handle DPX packages of 1 or 2 reels. Sorry! Check back later."${color_off}"
+	printf "${bired}"ERROR. Presently, this script can only handle DPX packages of 1 or 2 reels. Sorry! Check back later."${color_off}"
 	;;
 esac
 }
