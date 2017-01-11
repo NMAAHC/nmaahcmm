@@ -92,10 +92,10 @@ case "$reelnumber" in
 	audR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Audio)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Audio
 
-	DERR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Derivatives)
+	derR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Derivatives)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Derivatives
 
-	DPXR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX)
+	dpxR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX
 
 
@@ -103,7 +103,7 @@ case "$reelnumber" in
 	read input
 	echo
 	echo -e "${biwhite}"Moving files from "${input}" "${color_off}"
-
+asdf
 	find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
 	find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
 	find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
