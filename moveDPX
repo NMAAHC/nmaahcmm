@@ -1,67 +1,86 @@
 #!/usr/bin/env bash
-BIWhite='\e[1;97m'
-BIRed='\e[1;91m'
-Color_Off='\e[0m'
+biwhite='\e[1;97m'
+bired='\e[1;91m'
+color_off='\e[0m'
 
-while [ "${*}" != "" ] ; do
+#!/usr/bin/env bash
 
-	INPUT="${1}"
-	DPX_FOLDER="${INPUT}"
-	TARGET_FOLDER="/Users/medialab/Desktop/07_DPX_checksums"/$(basename "${DPX_FOLDER}")
-	mkdir -p "${TARGET_FOLDER}"
+# a script to copy .md5 checksum files and the first .dpx file in a stack to a designated directory
 
-	if [ ! -d "${TARGET_FOLDER}" ] ; then
-		printf "${BIWhite}"Creating "${TARGET_FOLDER}" "${Color_Off}"
-		echo
-	fi
+### CONSTANTS
 
-	for file in "${DPX_FOLDER}"/*DPX*/* ; do
-		if [ -f "${TARGET_FOLDER}"/*.dpx ] ; then
-			printf "${BIWhite}"$(basename "$file") exists, verifying checksum"${Color_Off}"
-			rsync -aPhic "$file" "${TARGET_FOLDER}"
-			RSYNC_ERR_1="$?"
-		else
-			rsync -aPhi "$file" "${TARGET_FOLDER}"
-			RSYNC_ERR_1="$?"
+biwhite='\e[1;97m'
+bired='\e[1;91m'
+color_off='\e[0m'
+
+### FUNCTIONS
+
+moveDPX ()
+{
+	while [ "${*}" != "" ] ; do
+
+		dpx_folder="${1}"
+		target_folder="/Users/medialab/Desktop/07_DPX_checksums/${dpx_folder##*/}"
+		mkdir -p "$target_folder"
+
+		if [ ! -d "$target_folder" ] ; then
+			printf "%sCreating $target_folder" "$biwhite"
 		fi
-		printf "${BIWhite}"rsync exit status is: "${RSYNC_ERR_1}""${Color_Off}"
 
-		if [[ "${RSYNC_ERR_1}" == 0 ]]; then
-			#statements
-			printf "${BIWhite}"MOVED: $(basename "$file")
-		  printf TO DIRECTORY: "${TARGET_FOLDER}""${Color_Off}"
-		  echo
-	 	else
-			printf "${BIRed}"ERRORS"${Color_Off}"
-		fi
-		break 1
+		for file in "$dpx_folder"/*DPX*/* ; do
+			if [ -f "$target_folder"/*.dpx ] ; then
+				printf "%s$file##*/ exists, verifying checksum" "$biwhite"
+				rsync -aPhic "$file" "$target_folder"
+				rsync_err_1="$?"
+			else
+				rsync -aPhi "$file" "$target_folder"
+				rsync_err_1="$?"
+			fi
+			printf "%srsync exit status is: $rsync_err_1" "$biwhite"
+
+			if [[ "$rsync_err_1" == 0 ]]; then
+				#statements
+				printf "%sMOVED: $file##*/" "$biwhite"
+			        printf "%sTO DIRECTORY: $target_folder" "$biwhite"
+			  echo
+		 	else
+				printf "%sERRORS" "$bired"
+			fi
+			break 1
+		done
+
+		for md5 in "$dpx_folder"/*.md5 ; do
+			if [ -f "$target_folder"/*.md5 ] ; then
+				printf "%s$md5##*/ exists, verifying checksum" "$biwhite"
+				rsync -aPhic "$md5" "$target_folder"
+				rsync_err_2="$?"
+			else
+				rsync -aPhi "$md5" "$target_folder"
+				rsync_err_2="$?"
+			fi
+				printf "%srsync exit status is: $rsync_err_2" "$biwhite"
+
+		 	if [[ "$rsync_err_2" == 0 ]] ; then
+		 		#statements
+				printf "%sMOVED: $md5##*/" "$biwhite"
+				printf "%sTO DIRECTORY: $target_folder" "$biwhite"
+				echo
+			else
+				printf "%sERRORS" "$bired"
+			fi
+		done
+		printf "moving on"
+		shift
+
 	done
+	echo
+	chmod_folder="/Users/medialab/Desktop/07_DPX_checksums"
+	printf "%schanged permissions on the following files in directory $chmod_folder##*/ to 777:"
+	chmod -vR 777 "$chmod_folder"
+}
 
-	for md5 in "${DPX_FOLDER}"/*.md5 ; do
-		if [ -f "${TARGET_FOLDER}"/*.md5 ] ; then
-			printf "${BIWhite}"$(basename "$md5") exists, verifying checksum"${Color_Off}"
-			rsync -aPhic "$md5" "${TARGET_FOLDER}"
-			RSYNC_ERR_2="$?"
-		else
-			rsync -aPhi "$md5" "${TARGET_FOLDER}"
-			RSYNC_ERR_2="$?"
-		fi
-			printf "${BIWhite}"rsync exit status is: "${RSYNC_ERR_2}""${Color_Off}"
+#call the function(s)
 
-	 	if [[ "${RSYNC_ERR_2}" == 0 ]]; then
-	 		#statements
-			printf "${BIWhite}"MOVED: $(basename "$md5")
-			printf TO DIRECTORY: "${TARGET_FOLDER}""${Color_Off}"
-			echo
-		else
-			printf "${BIRed}"ERRORS"${Color_Off}"
-		fi
-	done
-	printf "moving on"
-	shift
+moveDPX "$@"
 
-done
-echo
-printf "${BIWhite}"changed permissions on the following files in directory $(basename "${CHMOD_FOLDER}") to 777:
-CHMOD_FOLDER="/Users/medialab/Desktop/07_DPX_checksums"
-chmod -vR 777 "${CHMOD_FOLDER}"
+exit "$?"

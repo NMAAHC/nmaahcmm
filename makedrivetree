@@ -12,52 +12,24 @@ color_off='\e[0m'
 ### FUNCTIONS
 
 makedrivetree()
-# {
-#	local drive ;
-#	if [ -d $drive ] ; then
-#		for drive ; do
-#			output=$HOME/Desktop/${drive##*/}_contents_${date}
-#			if tree --filelimit 30 --si --du -U -Q -o "${output}" "${drive}" ; then
-#					echo "done. moving to next drive" >&2
-#			else
-#					echo "error" >&2
-#			fi
-#	else
-#		printf $bired'Error' $drive 'does not exist.'$color_off
-#	fi
-#done
-# }
-
- {
-	while [ "${*}" != "" ] ; do
-
-		#set $DRIVE as the first arugment sent to script
-		drive="${1}"
-		#set $OUTPUT
-		output="$HOME/Desktop/05_DriveContents_TXT/$(basename "${drive}")_contents_"${date}".txt"
-		#run tree
-		if [ -d $drive ] ; then
-			tree --filelimit 30 --si --du -U -Q -o "${output}" "${drive}"
-		else
-			printf $bired'Error' $drive 'does not exist.'$color_off
-		fi
-
-		#check $? for errors
-		if [ "$?" -eq "0" ] ; then
-			echo 'done. moving to next drive.'
-		else
-			echo 'error'
-		fi
-
-		shift
-
-	done
+{
+	local drive ;
+  for drive ; do
+    if [ -d "$drive" ] ; then
+      output=$HOME/Desktop/${drive##*/}_contents_${date}
+      if tree --filelimit 30 --si --du -U -Q -o "$output" "$drive" ; then
+        printf "%sdone. moving to next drive.\n" "$biwhite" >&2
+			else
+        printf "%Error" "$bired" >&2
+      fi
+    else
+      printf "%sError $drive does not exist.\n" "$bired"
+    fi
+  done
 }
 
 #call the function(s)
 
 makedrivetree "$@"
 
-echo 'makedrivetree exited with status' $?
-
-exit
+exit "$?"

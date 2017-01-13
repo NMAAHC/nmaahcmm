@@ -16,18 +16,18 @@ restructureDPX ()
 printf "${biwhite}"'Please enter the number of reels your DPX package has: '
 
 read reelnumber
-
+echo
 case "$reelnumber" in
 	1 )
-	printf "${biwhite}"'Please enter DPX Object ID Number with underscores:'"${color_off}"
-	printf "${biwhite}"'ex. 2015_167_10_1'"${color_off}"
+	printf "${biwhite}"'Please enter DPX Object ID Number with underscores:\n'
+	printf 'ex. 2015_167_10_1\n'"${color_off}"
 	read dpxid
-
-	printf "${biwhite}"Please enter DPX Object title with underscores:"${color_off}"
-	printf "${biwhite}"ex. Juke_Joint"${color_off}"
+	echo
+	printf "${biwhite}"'Please enter DPX Object title with underscores:\n'
+	printf 'ex. Juke_Joint\n'"${color_off}"
 	read title
-
-	printf "${biwhite}"Please enter destination for directory tree to be created:"${color_off}"
+	echo
+	printf "${biwhite}"'Please enter destination for directory tree to be created:\n'"${color_off}"
 	read dest
 
 	destination=("${dest}"/"${dpxid}"__"${title}")
@@ -44,17 +44,18 @@ case "$reelnumber" in
 	dpx=("${destination}"/"${dpxid}"__"${title}"/"${dpxid}"__"${title}"_DPX)
 	mkdir "${destination}"/"${dpxid}"__"${title}"/"${dpxid}"__"${title}"_DPX
 
-	printf "${biwhite}"Please enter directory to be worked with:"${color_off}"
+	echo
+	printf "${biwhite}"'Please enter directory to be worked with:\n'"${color_off}"
 	read input
 	echo
-	printf "${biwhite}"Moving files from "${input}" "${color_off}"
+	printf "${biwhite}""Moving files from "${color_off}"${input}"
 
 	find "${input}" -name "*.wav" -exec mv -vi {} "${aud}" \;
 	find "${input}" -name "*.mov" -exec mv -vi {} "${der}" \;
 	find "${input}" -name "*.dpx" -exec mv -vi {} "${dpx}" \;
 
 	echo
-	printf "${biwhite}"Removing "${input}" "${color_off}"
+	printf "${biwhite}""Removing "${color_off}"${input}\n"
 	rm -vri "${input}"
 
 	find "${destination}" -name "*.wav" -exec mv -vi {} "${aud}"/"${dpxid}"_AUD.wav \;
@@ -63,15 +64,15 @@ case "$reelnumber" in
 	;;
 
 	2 )
-	printf "${biwhite}"Please enter DPX Object ID Number with underscores:"${color_off}"
-	printf "${biwhite}"ex. 2015_167_10_1"${color_off}"
+	printf "${biwhite}"'Please enter DPX Object ID Number with underscores:\n'
+	printf 'ex. 2015_167_10_1\n'"${color_off}"
 	read dpxid
-
-	printf "${biwhite}"Please enter DPX Object title with underscores:"${color_off}"
-	printf "${biwhite}"ex. Juke_Joint"${color_off}"
+	echo
+	printf "${biwhite}"'Please enter DPX Object title with underscores:\n'
+	printf 'ex. Juke_Joint\n'"${color_off}"
 	read title
-
-	printf "${biwhite}"Please enter destination for directory tree to be created:"${color_off}"
+	echo
+	printf "${biwhite}"'Please enter destination for directory tree to be created:\n'"${color_off}"
 	read dest
 
 	destination=("${dest}"/"${dpxid}"__"${title}")
@@ -99,12 +100,12 @@ case "$reelnumber" in
 	dpxR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX
 
-
-	printf "${biwhite}"Please enter directory to be worked with:"${color_off}"
+	echo
+	printf "${biwhite}"'Please enter directory to be worked with:\n'"${color_off}"
 	read input
 	echo
-	printf "${biwhite}"Moving files from "${input}" "${color_off}"
-asdf
+	printf "${biwhite}""Moving files from "${color_off}"${input}"
+
 	find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
 	find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
 	find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
@@ -114,7 +115,7 @@ asdf
 	find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
 
 	echo
-	printf "${biwhite}"Removing "${input}" "${color_off}"
+	printf "${biwhite}""Removing "${color_off}"${input}\n"
 	rm -vri "${input}"
 
 	find "${destination}" -name "*R1*.wav" -exec mv -vi {} "${audR1}"/"${dpxid}"_R1_AUD.wav \;
@@ -126,7 +127,9 @@ asdf
 	;;
 
 	*	)
-	printf "${bired}"ERROR. Presently, this script can only handle DPX packages of 1 or 2 reels. Sorry! Check back later."${color_off}"
+	printf "${bired}"'ERROR. Presently, this script can only handle DPX packages of 1 or 2 reels. Check back later.'
+	echo
+	cowsay 'SORRY!'
 	;;
 esac
 }
