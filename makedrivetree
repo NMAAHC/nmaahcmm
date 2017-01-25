@@ -16,11 +16,12 @@ makedrivetree()
 	local drive ;
   for drive ; do
     if [ -d "$drive" ] ; then
-      output=$HOME/Desktop/${drive##*/}_contents_${date}
+      output=$HOME/Desktop/${drive##*/}_contents_${date}.txt
       if tree --filelimit 30 --si --du -U -Q -o "$output" "$drive" ; then
         printf "%sdone. moving to next drive.\n" "$biwhite" >&2
+				cp -va "$output" "$drive"
 			else
-        printf "%Error" "$bired" >&2
+        printf "%sError" "$bired" >&2
       fi
     else
       printf "%sError $drive does not exist.\n" "$bired"
