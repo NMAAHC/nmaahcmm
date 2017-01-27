@@ -126,8 +126,89 @@ case "$reelnumber" in
 	find "${destination}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}"/"${dpxid}"_R2_DER_02.mov \;
 	;;
 
+	3 )
+	printf "${biwhite}"'Please enter DPX Object ID Number with underscores:\n'
+	printf 'ex. 2015_167_10_1\n'"${color_off}"
+	read dpxid
+	echo
+	printf "${biwhite}"'Please enter DPX Object title with underscores:\n'
+	printf 'ex. Juke_Joint\n'"${color_off}"
+	read title
+	echo
+	printf "${biwhite}"'Please enter destination for directory tree to be created:\n'"${color_off}"
+	read dest
+
+	destination=("${dest}"/"${dpxid}"__"${title}")
+	mkdir "${dest}"/"${dpxid}"__"${title}"
+
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R1
+
+	audR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Audio)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Audio
+
+	DERR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives
+
+	DPXR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX
+
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R2
+
+	audR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Audio)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Audio
+
+	derR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Derivatives)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_Derivatives
+
+	dpxR2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2_DPX
+
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R3
+
+	audR2=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio
+
+	derR2=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio_Derivatives)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Derivatives
+
+	dpxR2=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_DPX)
+	mkdir "${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_DPX
+
+	echo
+	printf "${biwhite}"'Please enter directory to be worked with:\n'"${color_off}"
+	read input
+	echo
+	printf "${biwhite}""Moving files from "${color_off}"${input}"
+
+	find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
+	find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
+	find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
+
+	find "${input}" -name "*R2*.wav" -exec mv -vi {} "${audR2}" \;
+	find "${input}" -name "*R2*.mov" -exec mv -vi {} "${derR2}" \;
+	find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
+
+	find "${input}" -name "*R3*.wav" -exec mv -vi {} "${audR3}" \;
+	find "${input}" -name "*R3*.mov" -exec mv -vi {} "${derR3}" \;
+	find "${input}" -name "*R3*.dpx" -exec mv -vi {} "${dpxR3}" \;
+
+	echo
+	printf "${biwhite}""Removing "${color_off}"${input}\n"
+	rm -vri "${input}"
+
+	find "${destination}" -name "*R1*.wav" -exec mv -vi {} "${audR1}"/"${dpxid}"_R1_AUD.wav \;
+	find "${destination}" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "${derR1}"/"${dpxid}"_R1_DER_01.mov \;
+	find "${destination}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}"/"${dpxid}"_R1_DER_02.mov \;
+	find "${destination}" -name "*R2*.wav" -exec mv -vi {} "${audR2}"/"${dpxid}"_R2_AUD.wav \;
+	find "${destination}" -name "*R2*ProResHQ*.mov" -exec mv -vi {} "${derR2}"/"${dpxid}"_R2_DER_01.mov \;
+	find "${destination}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}"/"${dpxid}"_R2_DER_02.mov \;
+	find "${destination}" -name "*R3*.wav" -exec mv -vi {} "${audR3}"/"${dpxid}"_R3_AUD.wav \;
+	find "${destination}" -name "*R3*ProResHQ*.mov" -exec mv -vi {} "${derR3}"/"${dpxid}"_R3_DER_01.mov \;
+	find "${destination}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}"/"${dpxid}"_R3_DER_02.mov \;
+	;;
+
 	*	)
-	printf "${bired}"'ERROR. Presently, this script can only handle DPX packages of 1 or 2 reels. Check back later.'
+	printf "${bired}"'ERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later.'
 	echo
 	cowsay 'SORRY!'
 	;;
