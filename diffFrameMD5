@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-	input1="${1}"
-	input2="${2}"
+scriptdir=$(dirname "${0}")
+. "$scriptdir/nmaahcmmfunctions" ||
+{ echo "Missing '$scriptdir/nmaahcmmfunctions'. Exiting." ;
+exit 1 ;}
+;
 
-	diff --side-by-side --width=200 --suppress-common-lines <(cat "${input1}" | cut -d, -f 6) <(cat "${input2}" | cut -d, -f 6)
+input1="${1}"
+input2="${2}"
+
+diff --side-by-side --width=200 --suppress-common-lines <(cat "${input1}" | cut -d, -f 6) <(cat "${input2}" | cut -d, -f 6)
