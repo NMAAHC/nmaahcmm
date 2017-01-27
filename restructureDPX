@@ -4,16 +4,16 @@
 
 ### CONSTANTS
 
-biwhite='\e[1;97m'
-bired='\e[1;91m'
-color_off='\e[0m'
+biwhite=$(tput bold setaf 7)
+bired=$(tput bold setaf 1)
+color_off=$(tput sgr0)
 
 ### FUNCTIONS
 
 restructureDPX ()
 
 {
-printf "%sPlease enter the number of reels your DPX package has: %s" "$biwhite" "$color_off"
+printf "%sPlease enter the number of reels your DPX package has: %s" "{$biwhite}" "$color_off"
 
 read -r reelnumber
 echo
