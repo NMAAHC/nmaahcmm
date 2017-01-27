@@ -4,8 +4,8 @@
 
 ### CONSTANTS
 
-biwhite=$(tput bold setaf 7)
-bired=$(tput bold setaf 1)
+biwhite=$(tput bold)$(tput setaf 7)
+bired=$(tput bold)$(tput setaf 1)
 color_off=$(tput sgr0)
 
 ### FUNCTIONS
@@ -13,7 +13,7 @@ color_off=$(tput sgr0)
 restructureDPX ()
 
 {
-printf "%sPlease enter the number of reels your DPX package has: %s" "{$biwhite}" "$color_off"
+printf "%sPlease enter the number of reels your DPX package has: %s" "$biwhite" "$color_off"
 
 read -r reelnumber
 echo
@@ -70,7 +70,7 @@ case "$reelnumber" in
 		echo "Missing $der"
 		exit 1
 	fi
-	if [ -d "$dpx"] ; then
+	if [ -d "$dpx" ] ; then
 		find "$input" -name "*.dpx" -exec mv -vi {} "$dpx" \;
 	else
 		echo "Missing $dpx"
@@ -119,7 +119,7 @@ case "$reelnumber" in
 		echo "Missing $derR1"
 		exit 1
 	fi
-	if [ -d "$dpxR1"] ; then
+	if [ -d "$dpxR1" ] ; then
 		find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
 	else
 		echo "Missing $dpxR1"
@@ -139,7 +139,7 @@ case "$reelnumber" in
 		echo "Missing $derR2"
 		exit 1
 	fi
-	if [ -d "$dpxR2"] ; then
+	if [ -d "$dpxR2" ] ; then
 		find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
 	else
 		echo "Missing $dpxR2"
@@ -210,7 +210,7 @@ case "$reelnumber" in
 		echo "Missing $derR1"
 		exit 1
 	fi
-	if [ -d "$dpxR1"] ; then
+	if [ -d "$dpxR1" ] ; then
 		find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
 	else
 		echo "Missing $dpxR1"
@@ -230,7 +230,7 @@ case "$reelnumber" in
 		echo "Missing $derR2"
 		exit 1
 	fi
-	if [ -d "$dpxR2"] ; then
+	if [ -d "$dpxR2" ] ; then
 		find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
 	else
 		echo "Missing $dpxR2"
@@ -249,7 +249,7 @@ case "$reelnumber" in
 		echo "Missing $derR3"
 		exit 1
 	fi
-	if [ -d "$dpxR3"] ; then
+	if [ -d "$dpxR3" ] ; then
 		find "$input" -name "*R3*.dpx" -exec mv -vi {} "$dpxR3" \;
 	else
 		echo "Missing $dpxR3"
