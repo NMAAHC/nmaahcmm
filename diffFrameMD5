@@ -4,7 +4,6 @@ scriptdir=$(dirname "${0}")
 . "$scriptdir/nmaahcmmfunctions" ||
 { echo "Missing '$scriptdir/nmaahcmmfunctions'. Exiting." ;
 exit 1 ;}
-;
 
 input1="${1}"
 input2="${2}"
