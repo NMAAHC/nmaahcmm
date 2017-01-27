@@ -13,7 +13,7 @@ color_off='\e[0m'
 restructureDPX ()
 
 {
-printf '%sPlease enter the number of reels your DPX package has: %s' "$biwhite" "$color_off"
+printf "%sPlease enter the number of reels your DPX package has: %s" "$biwhite" "$color_off"
 
 read -r reelnumber
 echo
