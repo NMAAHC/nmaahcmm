@@ -58,9 +58,24 @@ case "$reelnumber" in
 	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
 	rm -vri "$input"
 
-	find "$destination" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
-	find "$destination" -name "*ProResHQ*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
-	find "$destination" -name "*Uncompressed*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
+	if [ -d "$aud" ] ; then
+		find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
+	else
+		echo "Missing $aud"
+		exit 1
+	fi
+	if [ -d "$der" ] ; then
+		find "$input" -name "*.mov" -exec mv -vi {} "$der" \;
+	else
+		echo "Missing $der"
+		exit 1
+	fi
+	if [ -d "$dpx"] ; then
+		find "$input" -name "*.dpx" -exec mv -vi {} "$dpx" \;
+	else
+		echo "Missing $dpx"
+		exit 1
+	fi
 	;;
 
 	2 )
@@ -92,13 +107,44 @@ case "$reelnumber" in
 	echo
 	printf "%sMoving files from%s $input" "$biwhite" "$color_off"
 
-	find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
-	find "$input" -name "*R1*.mov" -exec mv -vi {} "$derR1" \;
-	find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
+	if [ -d "$audR1" ] ; then
+		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
+	else
+		echo "Missing $audR1"
+		exit 1
+	fi
+	if [ -d "$derR1" ] ; then
+		find "$input" -name "*R1*.mov" -exec mv -vi {} "$derR1" \;
+	else
+		echo "Missing $derR1"
+		exit 1
+	fi
+	if [ -d "$dpxR1"] ; then
+		find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
+	else
+		echo "Missing $dpxR1"
+		exit 1
+	fi
 
-	find "$input" -name "*R2*.wav" -exec mv -vi {} "$audR2" \;
-	find "$input" -name "*R2*.mov" -exec mv -vi {} "$derR2" \;
-	find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
+
+	if [ -d "$audR2" ] ; then
+		find "$input" -name "*R2*.wav" -exec mv -vi {} "$audR2" \;
+	else
+		echo "Missing $audR2"
+		exit 1
+	fi
+	if [ -d "$derR2" ] ; then
+		find "$input" -name "*R2*.mov" -exec mv -vi {} "$derR2" \;
+	else
+		echo "Missing $derR2"
+		exit 1
+	fi
+	if [ -d "$dpxR2"] ; then
+		find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
+	else
+		echo "Missing $dpxR2"
+		exit 1
+	fi
 
 	echo
 	printf "%sRemoving $input\n" "$biwhite" "$color_off"
@@ -152,17 +198,63 @@ case "$reelnumber" in
 	echo
 	printf "%sMoving files from%s $input" "$biwhite" "$color_off"
 
-	find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
-	find "$input" -name "*R1*.mov" -exec mv -vi {} "$derR1" \;
-	find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
+	if [ -d "$audR1" ] ; then
+		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
+	else
+		echo "Missing $audR1"
+		exit 1
+	fi
+	if [ -d "$derR1" ] ; then
+		find "$input" -name "*R1*.mov" -exec mv -vi {} "$derR1" \;
+	else
+		echo "Missing $derR1"
+		exit 1
+	fi
+	if [ -d "$dpxR1"] ; then
+		find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
+	else
+		echo "Missing $dpxR1"
+		exit 1
+	fi
 
-	find "$input" -name "*R2*.wav" -exec mv -vi {} "$audR2" \;
-	find "$input" -name "*R2*.mov" -exec mv -vi {} "$derR2" \;
-	find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
 
-	find "$input" -name "*R3*.wav" -exec mv -vi {} "$audR3" \;
-	find "$input" -name "*R3*.mov" -exec mv -vi {} "$derR3" \;
-	find "$input" -name "*R3*.dpx" -exec mv -vi {} "$dpxR3" \;
+	if [ -d "$audR2" ] ; then
+		find "$input" -name "*R2*.wav" -exec mv -vi {} "$audR2" \;
+	else
+		echo "Missing $audR2"
+		exit 1
+	fi
+	if [ -d "$derR2" ] ; then
+		find "$input" -name "*R2*.mov" -exec mv -vi {} "$derR2" \;
+	else
+		echo "Missing $derR2"
+		exit 1
+	fi
+	if [ -d "$dpxR2"] ; then
+		find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
+	else
+		echo "Missing $dpxR2"
+		exit 1
+	fi
+
+	if [ -d "$audR3" ] ; then
+		find "$input" -name "*R3*.wav" -exec mv -vi {} "$audR3" \;
+	else
+		echo "Missing $audR3"
+		exit 1
+	fi
+	if [ -d "$derR3" ] ; then
+		find "$input" -name "*R3*.mov" -exec mv -vi {} "$derR3" \;
+	else
+		echo "Missing $derR3"
+		exit 1
+	fi
+	if [ -d "$dpxR3"] ; then
+		find "$input" -name "*R3*.dpx" -exec mv -vi {} "$dpxR3" \;
+	else
+		echo "Missing $dpxR3"
+		exit 1
+	fi
 
 	echo
 	printf "%sRemoving $input\n" "$biwhite" "$color_off"
