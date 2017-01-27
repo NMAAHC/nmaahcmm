@@ -189,7 +189,7 @@ case "$reelnumber" in
 	audR3=("$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3_Audio)
 	mkdir "$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3_Audio
 
-	derR3=("$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3_Audio_Derivatives)
+	derR3=("$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3_Derivatives)
 	mkdir "$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3_Derivatives
 
 	dpxR3=("$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3_DPX)
