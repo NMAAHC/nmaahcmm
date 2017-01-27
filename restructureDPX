@@ -83,10 +83,10 @@ case "$reelnumber" in
 	audR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Audio)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Audio
 
-	DERR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives)
+	derR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives
 
-	DPXR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX)
+	derR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX
 
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R2
@@ -146,10 +146,10 @@ case "$reelnumber" in
 	audR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Audio)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Audio
 
-	DERR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives)
+	derR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_Derivatives
 
-	DPXR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX)
+	dpxR1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1_DPX
 
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R2
@@ -165,13 +165,13 @@ case "$reelnumber" in
 
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R3
 
-	audR2=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio)
+	audR3=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio
 
-	derR2=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio_Derivatives)
+	derR3=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Audio_Derivatives)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_Derivatives
 
-	dpxR2=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_DPX)
+	dpxR3=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_DPX)
 	mkdir "${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3_DPX
 
 	echo
