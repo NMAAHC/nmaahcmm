@@ -1,46 +1,56 @@
 #!/usr/bin/env bash
 
-shopt -s globstar
-BIWhite='\e[1;97m'
-Color_Off='\e[0m'
+# a script to create a manifest of contents on an LTO tape, copy it to the tape and then copy it to a specified adtional folder (Google Drive)
 
+### CONSTANTS
+
+biwhite=$(tput bold)$(tput setaf 7)
+# bired=$(tput bold)$(tput setaf 1)
+color_off=$(tput sgr0)
+
+### FUNCTIONS
+
+makeLTOtree ()
+
+{
 while [ "${*}" != "" ] ; do
-	INPUT="${1}"
+	input="$1"
 	#name target as the filename of input
-	TARGET=$(basename "${INPUT}")
+	target=$(basename "$input")
 	shift
 	#specify folder location
-	FOLDER="${HOME}/Google Drive/00_LTO_filemetadata/${TARGET}_filemetadata"
+	folder="$HOME/Google Drive/00_LTO_filemetadata/${target}_filemetadata"
 	#create folder
-	mkdir -p "${FOLDER}"
+	mkdir -p "$folder"
 	#set the date to append to filename
-	TODAY=$(date +"%Y%m%d")
-	#define what the drive is if it is not the input 
-	DRIVE="${INPUT}"
+	today=$(date +"%Y%m%d")
+	#define what the drive is if it is not the input
+	drive="$input"
 	#if the drive is a directory, some sort of test operator, trying to say if the drive exists, do this thing to it
-	if [ -d "${DRIVE}" ] ; then 
+	if [ -d "$drive" ] ; then
 		#run tree and ls commands
-		echo -e "${BIWhite}"writing _contents_ls_
-		ls "${DRIVE}/${TARGET}" >> "${FOLDER}/${TARGET}_contents_ls_${TODAY}.txt" &&
-		echo -e "${BIWhite}"writing _contents_treeLong_
-		tree -RapugD --si --du "${DRIVE}" >> "${FOLDER}/${TARGET}_contents_treeLong_${TODAY}.txt" &&
-		echo -e "${BIWhite}"writing _contents_tree_
-		tree "${DRIVE}" >> "${FOLDER}/${TARGET}_contents_tree_${TODAY}.txt" &&
-		echo -e "${BIWhite}"writing _contents_treeShort_
-		tree -I *.dpx "${DRIVE}" >> "${FOLDER}/${TARGET}_contents_treeShort_${TODAY}.txt" ;
-		echo '' >> "${FOLDER}/${TARGET}_contents_treeShort_${TODAY}.txt" ;
-		echo '* .dpx files not listed *' >> "${FOLDER}/${TARGET}_contents_treeShort_${TODAY}.txt"
+		echo -e "$biwhite"writing contents_ls
+		ls "$drive/$target" >> "$folder/${target}_contents_ls_${today}.txt" &&
+
+		echo -e "$biwhite"writing contents_tree
+		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
+
+		echo -e "$biwhite"writing _contents_treeShort_
+		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
+
 	fi
-	#write metadata to ${FOLDER} and then write ${FOLDER} to ${TARGET}
+	#write metadata to $folder and then write $folder to $target
 	echo
-	echo -e "${BIWhite}"writing "${TARGET}".schema, "${TARGET}"_writelto.txt and "${TARGET}"_ReadBack_checksum.md5 to "${FOLDER}" "${Color_Off}"
-	find /Users/medialab/Documents/ -name "${TARGET}"* -type f -exec rsync -avPhi {} "${FOLDER}" \;
+	echo -e "$biwhite"writing "$target".schema, "$target"_writelto.txt and "$target"_ReadBack_checksum.md5 to "$folder" "$color_off"
+	find /Users/medialab/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
 	echo
-	echo -e "${BIWhite}"changing "${FOLDER}" permissions to 777 "${Color_Off}" 
-	chmod -vR 777 "${FOLDER}"
+	echo -e "$biwhite"changing "$folder" permissions to 777 "$color_off"
+	chmod -vR 777 "$folder"
 	echo
-	echo -e "${BIWhite}"writing contents of "${FOLDER}" to "${INPUT}" "${Color_Off}"
-	rsync -avPhi "${FOLDER}" "${INPUT}"
+	echo -e "$biwhite"writing contents of "$folder" to "$input" "$color_off"
+	rsync -avPhi "$folder" "$input"
 	echo
-	echo -e "${BIWhite}"makeTree is finished writing to "${INPUT}" "${Color_Off}"
+	echo -e "$biwhite"makeTree is finished writing to "$input" "$color_off"
 done
+
+}
