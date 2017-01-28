@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+shopt -s globstar
+BIWhite='\e[1;97m'
+Color_Off='\e[0m'
+
+while [ "${*}" != "" ] ; do
+	INPUT="${1}"
+	#name target as the filename of input
+	TARGET=$(basename "${INPUT}")
+	shift
+	#specify folder location
+	FOLDER="${HOME}/Google Drive/00_LTO_filemetadata/${TARGET}_filemetadata"
+	#create folder
+	mkdir -p "${FOLDER}"
+	#set the date to append to filename
+	TODAY=$(date +"%Y%m%d")
+	#define what the drive is if it is not the input 
+	DRIVE="${INPUT}"
+	#if the drive is a directory, some sort of test operator, trying to say if the drive exists, do this thing to it
+	if [ -d "${DRIVE}" ] ; then 
+		#run tree and ls commands
+		echo -e "${BIWhite}"writing _contents_ls_
+		ls "${DRIVE}/${TARGET}" >> "${FOLDER}/${TARGET}_contents_ls_${TODAY}.txt" &&
+		echo -e "${BIWhite}"writing _contents_treeLong_
+		tree -RapugD --si --du "${DRIVE}" >> "${FOLDER}/${TARGET}_contents_treeLong_${TODAY}.txt" &&
+		echo -e "${BIWhite}"writing _contents_tree_
+		tree "${DRIVE}" >> "${FOLDER}/${TARGET}_contents_tree_${TODAY}.txt" &&
+		echo -e "${BIWhite}"writing _contents_treeShort_
+		tree -I *.dpx "${DRIVE}" >> "${FOLDER}/${TARGET}_contents_treeShort_${TODAY}.txt" ;
+		echo '' >> "${FOLDER}/${TARGET}_contents_treeShort_${TODAY}.txt" ;
+		echo '* .dpx files not listed *' >> "${FOLDER}/${TARGET}_contents_treeShort_${TODAY}.txt"
+	fi
+	#write metadata to ${FOLDER} and then write ${FOLDER} to ${TARGET}
+	echo
+	echo -e "${BIWhite}"writing "${TARGET}".schema, "${TARGET}"_writelto.txt and "${TARGET}"_ReadBack_checksum.md5 to "${FOLDER}" "${Color_Off}"
+	find /Users/medialab/Documents/ -name "${TARGET}"* -type f -exec rsync -avPhi {} "${FOLDER}" \;
+	echo
+	echo -e "${BIWhite}"changing "${FOLDER}" permissions to 777 "${Color_Off}" 
+	chmod -vR 777 "${FOLDER}"
+	echo
+	echo -e "${BIWhite}"writing contents of "${FOLDER}" to "${INPUT}" "${Color_Off}"
+	rsync -avPhi "${FOLDER}" "${INPUT}"
+	echo
+	echo -e "${BIWhite}"makeTree is finished writing to "${INPUT}" "${Color_Off}"
+done
