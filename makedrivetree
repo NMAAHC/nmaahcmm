@@ -5,9 +5,9 @@
 ### CONSTANTS
 
 date="$(date +%Y%m%d)"
-biwhite='\e[1;97m'
-bired='\e[1;91m'
-color_off='\e[0m'
+biwhite=$(tput bold)$(tput setaf 7)
+bired=$(tput bold)$(tput setaf 1)
+color_off=$(tput sgr0)
 
 ### FUNCTIONS
 
@@ -16,7 +16,7 @@ makedrivetree()
 	local drive ;
   for drive ; do
     if [ -d "$drive" ] ; then
-      output=$HOME/Desktop/${drive##*/}_contents_${date}.txt
+      output=$HOME/Desktop/${drive##*/}_contents_"$date".txt
       if tree --filelimit 30 --si --du -U -Q -o "$output" "$drive" ; then
         printf "%sdone. moving to next drive.\n" "$biwhite" >&2
 				cp -va "$output" "$drive"

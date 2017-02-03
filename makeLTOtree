@@ -29,13 +29,9 @@ while [ "${*}" != "" ] ; do
 	#if the drive is a directory, some sort of test operator, trying to say if the drive exists, do this thing to it
 	if [ -d "$drive" ] ; then
 		#run tree and ls commands
-		echo -e "$biwhite"writing contents_ls
+		printf "%swriting contents_ls\n writing contents_tree\n writing contents_treeShort%s" "$biwhite" "$color_off"
 		ls "$drive/$target" >> "$folder/${target}_contents_ls_${today}.txt" &&
-
-		echo -e "$biwhite"writing contents_tree
 		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
-
-		echo -e "$biwhite"writing _contents_treeShort_
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
 
 	fi

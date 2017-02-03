@@ -1,17 +1,12 @@
 #!/usr/bin/env bash
-biwhite='\e[1;97m'
-bired='\e[1;91m'
-color_off='\e[0m'
-
-#!/usr/bin/env bash
 
 # a script to copy .md5 checksum files and the first .dpx file in a stack to a designated directory
 
 ### CONSTANTS
 
-biwhite='\e[1;97m'
-bired='\e[1;91m'
-color_off='\e[0m'
+biwhite=$(tput bold)$(tput setaf 7)
+bired=$(tput bold)$(tput setaf 1)
+color_off=$(tput sgr0)
 
 ### FUNCTIONS
 
