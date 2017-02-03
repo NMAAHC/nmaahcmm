@@ -53,6 +53,6 @@ done
 
 #call the function(s)
 
-makeltotree "$@"
+makeLTOtree "$@"
 
 exit "$?"
