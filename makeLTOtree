@@ -50,3 +50,9 @@ while [ "${*}" != "" ] ; do
 done
 
 }
+
+#call the function(s)
+
+makeltotree "$@"
+
+exit "$?"
