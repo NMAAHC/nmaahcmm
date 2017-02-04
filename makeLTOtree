@@ -29,7 +29,7 @@ while [ "${*}" != "" ] ; do
 	#if the drive is a directory, some sort of test operator, trying to say if the drive exists, do this thing to it
 	if [ -d "$drive" ] ; then
 		#run tree and ls commands
-		printf "%swriting contents_ls\n writing contents_tree\n writing contents_treeShort%s" "$biwhite" "$color_off"
+		printf "%swriting contents_ls\nwriting contents_tree\nwriting contents_treeShort%s" "$biwhite" "$color_off"
 		ls "$drive/$target" >> "$folder/${target}_contents_ls_${today}.txt" &&
 		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
@@ -37,18 +37,17 @@ while [ "${*}" != "" ] ; do
 	fi
 	#write metadata to $folder and then write $folder to $target
 	echo
-	echo -e "$biwhite"writing "$target".schema, "$target"_writelto.txt and "$target"_ReadBack_checksum.md5 to "$folder" "$color_off"
+	printf "%swriting $target.schema, $target_writelto.txt and $target_ReadBack_checksum.md5 to $folder\n" "$biwhite"
 	find /Users/medialab/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
 	echo
-	echo -e "$biwhite"changing "$folder" permissions to 777 "$color_off"
+	printf "changing $folder permissions to 777\n"
 	chmod -vR 777 "$folder"
 	echo
-	echo -e "$biwhite"writing contents of "$folder" to "$input" "$color_off"
+	printf "writing contents of $folder to $input\n"
 	rsync -avPhi "$folder" "$input"
 	echo
-	echo -e "$biwhite"makeTree is finished writing to "$input" "$color_off"
+	printf "makeTree is finished writing to $input"
 done
-
 }
 
 #call the function(s)
