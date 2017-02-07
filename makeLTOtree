@@ -33,21 +33,21 @@ while [ "${*}" != "" ] ; do
 		ls "$drive/$target" >> "$folder/${target}_contents_ls_${today}.txt" &&
 		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
-		printf "Done writing content files"
+		printf "\nDone writing content files"
 
 	fi
 	#write metadata to $folder and then write $folder to $target
 	echo
-	printf "%swriting $target.schema, $target_writelto.txt and $target_ReadBack_checksum.md5 to $folder\n" "$biwhite"
+	printf "%swriting $target.schema, $target_writelto.txt and $target_ReadBack_checksum.md5 to $folder%s" "$biwhite" "$color_off"
 	find /Users/medialab/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
 	echo
-	printf "changing $folder permissions to 777\n"
+	printf "%s\nchanging $folder permissions to 777%s" "$biwhite" "$color_off"
 	chmod -vR 777 "$folder"
 	echo
-	printf "writing contents of $folder to $input\n"
+	printf "%s\nwriting contents of $folder to $input%s" "$biwhite" "$color_off"
 	rsync -avPhi "$folder" "$input"
 	echo
-	printf "makeTree is finished writing to $input"
+	printf "%s\nmakeLTOtree is finished writing to $input%s" "$biwhite" "$color_off"
 done
 }
 

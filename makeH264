@@ -25,22 +25,23 @@ while [ "$*" != "" ] ; do
 		#statements
 		#if input is a file, set output_dir to input name with extension stripped plus relativepath
 		output_dir="${input%.*}/$relativepath"
-    elif [[ -d "$input" ]]; then
+  elif [[ -d "$input" ]]; then
     	#statements
 			#if input is a directory, set output_dir to input name plus relativepath
     	output_dir="$input/$relativepath"
-    fi
+  fi
   printf "The output directory is: %s$output_dir\n" "$biwhite"
   parentdir="${output_dir##*/}"
   #printf  "%sThe parent directory is:%s $parentdir\n" "$color_off" "$biwhite"
   #mv -v "$input" "$parentdir"
 
 	#set $mediaid to basename of $input with extension stripped
-	mediaid="$(${input##*/} | cut -d. -f1)"
+	mediaid="${input##*/}"
+	mediaid="${mediaid%.*}"
  	printf  "%smediaid is:%s $mediaid\n" "$color_off" "$biwhite"
 
 	#set $output
-	output="$output_dir/$mediaid%.*$suffix.$extension"
+	output="$output_dir/${mediaid%.*}$suffix.$extension"
 	printf  "%soutput is:%s ${output_dir/$mediaid%.*$suffix.$extension}\n" "$color_off" "$biwhite"
 
 	#check to see if $output exists
