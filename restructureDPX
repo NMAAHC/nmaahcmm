@@ -76,6 +76,10 @@ case "$reelnumber" in
 		echo "Missing $dpx"
 		exit 1
 	fi
+
+	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
+	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
+	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
 	;;
 
 	2 )
