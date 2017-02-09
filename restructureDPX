@@ -42,7 +42,7 @@ case "$reelnumber" in
 	der=("$destination"/"$dpxid"__"$title"_Derivatives)
 	mkdir "$der"
 
-	dpx=("$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_DPX)
+	dpx=("$destination"/"$dpxid"__"$title"_DPX)
 	mkdir "$dpx"
 
 	echo
@@ -51,19 +51,19 @@ case "$reelnumber" in
 	if [ -d "$aud" ] ; then
 		find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
 	else
-		echo "Missing $aud"
+		printf "%sMissing%s $aud" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$der" ] ; then
 		find "$input" -name "*.mov" -exec mv -vi {} "$der" \;
 	else
-		echo "Missing $der"
+		printf "%sMissing%s $der" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$dpx" ] ; then
 		find "$input" -name "*.dpx" -exec mv -vi {} "$dpx" \;
 	else
-		echo "Missing $dpx"
+		echo "%sMissing%s $dpx" "$bired" "$color_off"
 		exit 1
 	fi
 
