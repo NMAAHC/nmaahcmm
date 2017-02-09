@@ -48,14 +48,6 @@ case "$reelnumber" in
 	echo
 	printf "%sMoving files from %s" "$biwhite" "$color_off" "$input"
 
-	find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
-	find "$input" -name "*.mov" -exec mv -vi {} "$der" \;
-	find "$input" -name "*.dpx" -exec mv -vi {} "$dpx" \;
-
-	echo
-	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
-	rm -vri "$input"
-
 	if [ -d "$aud" ] ; then
 		find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
 	else
@@ -75,6 +67,12 @@ case "$reelnumber" in
 		exit 1
 	fi
 
+	echo
+	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
+	rm -vri "$input"
+
+	echo
+	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
 	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
@@ -152,6 +150,8 @@ case "$reelnumber" in
 	printf "%sRemoving $input\n" "$biwhite" "$color_off"
 	rm -vri "$input"
 
+	echo
+	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
 	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
@@ -262,6 +262,8 @@ case "$reelnumber" in
 	printf "%sRemoving $input\n" "$biwhite" "$color_off"
 	rm -vri "$input"
 
+	echo
+	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
 	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
