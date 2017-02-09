@@ -46,7 +46,7 @@ case "$reelnumber" in
 	mkdir "$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_DPX
 
 	echo
-	printf "%sMoving files from %s" "$biwhite" "$color_off" "$input"
+	printf "%sMoving files from %s $input\n" "$biwhite" "$color_off"
 
 	if [ -d "$aud" ] ; then
 		find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
