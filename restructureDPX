@@ -69,9 +69,9 @@ case "$reelnumber" in
 
 	echo
 	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
-	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
-	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
-	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
+	find "$destination" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
+	find "$destination" -name "*ProResHQ*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
+	find "$destination" -name "*Uncompressed*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
 
 	echo
 	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
