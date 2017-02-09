@@ -34,16 +34,16 @@ read -r input
 case "$reelnumber" in
 	1 )
 	destination=("$dest"/"$dpxid"__"$title")
-	mkdir "$dest"/"$dpxid"__"$title"
+	mkdir "$destination"
 
-	aud=("$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_Audio)
-	mkdir "$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_Audio
+	aud=("$destination"/"$dpxid"__"$title"_Audio)
+	mkdir $aud
 
-	der=("$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_Derivatives)
-	mkdir "$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_Derivatives
+	der=("$destination"/"$dpxid"__"$title"_Derivatives)
+	mkdir "$der"
 
 	dpx=("$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_DPX)
-	mkdir "$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_DPX
+	mkdir "$dpx"
 
 	echo
 	printf "%sMoving files from %s $input\n" "$biwhite" "$color_off"
@@ -68,14 +68,14 @@ case "$reelnumber" in
 	fi
 
 	echo
-	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
-	rm -vri "$input"
-
-	echo
 	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
 	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
+
+	echo
+	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
+	rm -vri "$input"
 	;;
 
 	2 )
