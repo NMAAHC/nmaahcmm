@@ -36,8 +36,6 @@ case "$reelnumber" in
 	destination=("$dest"/"$dpxid"__"$title")
 	mkdir "$dest"/"$dpxid"__"$title"
 
-	mkdir "$destination"/"$dpxid"__"$title"
-
 	aud=("$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_Audio)
 	mkdir "$destination"/"$dpxid"__"$title"/"$dpxid"__"$title"_Audio
 
