@@ -14,7 +14,6 @@ restructureDPX ()
 
 {
 printf "%sPlease enter the number of reels your DPX package has: %s" "$biwhite" "$color_off"
-
 read -r reelnumber
 echo
 printf '%sPlease enter DPX Object ID Number with underscores:\n' "$biwhite"
@@ -33,33 +32,36 @@ read -r input
 
 case "$reelnumber" in
 	1 )
+	#make $destination directory ex. 2012_79_1_54__Something_to_Build_On
 	destination=("$dest"/"$dpxid"__"$title")
 	mkdir "$destination"
-
-	aud=("$destination"/"$dpxid"__"$title"_Audio)
+	#make $aud directory ex. 2012_79_1_54__Something_to_Build_On_Audio
+	aud=("$destination"/"$dpxid"__"$title"__Audio)
 	mkdir $aud
-
-	der=("$destination"/"$dpxid"__"$title"_Derivatives)
+	#make $der directory ex. 2012_79_1_54__Something_to_Build_On_Derivatives
+	der=("$destination"/"$dpxid"__"$title"__Derivatives)
 	mkdir "$der"
-
-	dpx=("$destination"/"$dpxid"__"$title"_DPX)
+	#make $dpx directory ex. 2012_79_1_54__Something_to_Build_On_DPX
+	dpx=("$destination"/"$dpxid"__"$title"__DPX)
 	mkdir "$dpx"
 
 	echo
 	printf "%sMoving files from %s $input\n" "$biwhite" "$color_off"
-
+	#move any .wav files from the $input to the $aud directory
 	if [ -d "$aud" ] ; then
 		find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
 	else
 		printf "%sMissing%s $aud" "$bired" "$color_off"
 		exit 1
 	fi
+	#move any .mov files from the $input to the $der directory
 	if [ -d "$der" ] ; then
 		find "$input" -name "*.mov" -exec mv -vi {} "$der" \;
 	else
 		printf "%sMissing%s $der" "$bired" "$color_off"
 		exit 1
 	fi
+	#move any .dpx files from the $input to the $dpx directory
 	if [ -d "$dpx" ] ; then
 		find "$input" -name "*.dpx" -exec mv -vi {} "$dpx" \;
 	else
@@ -68,10 +70,10 @@ case "$reelnumber" in
 	fi
 
 	echo
-	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
-	find "$destination" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
-	find "$destination" -name "*ProResHQ*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
-	find "$destination" -name "*Uncompressed*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
+	printf "%sReaming files in %s$destination\n" "$biwhite" "$color_off"
+	find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
+	find "$der" -name "*ProResHQ.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
+	find "$der" -name "*Uncompressed.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
 
 	echo
 	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
@@ -151,7 +153,7 @@ case "$reelnumber" in
 	rm -vri "$input"
 
 	echo
-	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
+	printf "%sReaming files in %s$destination\n" "$biwhite" "$color_off"
 	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
@@ -263,7 +265,7 @@ case "$reelnumber" in
 	rm -vri "$input"
 
 	echo
-	printf "%sReaming files in $destination\n%s" "$biwhite" "$color_off"
+	printf "%sReaming files in %s$destination\n" "$biwhite" "$color_off"
 	find "$destination" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$destination" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$destination" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
