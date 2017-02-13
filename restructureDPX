@@ -89,25 +89,25 @@ case "$reelnumber" in
 	R1=("$dpxid"__"$title"_R1)
 	mkdir "$R1"
 
-	audR1=("$destination"/"$R1"/"$R1"_Audio)
+	audR1=("$destination"/"$R1"/"$R1"__Audio)
 	mkdir "$audR1"
 
-	derR1=("$destination"/"$R1"/"$R1"_Derivatives)
+	derR1=("$destination"/"$R1"/"$R1"__Derivatives)
 	mkdir "$derR1"
 
-	dpxR1=("$destination"/"$R1"/"$R1"_DPX)
+	dpxR1=("$destination"/"$R1"/"$R1"__DPX)
 	mkdir "$dpxR1"
 
 	R2=("$dpxid"__"$title"_R2)
 	mkdir "$R2"
 
-	audR2=("$destination"/"$R2"/"$R2"_Audio)
+	audR2=("$destination"/"$R2"/"$R2"__Audio)
 	mkdir "$audR2"
 
-	derR2=("$destination"/"$R2"/"$R2"_Derivatives)
+	derR2=("$destination"/"$R2"/"$R2"__Derivatives)
 	mkdir "$derR2"
 
-	dpxR2=("$destination"/"$R2"/"$R2"_DPX)
+	dpxR2=("$destination"/"$R2"/"$R2"__DPX)
 	mkdir "$dpxR2"
 
 	echo
@@ -173,37 +173,37 @@ case "$reelnumber" in
 	R1=("$dpxid"__"$title"_R1)
 	mkdir "$R1"
 
-	audR1=("$destination"/"$R1"/"$R1"_Audio)
+	audR1=("$destination"/"$R1"/"$R1"__Audio)
 	mkdir "$audR1"
 
-	derR1=("$destination"/"$R1"/"$R1"_Derivatives)
+	derR1=("$destination"/"$R1"/"$R1"__Derivatives)
 	mkdir "$derR1"
 
-	dpxR1=("$destination"/"$R1"/"$R1"_DPX)
+	dpxR1=("$destination"/"$R1"/"$R1"__DPX)
 	mkdir "$dpxR1"
 
 	R2=("$dpxid"__"$title"_R2)
 	mkdir "$R2"
 
-	audR2=("$destination"/"$R2"/"$R2"_Audio)
+	audR2=("$destination"/"$R2"/"$R2"__Audio)
 	mkdir "$audR2"
 
-	derR2=("$destination"/"$R2"/"$R2"_Derivatives)
+	derR2=("$destination"/"$R2"/"$R2"__Derivatives)
 	mkdir "$derR2"
 
-	dpxR2=("$destination"/"$R2"/"$R2"_DPX)
+	dpxR2=("$destination"/"$R2"/"$R2"__DPX)
 	mkdir "$dpxR2"
 
 	R3=("$dpxid"__"$title"_R3)
 	mkdir "$R3"
 
-	audR3=("$destination"/"$R3"/"$R3"_Audio)
+	audR3=("$destination"/"$R3"/"$R3"__Audio)
 	mkdir "$audR3"
 
-	derR3=("$destination"/"$R3"/"$R3"_Derivatives)
+	derR3=("$destination"/"$R3"/"$R3"__Derivatives)
 	mkdir "$derR3"
 
-	dpxR3=("$destination"/"$R3"/"$R3"_DPX)
+	dpxR3=("$destination"/"$R3"/"$R3"__DPX)
 	mkdir "$dpxR3"
 
 	echo
@@ -288,7 +288,7 @@ case "$reelnumber" in
 	echo
 	cowsay 'SORRY!'
 	;;
-	
+
 esac
 }
 
