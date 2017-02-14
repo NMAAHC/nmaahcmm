@@ -14,41 +14,39 @@ date="$(date +%Y%m%d)"
 makechecksum ()
 
 {
-while [ "${*}" != "" ] ; do
-
 	#name $input as the first arugment sent to script
 	input="$1"
-
-	#set $target to filename of $input
-	#by getting basename of $input
-	target="${input##*/}"
 
 	#if argment is a directory, run md5deep
 	if [ -d "$input" ] ; then
 		#set .md5 file to $output
-		output="$input"/"$target"_"$date"_checksums.md5
-		printf "%s$target is a directory, making checksum of all files in $target and writing to $output%s"	"$biwhite" "$color_off"
+		output="$input"_"$date"_checksums.md5
+		echo output is $output
+		printf "%s$input is a directory, making checksum of all files in $input \nwriting to: $output%s" "$biwhite" "$color_off"
 		md5deep -bre "$input" >> "$output"
 	fi
 
 	#if argment is a file, run md5deep
 	if [ -f "$input" ] ; then
+		#set $target to filename of $input
+		#by getting basename of $input
+		target="${input##*/}"
 		#set .md5 file to $output by getting dirname of $input
 		output="${input%/*}"
 		output="$output"/"$target"_"$date"_checksums.md5
-		printf "%s$target is a file, making checksum of $target and writing to $outputd%s" "$biwhite" "$color_off"
+		echo output is $output
+		printf "%s$target is a file, making checksum of $target \nwriting to: $output%s" "$biwhite" "$color_off"
 		md5deep -bre "$input" >> "$output"
 	fi
 
 	#sort $output
 	echo
 	printf "%sSorting ${output##*/}\n" "$biwhite"
-	sort -k 2 -o "${output}" "${output}"
+	sort -k 2 -o "$output" "$output"
 	echo
-	printf "Finished making checksums for $input. Moving to next job.%s" "${color_off}"
+	printf "Finished making checksums for $input.\nMoving to next job.%s" "$color_off"
 
 	shift
-done
 }
 
 #call the function(s)
