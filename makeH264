@@ -22,21 +22,21 @@ while [ "$*" != "" ] ; do
 	input="$1"
 
 	if [[ -f "$input" ]] ; then
-		#statements
 		#if input is a file, set output_dir to input name with extension stripped plus relativepath
 		output_dir="${input%.*}/$relativepath"
   elif [[ -d "$input" ]]; then
-    	#statements
-			#if input is a directory, set output_dir to input name plus relativepath
+    	#if input is a directory, set output_dir to input name plus relativepath
     	output_dir="$input/$relativepath"
   fi
   printf "The output directory is: %s$output_dir\n" "$biwhite"
-  parentdir="${output_dir##*/}"
+
+	#parentdir="${output_dir##*/}"
   #printf  "%sThe parent directory is:%s $parentdir\n" "$color_off" "$biwhite"
   #mv -v "$input" "$parentdir"
 
-	#set $mediaid to basename of $input with extension stripped
+	#set $mediaid to basename of $input
 	mediaid="${input##*/}"
+	#set $mediaid to $mediaid with extension stripped
 	mediaid="${mediaid%.*}"
  	printf  "%smediaid is:%s $mediaid\n" "$color_off" "$biwhite"
 

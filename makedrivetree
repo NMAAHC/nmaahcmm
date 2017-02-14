@@ -13,18 +13,21 @@ color_off=$(tput sgr0)
 
 makedrivetree()
 {
-	local drive ;
+local drive ;
   for drive ; do
     if [ -d "$drive" ] ; then
       output=$HOME/Google_Drive/05_DriveContents_TXT/${drive##*/}_contents_"$date".txt
-      if tree --filelimit 30 --si --du -U -Q -o "$output" "$drive" ; then
+			if [ -d $output ] ; then
+      	tree --filelimit 30 --si --du -U -Q -o "$output" "$drive"
         printf "%sdone. moving to next drive.\n" "$biwhite" >&2
 				cp -va "$output" "$drive"
 			else
-        printf "%sError" "$bired" >&2
+        printf "%sError $output does not exist\n" "$bired" >&2
+				exit
       fi
     else
-      printf "%sError $drive does not exist.\n" "$bired"
+      printf "%sError $drive does not exist.\n" "$bired" >&2
+			exit
     fi
   done
 }
