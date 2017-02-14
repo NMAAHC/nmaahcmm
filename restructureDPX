@@ -86,28 +86,28 @@ case "$reelnumber" in
 	destination=("$dest"/"$dpxid"__"$title")
 	mkdir "$destination"
 
-	R1=("$dpxid"__"$title"_R1)
+	R1=("$destination"/"$dpxid"__"$title"_R1/"$dpxid"__"$title"_R1)
 	mkdir "$R1"
 
-	audR1=("$destination"/"$R1"/"$R1"__Audio)
+	audR1="$R1"__Audio
 	mkdir "$audR1"
 
-	derR1=("$destination"/"$R1"/"$R1"__Derivatives)
+	derR1="$R1"__Derivatives
 	mkdir "$derR1"
 
-	dpxR1=("$destination"/"$R1"/"$R1"__DPX)
+	dpxR1="$R1"__DPX
 	mkdir "$dpxR1"
 
-	R2=("$dpxid"__"$title"_R2)
+	R2=("$destination"/"$dpxid"__"$title"_R2/"$dpxid"__"$title"_R2)
 	mkdir "$R2"
 
-	audR2=("$destination"/"$R2"/"$R2"__Audio)
+	audR2="$R2"__Audio
 	mkdir "$audR2"
 
-	derR2=("$destination"/"$R2"/"$R2"__Derivatives)
+	derR2="$R2"__Derivatives
 	mkdir "$derR2"
 
-	dpxR2=("$destination"/"$R2"/"$R2"__DPX)
+	dpxR2="$R2"__DPX
 	mkdir "$dpxR2"
 
 	echo
@@ -170,40 +170,40 @@ case "$reelnumber" in
 	destination=("$dest"/"$dpxid"__"$title")
 	mkdir "$destination"
 
-	R1=("$dpxid"__"$title"_R1)
+	R1=("$destination"/"$dpxid"__"$title"_R1/"$dpxid"__"$title"_R1)
 	mkdir "$R1"
 
-	audR1=("$destination"/"$R1"/"$R1"__Audio)
+	audR1="$R1"__Audio
 	mkdir "$audR1"
 
-	derR1=("$destination"/"$R1"/"$R1"__Derivatives)
+	derR1="$R1"__Derivatives
 	mkdir "$derR1"
 
-	dpxR1=("$destination"/"$R1"/"$R1"__DPX)
+	dpxR1="$R1"__DPX
 	mkdir "$dpxR1"
 
-	R2=("$dpxid"__"$title"_R2)
+	R2=("$destination"/"$dpxid"__"$title"_R2/"$dpxid"__"$title"_R2)
 	mkdir "$R2"
 
-	audR2=("$destination"/"$R2"/"$R2"__Audio)
+	audR2="$R2"__Audio
 	mkdir "$audR2"
 
-	derR2=("$destination"/"$R2"/"$R2"__Derivatives)
+	derR2="$R2"__Derivatives
 	mkdir "$derR2"
 
-	dpxR2=("$destination"/"$R2"/"$R2"__DPX)
+	dpxR2="$R2"__DPX
 	mkdir "$dpxR2"
 
-	R3=("$dpxid"__"$title"_R3)
+	R3=("$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3)
 	mkdir "$R3"
 
-	audR3=("$destination"/"$R3"/"$R3"__Audio)
+	audR3="$R3"__Audio
 	mkdir "$audR3"
 
-	derR3=("$destination"/"$R3"/"$R3"__Derivatives)
+	derR3="$R3"__Derivatives
 	mkdir "$derR3"
 
-	dpxR3=("$destination"/"$R3"/"$R3"__DPX)
+	dpxR3="$R3"__DPX
 	mkdir "$dpxR3"
 
 	echo
