@@ -4,8 +4,9 @@
 
 ### CONSTANTS
 
-color_off='\e[0m'
-biwhite='\e[1;97m'
+biwhite=$(tput bold)$(tput setaf 7)
+#bired=$(tput bold)$(tput setaf 1)
+color_off=$(tput sgr0)
 date="$(date +%Y%m%d)"
 
 ### FUNCTIONS
