@@ -33,7 +33,8 @@ while [ "${*}" != "" ] ; do
 	#if argment is a file, run md5deep
 	if [ -f "$input" ] ; then
 		#set .md5 file to $output by getting dirname of $input
-		output="{$input%/*}"/"$target"_"$date"_checksums.md5
+		output="${input%/*}"
+		output="$output"/"$target"_"$date"_checksums.md5
 		printf "%s$target is a file, making checksum of $target and writing to $outputd%s" "$biwhite" "$color_off"
 		md5deep -bre "$input" >> "$output"
 	fi
