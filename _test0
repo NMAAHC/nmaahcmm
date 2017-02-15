@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-#name $input as the first arugment sent to script
-input="/Users/medialab/Google_Drive/05_DriveContents_TXT/_old/"
-echo input is $input
-#set $target to filename of $input
-#by getting basename of $input
-target="${input##*/}"
-echo target is "$target"
+biwhite=$(tput bold)$(tput setaf 7)
+color_off=$(tput sgr0)
+
+printf "%s$USER%s at %s$HOME%s has path %s$PATH%s" "$biwhite" "$color_off" "$biwhite" "$color_off" "$biwhite" "$color_off"

@@ -19,32 +19,32 @@ makechecksum ()
 
 	#if argment is a directory, run md5deep
 	if [ -d "$input" ] ; then
-		#set .md5 file to $output
-		output="$input"_"$date"_checksums.md5
-		echo output is $output
-		printf "%s$input is a directory, making checksum of all files in $input \nwriting to: $output%s" "$biwhite" "$color_off"
-		md5deep -bre "$input" >> "$output"
+		target="${input%/}" #strip the trailing /, if any
+		target="${target##*/}" #drop the leading directory componenets
+		output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
+		#echo output is "$output"
+		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
+		printf "%s${input##*/}%s is a directory.\nMaking checksum of all files in %s$input%s\nWriting to: %s$output%s" "$biwhite" "$color_off" "$biwhite" "$color_off" "$biwhite" "$color_off"
 	fi
 
 	#if argment is a file, run md5deep
 	if [ -f "$input" ] ; then
-		#set $target to filename of $input
-		#by getting basename of $input
-		target="${input##*/}"
-		#set .md5 file to $output by getting dirname of $input
-		output="${input%/*}"
-		output="$output"/"$target"_"$date"_checksums.md5
-		echo output is $output
-		printf "%s$target is a file, making checksum of $target \nwriting to: $output%s" "$biwhite" "$color_off"
-		md5deep -bre "$input" >> "$output"
+		target="${input##*/}" #get basname of $input
+		target="${target%.*}" #strip extention from $target
+		output="${input%/*}" #get full path parent dirname of $input
+		output="$output"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
+		#echo output is $output
+		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
+		printf "%s"${input##*/}"%s is a file.\nMaking checksum of %s"${input##*/}"%s\nWriting to: %s$output%s" "$biwhite" "$color_off" "$biwhite" "$color_off" "$biwhite" "$color_off"
 	fi
 
 	#sort $output
 	echo
-	printf "%sSorting ${output##*/}\n" "$biwhite"
+	printf "Sorting %s${output##*/}\n%s" "$biwhite" "$color_off"
 	sort -k 2 -o "$output" "$output"
 	echo
-	printf "Finished making checksums for $input.\nMoving to next job.%s" "$color_off"
+	printf "Finished making checksums for %s${input##*/}.\n\nMoving to next job.%s" "$biwhite" "$color_off"
+	echo
 
 	shift
 }
