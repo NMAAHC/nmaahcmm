@@ -23,12 +23,13 @@ local folder=$HOME/Google_Drive/05_DriveContents/
 			if [ -d $folder ] ; then
       	tree --filelimit 30 --si --du -U -Q -o "$output" "$drive"
         if grep "0 directories, 0 files" "$output" ; then
-          echo "$drive is empty" &&
+          printf "%s$drive is empty. Adding EMPTY to file name.\n%s" "$biwhite" "$color_off" &&
           outputE="$folder/${drive##*/}_contents_"$date"_EMPTY.txt" &&
           mv -v "$output" "$outputE"
+          printf "%sMoving ${outputE##*/} to $drive\n%s" "$biwhite" "$color_off"
           cp -v "$outputE" "$drive"
         else
-          echo "$drive is not empty"
+          printf "%s$drive is not empty" "$biwhite"
           cp -va "$output" "$drive"
         fi
 			else
