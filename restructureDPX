@@ -33,15 +33,15 @@ read -r input
 case "$reelnumber" in
 	1 )
 	#make $destination directory ex. 2012_79_1_54__Something_to_Build_On
-	destination=("$dest"/"$dpxid"__"$title")
+	destination=("$dest"/"$dpxid"__"$title"/)
 	mkdir "$destination"
-	#make $aud directory ex. 2012_79_1_54__Something_to_Build_On_Audio
+	#make $aud directory ex. 2012_79_1_54__Something_to_Build_On__Audio
 	aud=("$destination"/"$dpxid"__"$title"__Audio)
 	mkdir $aud
-	#make $der directory ex. 2012_79_1_54__Something_to_Build_On_Derivatives
+	#make $der directory ex. 2012_79_1_54__Something_to_Build_On__Derivatives
 	der=("$destination"/"$dpxid"__"$title"__Derivatives)
 	mkdir "$der"
-	#make $dpx directory ex. 2012_79_1_54__Something_to_Build_On_DPX
+	#make $dpx directory ex. 2012_79_1_54__Something_to_Build_On__DPX
 	dpx=("$destination"/"$dpxid"__"$title"__DPX)
 	mkdir "$dpx"
 
