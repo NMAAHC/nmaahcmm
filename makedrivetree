@@ -29,7 +29,7 @@ local folder=$HOME/Google_Drive/05_DriveContents/
           printf "%sMoving ${outputE##*/} to $drive\n%s" "$biwhite" "$color_off"
           cp -v "$outputE" "$drive"
         else
-          printf "%s$drive is not empty" "$biwhite"
+          printf "%s$drive is not empty\n" "$biwhite" "$color_off"
           cp -va "$output" "$drive"
         fi
 			else
