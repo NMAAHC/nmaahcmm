@@ -32,8 +32,13 @@ read -r input
 
 case "$reelnumber" in
 	1 )
+<<<<<<< Updated upstream
 	#make $destination directory ex. 2012_79_1_54__Something_to_Build_On
 	destination=("$dest"/"$dpxid"__"$title"/)
+=======
+	#make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
+	destination=("$dest"/"$dpxid"__"$title")
+>>>>>>> Stashed changes
 	mkdir "$destination"
 	#make $aud directory ex. 2012_79_1_54__Something_to_Build_On__Audio
 	aud=("$destination"/"$dpxid"__"$title"__Audio)
@@ -87,48 +92,48 @@ case "$reelnumber" in
 	mkdir "$destination"
 
 	R1=("$destination"/"$dpxid"__"$title"_R1/"$dpxid"__"$title"_R1)
-	mkdir "$R1"
+	mkdir -p "$R1"
 
 	audR1="$R1"__Audio
-	mkdir "$audR1"
+	mkdir -p "$audR1"
 
 	derR1="$R1"__Derivatives
-	mkdir "$derR1"
+	mkdir -p "$derR1"
 
 	dpxR1="$R1"__DPX
-	mkdir "$dpxR1"
+	mkdir -p "$dpxR1"
 
 	R2=("$destination"/"$dpxid"__"$title"_R2/"$dpxid"__"$title"_R2)
-	mkdir "$R2"
+	mkdir -p "$R2"
 
 	audR2="$R2"__Audio
-	mkdir "$audR2"
+	mkdir -p "$audR2"
 
 	derR2="$R2"__Derivatives
-	mkdir "$derR2"
+	mkdir -p "$derR2"
 
 	dpxR2="$R2"__DPX
-	mkdir "$dpxR2"
+	mkdir -p "$dpxR2"
 
 	echo
-	printf "%sMoving files from%s $input" "$biwhite" "$color_off"
+	printf "%sMoving files from%s $input\n" "$biwhite" "$color_off"
 
 	if [ -d "$audR1" ] ; then
 		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
 	else
-		echo "Missing $audR1"
+		printf "%sMissing $audR1%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$derR1" ] ; then
 		find "$input" -name "*R1*.mov" -exec mv -vi {} "$derR1" \;
 	else
-		echo "Missing $derR1"
+		printf "%sMissing $derR1%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$dpxR1" ] ; then
 		find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
 	else
-		echo "Missing $dpxR1"
+		printf "%sMissing $dpxR1%s" "$bired" "$color_off"
 		exit 1
 	fi
 
@@ -136,19 +141,19 @@ case "$reelnumber" in
 	if [ -d "$audR2" ] ; then
 		find "$input" -name "*R2*.wav" -exec mv -vi {} "$audR2" \;
 	else
-		echo "Missing $audR2"
+		printf "%sMissing $audR2%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$derR2" ] ; then
 		find "$input" -name "*R2*.mov" -exec mv -vi {} "$derR2" \;
 	else
-		echo "Missing $derR2"
+		printf "%sMissing $derR2%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$dpxR2" ] ; then
 		find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
 	else
-		echo "Missing $dpxR2"
+		printf "%sMissing $dpxR2%s" "$bired" "$color_off"
 		exit 1
 	fi
 
@@ -171,98 +176,100 @@ case "$reelnumber" in
 	mkdir "$destination"
 
 	R1=("$destination"/"$dpxid"__"$title"_R1/"$dpxid"__"$title"_R1)
-	mkdir "$R1"
+	mkdir -p "$R1"
 
 	audR1="$R1"__Audio
-	mkdir "$audR1"
+	mkdir -p "$audR1"
 
 	derR1="$R1"__Derivatives
-	mkdir "$derR1"
+	mkdir -p "$derR1"
 
 	dpxR1="$R1"__DPX
-	mkdir "$dpxR1"
+	mkdir -p "$dpxR1"
 
 	R2=("$destination"/"$dpxid"__"$title"_R2/"$dpxid"__"$title"_R2)
-	mkdir "$R2"
+	mkdir -p "$R2"
 
 	audR2="$R2"__Audio
-	mkdir "$audR2"
+	mkdir -p "$audR2"
 
 	derR2="$R2"__Derivatives
-	mkdir "$derR2"
+	mkdir -p "$derR2"
 
 	dpxR2="$R2"__DPX
-	mkdir "$dpxR2"
+	mkdir -p "$dpxR2"
 
 	R3=("$destination"/"$dpxid"__"$title"_R3/"$dpxid"__"$title"_R3)
-	mkdir "$R3"
+	mkdir -p "$R3"
 
 	audR3="$R3"__Audio
-	mkdir "$audR3"
+	mkdir -p "$audR3"
 
 	derR3="$R3"__Derivatives
-	mkdir "$derR3"
+	mkdir -p "$derR3"
 
 	dpxR3="$R3"__DPX
-	mkdir "$dpxR3"
+	mkdir -p "$dpxR3"
 
 	echo
-	printf "%sMoving files from%s $input" "$biwhite" "$color_off"
+	printf "%sMoving files from%s $input\n" "$biwhite" "$color_off"
 
 	if [ -d "$audR1" ] ; then
 		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
 	else
-		echo "Missing $audR1"
+		printf "%sMissing $audR1%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$derR1" ] ; then
 		find "$input" -name "*R1*.mov" -exec mv -vi {} "$derR1" \;
 	else
-		echo "Missing $derR1"
+		printf "%sMissing $derR1%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$dpxR1" ] ; then
 		find "$input" -name "*R1*.dpx" -exec mv -vi {} "$dpxR1" \;
 	else
-		echo "Missing $dpxR1"
+		printf "%sMissing $dpxR1%s" "$bired" "$color_off"
 		exit 1
 	fi
+
 
 	if [ -d "$audR2" ] ; then
 		find "$input" -name "*R2*.wav" -exec mv -vi {} "$audR2" \;
 	else
-		echo "Missing $audR2"
+		printf "%sMissing $audR2%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$derR2" ] ; then
 		find "$input" -name "*R2*.mov" -exec mv -vi {} "$derR2" \;
 	else
-		echo "Missing $derR2"
+		printf "%sMissing $derR2%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$dpxR2" ] ; then
 		find "$input" -name "*R2*.dpx" -exec mv -vi {} "$dpxR2" \;
 	else
-		echo "Missing $dpxR2"
+		printf "%sMissing $dpxR2%s" "$bired" "$color_off"
 		exit 1
 	fi
+
 
 	if [ -d "$audR3" ] ; then
 		find "$input" -name "*R3*.wav" -exec mv -vi {} "$audR3" \;
 	else
-		echo "Missing $audR3"
+		printf "%sMissing $audR3%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$derR3" ] ; then
 		find "$input" -name "*R3*.mov" -exec mv -vi {} "$derR3" \;
 	else
-		echo "Missing $derR3"
+		printf "%sMissing $derR3%s" "$bired" "$color_off"
 		exit 1
 	fi
 	if [ -d "$dpxR3" ] ; then
 		find "$input" -name "*R3*.dpx" -exec mv -vi {} "$dpxR3" \;
 	else
-		echo "Missing $dpxR3"
+		printf "%sMissing $dpxR3%s" "$bired" "$color_off"
 		exit 1
 	fi
 

@@ -17,46 +17,34 @@ extension="mp4"
 makeh264 ()
 {
 while [ "$*" != "" ] ; do
-
-	#set $input as the first arugment sent to script
-	input="$1"
-
-	if [[ -f "$input" ]] ; then
-		#if input is a file, set output_dir to input name with extension stripped plus relativepath
+	input="$1" #set $input as the first arugment sent to script
+	if [[ -f "$input" ]] ; then #if input is a file, set output_dir to input name with extension stripped plus relativepath
 		output_dir="${input%.*}/$relativepath"
-  elif [[ -d "$input" ]]; then
-    	#if input is a directory, set output_dir to input name plus relativepath
-    	output_dir="$input/$relativepath"
+  elif [[ -d "$input" ]]; then #if input is a directory, set output_dir to input name plus relativepath
+		output_dir="$input/$relativepath"
   fi
   printf "The output directory is: %s$output_dir\n" "$biwhite"
-
-	#parentdir="${output_dir##*/}"
-  #printf  "%sThe parent directory is:%s $parentdir\n" "$color_off" "$biwhite"
-  #mv -v "$input" "$parentdir"
-
-	#set $mediaid to basename of $input
-	mediaid="${input##*/}"
-	#set $mediaid to $mediaid with extension stripped
-	mediaid="${mediaid%.*}"
+	mediaid="${input##*/}" #set $mediaid to basename of $input
+	mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
  	printf  "%smediaid is:%s $mediaid\n" "$color_off" "$biwhite"
-
-	#set $output
-	output="$output_dir/${mediaid%.*}$suffix.$extension"
+	output="$output_dir/${mediaid%.*}$suffix.$extension" #set $output
 	printf  "%soutput is:%s ${output_dir/$mediaid%.*$suffix.$extension}\n" "$color_off" "$biwhite"
-
-	#check to see if $output exists
-	if [ -s "$output" ] ; then
-	        printf "%sWARNING $output already exists, skipping transcode.\n" "$bired"
+	if [ -s "$output" ] ; then #check to see if $output exists
+	printf "%sWARNING $output already exists, skipping transcode.\n" "$bired"
 	fi
 	echo
 cat <<-EOF
 	A CRF value needs specified.
 	The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
 	A lower value is a higher quality and a subjectively sane range is 18-28.
-	Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input but it is not technically lossless.
+	Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input,
+	but it is not technically lossless.
+	The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
+	General usage is to choose the highest CRF value that still provides an acceptable quality.
+	If the output looks good, then try a higher value and if it looks bad then choose a lower value.
 EOF
 	echo
-	printf "%sPlease enter a CRF value:\n" "$biwhite"
+	printf "Please enter a CRF value:\n"
 	read -r crfvalue
 	echo
 cat <<-EOF
@@ -69,17 +57,11 @@ cat <<-EOF
 	The general guideline is to use the slowest preset that you have patience for.
 	Current presets in descending order of speed are:
 EOF
-printf "%sultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow\n" "$bired"
-printf "%s" "$biwhite"
-cat <<-EOF
-	The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
-	General usage is to choose the highest CRF value that still provides an acceptable quality.
-	If the output looks good, then try a higher value and if it looks bad then choose a lower value.
-EOF
+	printf "%sultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow\n" "$bired"
+	#printf "%s" "$biwhite"
 	echo
 	printf "Please enter a preset speed:\n"
 	read -r presetspeed
-
 	echo
 cat <<-EOF
 	The maxrate speed is the max bitrate at which your video will be encoded. It is written in kbps.
@@ -87,27 +69,13 @@ cat <<-EOF
 EOF
 	printf "Please enter a maxrate speed:\n"
 	read -r maxrate
-
-	#have script say what is about to do
-	printf "%smaking .mp4 derivative of $mediaid" "$biwhite"
-
-	#run ffmpeg command on $input and set output to $output
+	printf "%smaking .mp4 derivative of $mediaid" "$biwhite" #have script say what is about to do
 	mkdir -p "$output_dir"
-	if [[ -f "$input" ]]; then
-		#statements
+	if [[ -f "$input" ]]; then #run ffmpeg command on $input and set output to $output
 		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "$input" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "$crfvalue" -preset "$presetspeed" -maxrate "$maxrate"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "$output"
-		#mv -v -n "$input" "$parentdir"
 	elif [[ -d "$input" ]]; then
-		#statements
 		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "$input"/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "$crfvalue" -preset "$presetspeed" -maxrate "$maxrate"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "$output"
 	fi
-
-	#printf "%sRenaming ${output}%s" "$biwhite" "$color_off"
-	#rename file to indcate YouTube derivative
-        #cd "$output_dir"
-	#rename 's/PM/YT/' *.mp4
-	#cd ~
-
 	printf '%sdone. moving to next file.%s' "$biwhite" "$color_off"
 
 	shift

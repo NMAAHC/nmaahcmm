@@ -5,9 +5,14 @@
 ### CONSTANTS
 
 biwhite=$(tput bold)$(tput setaf 7)
-# bired=$(tput bold)$(tput setaf 1)
+bired=$(tput bold)$(tput setaf 1)
 color_off=$(tput sgr0)
+<<<<<<< Updated upstream
 today=$(date +"%Y%m%d")
+=======
+today=$(date +"%Y%m%d") #set the date to append to filename
+
+>>>>>>> Stashed changes
 ### FUNCTIONS
 
 makeLTOtree ()
@@ -15,23 +20,46 @@ makeLTOtree ()
 {
 while [ "${*}" != "" ] ; do
 	drive="$1"
+<<<<<<< Updated upstream
 	target="${input##*/}" #set target as basename of input
 	folder="$HOME/Google Drive/00_LTO_filemetadata/${target}_filemetadata" 	#specify folder location
 	mkdir -p "$folder" 	#create folder
 if [ -d "$drive" ] ; then
+=======
+	target="${drive##*/}" #name $target as the basename of $drive
+	folder="$HOME/Google Drive/00_LTO_filemetadata/${target}_filemetadata" #specify folder location
+	mkdir -p "$folder" #create folder
+	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
+>>>>>>> Stashed changes
 		printf "%swriting contents_ls\nwriting contents_tree\nwriting contents_treeShort%s" "$biwhite"
 		ls "$drive/$target" >> "$folder/${target}_contents_ls_${today}.txt" &&
 		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
 		printf "\nDone writing content files"
+<<<<<<< Updated upstream
 fi
 	#write metadata to $folder and then write $folder to $target
 	printf "\n%swriting $target.schema, $target_writelto.txt and $target_ReadBack_checksum.md5 to $folder%s" "$biwhite" "$color_off"
+=======
+	else
+		printf "%s$drive does not exist. Exiting.%s" "$bired" "$color_off"
+		exit
+	fi
+	echo #write metadata to $folder and then write $folder to $target
+	printf "%swriting {$target}.schema, {$target}_writelto.txt and {$target}_ReadBack_checksum.md5 to $folder%s" "$biwhite" "$color_off"
+>>>>>>> Stashed changes
 	find /Users/medialab/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
 	printf "%s\nchanging $folder permissions to 777%s" "$biwhite" "$color_off"
 	chmod -vR 777 "$folder"
+<<<<<<< Updated upstream
 	printf "%s\nwriting contents of $folder to $input%s" "$biwhite" "$color_off"
 	rsync -avPhi "$folder" "$input"
+=======
+	echo
+	printf "%s\nwriting contents of $folder to $drive%s" "$biwhite" "$color_off"
+	rsync -avPhi "$folder" "$drive"
+	echo
+>>>>>>> Stashed changes
 	printf "%s\nmakeLTOtree is finished writing to $drive%s" "$biwhite" "$color_off"
 done
 }

@@ -20,7 +20,7 @@ makechecksum ()
 	#if argment is a directory, run md5deep
 	if [ -d "$input" ] ; then
 		target="${input%/}" #strip the trailing /, if any
-		target="${target##*/}" #drop the leading directory componenets
+		target="${target##*/}" #drop the leading directory componenets i.e. get basename
 		output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
 		#echo output is "$output"
 		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
