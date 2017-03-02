@@ -20,11 +20,13 @@ while [[ $# -gt 0 ]] ; do
 	input="$1" #name $input as the first arugment sent to script
 
 	if [ -d "$input" ] ; then 	#if argment is a directory, run md5deep
-		target="${input%/}" #strip the trailing /, if any
-		target="${target##*/}" #drop the leading directory componenets i.e. get basename
-		output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
-		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
-		printf "%s${input##*/}%s is a directory.\nMaking checksum of all files in %s$input%s\nWriting to: %s$output%s" "$biwhite" "$color_off" "$biwhite" "$color_off" "$biwhite" "$color_off"
+	  target="${input%/}" #strip the trailing /, if any
+	  target="${target##*/}" #drop the leading directory componenets i.e. get basename
+	  output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
+	  printf "%s is a directory.\n" "$biwhite${input##*/}$color_off"
+	  printf "Making checksums of all files in %s\n" "$biwhite$input$color_off"
+	  printf "Writing to %s\n" "$biwhite$output$color_off"
+	  md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
 	fi
 
 	if [ -f "$input" ] ; then #if argment is a file, run md5deep
@@ -32,22 +34,24 @@ while [[ $# -gt 0 ]] ; do
 		target="${target%.*}" #strip extention from $target
 		output="${input%/*}" #get full path parent dirname of $input
 		output="$output"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
+		printf "%s is a file.\n" "$biwhite${input##*/}$color_off"
+		printf "Making checksum of %s\n" "$biwhite${input##*/}$color_off"
+		printf "Writing to %s\n" "$biwhite$output$color_off"
 		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
-		printf "%s"${input##*/}"%s is a file.\nMaking checksum of %s"${input##*/}"%s\nWriting to: %s$output%s" "$biwhite" "$color_off" "$biwhite" "$color_off" "$biwhite" "$color_off"
 	fi
 
 	echo
-	printf "Sorting %s${output##*/}\n%s" "$biwhite" "$color_off" #sort $output
+	printf "Sorting %s\n" "$biwhite${output##*/}$color_off" #sort $output
 	sort -k 2 -o "$output" "$output"
 	shift
 	echo
 		if [[ $# -gt 0 ]] ; then
-			printf "Finished making checksums for %s${input##*/}%s.\nMoving to %s${1##*/}%s\n" "$biwhite" "$color_off" "$biwhite" "$color_off"
+			printf "Finished making checksums for %s.\n\n<>..<> Moving to %s\n" "$biwhite${input##*/}$color_off" "$biwhite${1##*/}$color_off"
 			echo
 		else
-			printf "Finished making checksums for %s${input##*/}%s.\nNothing left to checksum.\n" "$biwhite" "$color_off"
+			printf "Finished making checksums for %s.\nNothing left to checksum.\n" "$biwhite${input##*/}$color_off"
 			echo
-			cowsay "bye"
+			cowsay "Tootles!"
 		fi
 
 done
