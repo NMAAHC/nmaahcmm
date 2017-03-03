@@ -14,7 +14,7 @@ today=$(date +"%Y%m%d")
 makeLTOtree ()
 
 {
-while [ "${*}" != "" ] ; do
+ 	do
 	drive="$1"
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
@@ -40,7 +40,6 @@ while [ "${*}" != "" ] ; do
 	echo
 	printf "%smakeLTOtree is finished writing to $drive%s" "$biwhite" "$color_off"
 done
-exit
 }
 
 #call the function(s)
