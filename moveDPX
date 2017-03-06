@@ -15,28 +15,28 @@ moveDPX ()
 	while [ "${*}" != "" ] ; do
 
 		dpx_folder="${1}"
-		target_folder="/Users/medialab/Desktop/07_DPX_checksums/${dpx_folder##*/}"
+		target_folder="/Users/medialab/Google_Drive/07_DPX_checksums/${dpx_folder##*/}"
 		mkdir -p "$target_folder"
 
 		if [ ! -d "$target_folder" ] ; then
-			printf "%sCreating $target_folder" "$biwhite"
+			printf "%sCreating %s" "$biwhite" "$target_folder"
 		fi
 
 		for file in "$dpx_folder"/*DPX*/* ; do
 			if [ -f "$target_folder"/*.dpx ] ; then
-				printf "%s$file##*/ exists, verifying checksum" "$biwhite"
+				printf "%s%s exists, verifying checksum" "$biwhite" "${file##*/}"
 				rsync -aPhic "$file" "$target_folder"
 				rsync_err_1="$?"
 			else
 				rsync -aPhi "$file" "$target_folder"
 				rsync_err_1="$?"
 			fi
-			printf "%srsync exit status is: $rsync_err_1" "$biwhite"
+			printf "%srsync exit status is: %s" "$biwhite" "$rsync_err_1"
 
 			if [[ "$rsync_err_1" == 0 ]]; then
 				#statements
-				printf "%sMOVED: $file##*/" "$biwhite"
-			        printf "%sTO DIRECTORY: $target_folder" "$biwhite"
+				printf "%sMOVED: %s" "$biwhite" "${file##*/}"
+			        printf "%sTO DIRECTORY: %s" "$biwhite" "$target_folder"
 			  echo
 		 	else
 				printf "%sERRORS" "$bired"
@@ -46,19 +46,19 @@ moveDPX ()
 
 		for md5 in "$dpx_folder"/*.md5 ; do
 			if [ -f "$target_folder"/*.md5 ] ; then
-				printf "%s$md5##*/ exists, verifying checksum" "$biwhite"
+				printf "%s%s exists, verifying checksum" "$biwhite" "${md5##*/}"
 				rsync -aPhic "$md5" "$target_folder"
 				rsync_err_2="$?"
 			else
 				rsync -aPhi "$md5" "$target_folder"
 				rsync_err_2="$?"
 			fi
-				printf "%srsync exit status is: $rsync_err_2" "$biwhite"
+				printf "%srsync exit status is: %s" "$biwhite" "$rsync_err_2"
 
 		 	if [[ "$rsync_err_2" == 0 ]] ; then
 		 		#statements
-				printf "%sMOVED: $md5##*/" "$biwhite"
-				printf "%sTO DIRECTORY: $target_folder" "$biwhite"
+				printf "%sMOVED: %s" "$biwhite" "${md5##*/}"
+				printf "%sTO DIRECTORY: %s" "$biwhite" "$target_folder"
 				echo
 			else
 				printf "%sERRORS" "$bired"
@@ -70,7 +70,7 @@ moveDPX ()
 	done
 	echo
 	chmod_folder="/Users/medialab/Desktop/07_DPX_checksums"
-	printf "%schanged permissions on the following files in directory $chmod_folder##*/ to 777:"
+	printf "%schanged permissions on the following files in directory %s to 777:" "$biwhite" "${chmod_folder##*/}"
 	chmod -vR 777 "$chmod_folder"
 }
 
