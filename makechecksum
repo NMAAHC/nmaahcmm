@@ -14,39 +14,47 @@ date="$(date +%Y%m%d)"
 makechecksum ()
 
 {
-	#name $input as the first arugment sent to script
-	input="$1"
+echo
+while [[ $# -gt 0 ]] ; do
 
-	#if argment is a directory, run md5deep
-	if [ -d "$input" ] ; then
-		target="${input%/}" #strip the trailing /, if any
-		target="${target##*/}" #drop the leading directory componenets
-		output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
-		#echo output is "$output"
-		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
-		printf "%s${input##*/}%s is a directory.\nMaking checksum of all files in %s$input%s\nWriting to: %s$output%s" "$biwhite" "$color_off" "$biwhite" "$color_off" "$biwhite" "$color_off"
+	input="$1" #name $input as the first arugment sent to script
+
+	if [ -d "$input" ] ; then 	#if argment is a directory, run md5deep
+	  target="${input%/}" #strip the trailing /, if any
+	  target="${target##*/}" #drop the leading directory componenets i.e. get basename
+	  output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
+	  printf "%s is a directory.\n" "$biwhite${input##*/}$color_off"
+	  printf "Making checksums of all files in %s\n" "$biwhite$input$color_off"
+	  printf "Writing to %s\n" "$biwhite$output$color_off"
+	  md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
 	fi
 
-	#if argment is a file, run md5deep
-	if [ -f "$input" ] ; then
+	if [ -f "$input" ] ; then #if argment is a file, run md5deep
 		target="${input##*/}" #get basname of $input
 		target="${target%.*}" #strip extention from $target
 		output="${input%/*}" #get full path parent dirname of $input
 		output="$output"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
-		#echo output is $output
+		printf "%s is a file.\n" "$biwhite${input##*/}$color_off"
+		printf "Making checksum of %s\n" "$biwhite${input##*/}$color_off"
+		printf "Writing to %s\n" "$biwhite$output$color_off"
 		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
-		printf "%s"${input##*/}"%s is a file.\nMaking checksum of %s"${input##*/}"%s\nWriting to: %s$output%s" "$biwhite" "$color_off" "$biwhite" "$color_off" "$biwhite" "$color_off"
 	fi
 
-	#sort $output
 	echo
-	printf "Sorting %s${output##*/}\n%s" "$biwhite" "$color_off"
+	printf "Sorting %s\n" "$biwhite${output##*/}$color_off" #sort $output
 	sort -k 2 -o "$output" "$output"
-	echo
-	printf "Finished making checksums for %s${input##*/}.\n\nMoving to next job.%s" "$biwhite" "$color_off"
-	echo
-
 	shift
+	echo
+		if [[ $# -gt 0 ]] ; then
+			printf "Finished making checksums for %s.\n\n<>..<> Moving to %s\n" "$biwhite${input##*/}$color_off" "$biwhite${1##*/}$color_off"
+			echo
+		else
+			printf "Finished making checksums for %s.\nNothing left to checksum.\n" "$biwhite${input##*/}$color_off"
+			echo
+			cowsay "Tootles!"
+		fi
+
+done
 }
 
 #call the function(s)
