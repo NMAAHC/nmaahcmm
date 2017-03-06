@@ -51,33 +51,35 @@ case "$reelnumber" in
 	if [ -d "$aud" ] ; then
 		find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
 	else
-		printf "%sMissing%s $aud" "$bired" "$color_off"
+		printf "%sMissing%s %s" "$bired" "$color_off" "$aud"
 		exit 1
 	fi
 	#move any .mov files from the $input to the $der directory
 	if [ -d "$der" ] ; then
 		find "$input" -name "*.mov" -exec mv -vi {} "$der" \;
 	else
-		printf "%sMissing%s $der" "$bired" "$color_off"
+		printf "%sMissing%s %s" "$bired" "$color_off" "$der"
 		exit 1
 	fi
 	#move any .dpx files from the $input to the $dpx directory
 	if [ -d "$dpx" ] ; then
 		find "$input" -name "*.dpx" -exec mv -vi {} "$dpx" \;
 	else
-		echo "%sMissing%s $dpx" "$bired" "$color_off"
+		echo "%sMissing%s " "$bired" "$color_off" "$dpx"
 		exit 1
 	fi
 
 	echo
-	printf "%sReaming files in %s$destination\n" "$biwhite" "$color_off"
+	printf "%sReaming files in %s%\n" "$biwhite" "$color_off" "$destination"
 	#find the .wav and .mov files and rename them according to NMAAHC naming structures
 	find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
 	find "$der" -name "*ProResHQ.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
+	find "$der" -name "*DER_01.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
 	find "$der" -name "*Uncompressed.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
+	find "$der" -name "*DER_02.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
 
 	echo
-	printf "%sRemoving %s$input\n" "$biwhite" "$color_off"
+	printf "%sRemoving %s%s\n" "$biwhite" "$color_off" "$input"
 	#remove the $input directory
 	rm -vri "$input"
 	;;
@@ -111,7 +113,7 @@ case "$reelnumber" in
 	mkdir "$dpxR2"
 
 	echo
-	printf "%sMoving files from%s $input" "$biwhite" "$color_off"
+	printf "%sMoving files from%s %s" "$biwhite" "$color_off" "$input"
 
 	if [ -d "$audR1" ] ; then
 		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
@@ -153,7 +155,7 @@ case "$reelnumber" in
 	fi
 
 	echo
-	printf "%sReaming files in %s$destination\n" "$biwhite" "$color_off"
+	printf "%sReaming files in %s%s\n" "$biwhite" "$color_off" "$destination"
 	find "$audR1" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$derR1" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$derR1" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
@@ -162,7 +164,7 @@ case "$reelnumber" in
 	find "$derR2" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "$derR2"/"$dpxid"_R2_DER_02.mov \;
 
 	echo
-	printf "%sRemoving $input\n" "$biwhite" "$color_off"
+	printf "%sRemoving %s\n" "$biwhite" "$color_off" "$input"
 	rm -vri "$input"
 	;;
 
@@ -207,7 +209,7 @@ case "$reelnumber" in
 	mkdir "$dpxR3"
 
 	echo
-	printf "%sMoving files from%s $input" "$biwhite" "$color_off"
+	printf "%sMoving files from%s %s" "$biwhite" "$color_off" "$input"
 
 	if [ -d "$audR1" ] ; then
 		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
@@ -267,7 +269,7 @@ case "$reelnumber" in
 	fi
 
 	echo
-	printf "%sReaming files in %s$destination\n" "$biwhite" "$color_off"
+	printf "%sReaming files in %s%s\n" "$biwhite" "$color_off" "$destination"
 	find "$audR1" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
 	find "$derR1" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$derR1" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
@@ -279,7 +281,7 @@ case "$reelnumber" in
 	find "$derR3" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "$derR3"/"$dpxid"_R3_DER_02.mov \;
 
 	echo
-	printf "%sRemoving $input\n" "$biwhite" "$color_off"
+	printf "%sRemoving \n" "$biwhite" "$color_off" "$input"
 	rm -vri "$input"
 	;;
 
