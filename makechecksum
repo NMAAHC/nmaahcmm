@@ -26,6 +26,7 @@ while [[ $# -gt 0 ]] ; do
 	  printf "%s%s%s is a directory.\n" "$biwhite" "$target" "$color_off"
 	  printf "Making checksums of all files in %s\n" "$biwhite$target$color_off"
 	  printf "Writing to %s\n" "$biwhite$output$color_off"
+		echo
 	  md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
 	fi
 
@@ -37,6 +38,7 @@ while [[ $# -gt 0 ]] ; do
 		printf "%s%s%s is a file.\n" "$biwhite" "${input##*/}" "$color_off"
 		printf "Making checksum of %s%s%s\n" "$biwhite" "${input##*/}" "$color_off"
 		printf "Writing to %s\n" "$biwhite$output$color_off"
+		echo
 		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
 	fi
 
