@@ -21,9 +21,7 @@ while [[ $# -gt 0 ]] ; do
 
 	if [ -d "$input" ] ; then 	#if argment is a directory, run md5deep
 	  target="${input%/}" #strip the trailing /, if any
-		echo "target is $target"
 	  target="${target##*/}" #drop the leading directory componenets i.e. get basename
-		echo "target is $target"
 	  output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
 	  printf "%s%s%s is a directory.\n" "$biwhite" "$target" "$color_off"
 	  printf "Making checksums of all files in %s\n" "$biwhite$target$color_off"
