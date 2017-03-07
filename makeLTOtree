@@ -21,8 +21,8 @@ while [ "${*}" != "" ] ; do
 	folder="$HOME/Google Drive/00_LTO_filemetadata/${target}_filemetadata" #specify folder location
 	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
-		printf "%swriting contents_ls\nwriting contents_tree\nwriting contents_treeShort%s" "$biwhite"
-		ls "$drive/$target" >> "$folder/${target}_contents_ls_${today}.txt" &&
+		printf "\n%swriting:\n\t%scontents_ls\n\t\%scontents_tree\n\t%scontents_treeShort%s" "$biwhite$target$target$target$color_off"
+		ls "$drive" >> "$folder/${target}_contents_ls_${today}.txt" &&
 		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
 		printf "\nDone writing content files"
