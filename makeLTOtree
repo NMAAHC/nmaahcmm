@@ -14,32 +14,33 @@ today=$(date +"%Y%m%d")
 makeLTOtree ()
 
 {
-while [ "${*}" != "" ] ; do
 	drive="$1"
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
 	folder="$HOME/Google Drive/00_LTO_filemetadata/${target}_filemetadata" #specify folder location
 	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
-		printf "\n%swriting:\n\t%scontents_ls\n\t\%scontents_tree\n\t%scontents_treeShort%s" "$biwhite$target$target$target$color_off"
+		printf "\nwriting:\n\t%s%s_contents_ls\n\t%s_contents_tree\n\t%s_contents_treeShort%s\n" "$biwhite" "$target" "$target" "$target" "$color_off"
 		ls "$drive" >> "$folder/${target}_contents_ls_${today}.txt" &&
 		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
-		printf "\nDone writing content files"
+		printf "\n\t<<Done writing content files.>>"
 	else
-		printf "%s$drive does not exist. Exiting.%s" "$bired" "$color_off"
+		printf "%s%s does not exist. Exiting.%s" "$bired" "$drive" "$color_off"
 		exit
 	fi
 	echo #write metadata to $folder and then write $folder to $target
-	printf "%swriting {$target}.schema, {$target}_writelto.txt and {$target}_ReadBack_checksum.md5 to $folder%s\n" "$biwhite" "$color_off"
-	find /Users/medialab/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
-	printf "%schanging $folder permissions to 777%s\n" "$biwhite" "$color_off"
+	printf "\nwriting:\n\t%s%s.schema\n\t%s_writelto.txt\n\t%s_ReadBack_checksum.md5\n%sto:\n\t%s%s%s\n" "$biwhite" "$target" "$target" "$target" "$color_off" "$biwhite" "$folder" "$color_off"
+	find "$HOME"/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
+	printf "\n\t<<changing %s%s%s permissions to 777>>\n" "$biwhite" "${folder##*/}" "$color_off"
+	echo
 	chmod -vR 777 "$folder"
-	printf "%swriting contents of $folder to $drive%s\n" "$biwhite" "$color_off"
+	printf "\nwriting contents of:\n\t%s%s%s\nto:\n\t%s%s%s\n" "$biwhite" "${folder##*/}" "$color_off" "$biwhite" "$drive" "$color_off"
+	echo
 	rsync -avPhi "$folder" "$drive"
 	echo
-	printf "%smakeLTOtree is finished writing to $drive%s" "$biwhite" "$color_off"
-done
+	printf "%smakeLTOtree is finished writing to %s%s" "$biwhite" "$drive" "$color_off"
+	echo
 exit
 }
 
