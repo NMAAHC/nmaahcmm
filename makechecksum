@@ -23,8 +23,8 @@ while [[ $# -gt 0 ]] ; do
 	  target="${input%/}" #strip the trailing /, if any
 	  target="${target##*/}" #drop the leading directory componenets i.e. get basename
 	  output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
-	  printf "%s is a directory.\n" "$biwhite${input##*/}$color_off"
-	  printf "Making checksums of all files in %s\n" "$biwhite$input$color_off"
+	  printf "%s%s%s is a directory.\n" "$biwhite" "$target" "$color_off"
+	  printf "Making checksums of all files in %s\n" "$biwhite$target$color_off"
 	  printf "Writing to %s\n" "$biwhite$output$color_off"
 	  md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
 	fi
@@ -34,22 +34,22 @@ while [[ $# -gt 0 ]] ; do
 		target="${target%.*}" #strip extention from $target
 		output="${input%/*}" #get full path parent dirname of $input
 		output="$output"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
-		printf "%s is a file.\n" "$biwhite${input##*/}$color_off"
-		printf "Making checksum of %s\n" "$biwhite${input##*/}$color_off"
+		printf "%s%s%s is a file.\n" "$biwhite" "${input##*/}" "$color_off"
+		printf "Making checksum of %s%s%s\n" "$biwhite" "${input##*/}" "$color_off"
 		printf "Writing to %s\n" "$biwhite$output$color_off"
 		md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
 	fi
 
 	echo
-	printf "Sorting %s\n" "$biwhite${output##*/}$color_off" #sort $output
+	printf "Sorting %s%s%s\n" "$biwhite" "${output##*/}" "$color_off" #sort $output
 	sort -k 2 -o "$output" "$output"
 	shift
 	echo
 		if [[ $# -gt 0 ]] ; then
-			printf "Finished making checksums for %s.\n\n<>..<> Moving to %s\n" "$biwhite${input##*/}$color_off" "$biwhite${1##*/}$color_off"
+			printf "Finished making checksums for %s%s%s.\n\n<>..<> Moving to %s%s%s\n" "$biwhite" "${input##*/}" "$color_off" "$biwhite" "${1##*/}" "$color_off"
 			echo
 		else
-			printf "Finished making checksums for %s.\nNothing left to checksum.\n" "$biwhite${input##*/}$color_off"
+			printf "Finished making checksums for %s%s%s.\nNothing left to checksum.\n" "$biwhite" "${input##*/}" "$color_off"
 			echo
 			cowsay "Tootles!"
 		fi
