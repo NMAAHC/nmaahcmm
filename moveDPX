@@ -24,7 +24,7 @@ moveDPX ()
 
 		for file in "$dpx_folder"/*DPX*/* ; do
 			if [ -f "$target_folder"/*.dpx ] ; then
-				printf "%s%s% exists, verifying checksum.\n" "$biwhite" "${file##*/}" "$color_off"
+				printf "%s%s%s exists, verifying checksum.\n" "$biwhite" "${file##*/}" "$color_off"
 				rsync -aPhic "$file" "$target_folder"
 				rsync_err_1="$?"
 			else
