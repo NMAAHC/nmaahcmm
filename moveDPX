@@ -51,7 +51,7 @@ moveDPX ()
 				rsync -aPhi "$md5" "$target_folder"
 				rsync_err_2="$?"
 			fi
-				printf "%srsync exit status is: %s%s" "$biwhite" "$rsync_err_2" "$color_off"
+				printf "%srsync exit status is: %s%s\n" "$biwhite" "$rsync_err_2" "$color_off"
 
 		 	if [[ "$rsync_err_2" == 0 ]] ; then
 				printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "$biwhite" "${md5##*/}" "$color_off" "$biwhite" "$target_folder" "$color_off"
@@ -60,13 +60,13 @@ moveDPX ()
 				printf "%sERRORS\n" "$bired" "$color_off"
 			fi
 		done
-		printf "moving on"
+		printf "moving on\n"
 		shift
 
 	done
 	echo
 	chmod_folder="$HOME/Google_Drive/07_DPX_checksums"
-	printf "%schanged permissions on the following files in directory %s to 777:%s" "$biwhite" "${chmod_folder##*/}" "$color_off"
+	printf "%schanged permissions on the following files in directory %s to 777:%s\n" "$biwhite" "${chmod_folder##*/}" "$color_off"
 	chmod -vR 777 "$chmod_folder"
 }
 
