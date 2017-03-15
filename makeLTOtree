@@ -20,9 +20,17 @@ makeLTOtree ()
 	folder="$HOME/Google Drive/00_LTO_filemetadata/${target}_filemetadata" #specify folder location
 	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
-		printf "\nwriting:\n\t%s%s_contents_ls\n\t%s_contents_tree\n\t%s_contents_treeShort%s\n" "$biwhite" "$target" "$target" "$target" "$color_off"
-		ls "$drive" >> "$folder/${target}_contents_ls_${today}.txt" &&
-		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_treeLong_$today.txt" &&
+		printf "\nwriting:\n\t%s%s_contents\n\t%s_contents_tree\n\t%s_contents_treeShort%s\n" "$biwhite" "$target" "$target" "$target" "$color_off"
+		contents="$folder/${target}_contents_${today}.txt"
+		contents_tree="$folder/${target}_contents_tree_$today.txt"
+		contents_treeShort="$folder/${target}_contents_treeShort_$today.txt"
+		touch "$contents" "$contents_tree" "$contents_treeShort"
+		echo "The results of 'du -ch' on ${drive}:" >> "$contents"
+		du -ch "$drive" >> "$contents" &&
+		echo -en '\n' >> "$contents"
+		echo "The results of 'df -ch' on ${drive}:" >> "$contents"
+		df -h "$drive" >> "$contents" &&
+		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_tree_$today.txt" &&
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
 		printf "\n\t<<Done writing content files.>>"
 	else
