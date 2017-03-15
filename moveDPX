@@ -19,11 +19,13 @@ moveDPX ()
 		mkdir -p "$target_folder"
 
 		if [ ! -d "$target_folder" ] ; then
+			echo
 			printf "Creating:\t%s%s%s\n" "$biwhite" "$target_folder" "$color_off"
 		fi
 
 		for file in "$dpx_folder"/*DPX*/* ; do
 			if [ -f "$target_folder"/*.dpx ] ; then
+				echo
 				printf "%s%s%s exists, verifying checksum.\n" "$biwhite" "${file##*/}" "$color_off"
 				rsync -aPhic "$file" "$target_folder"
 				rsync_err_1="$?"
@@ -34,6 +36,7 @@ moveDPX ()
 			printf "%srsync exit status is: %s%s\n" "$biwhite" "$rsync_err_1" "$color_off"
 
 			if [[ "$rsync_err_1" == 0 ]]; then
+				echo
 				printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "$biwhite" "${file##*/}" "$color_off" "$biwhite" "$target_folder" "$color_off"
 			  echo
 		 	else
@@ -44,6 +47,7 @@ moveDPX ()
 
 		for md5 in "$dpx_folder"/*.md5 ; do
 			if [ -f "$target_folder"/*.md5 ] ; then
+				echo
 				printf "%s%s%s exists, verifying checksum." "$biwhite" "${md5##*/}" "$color_off"
 				rsync -aPhic "$md5" "$target_folder"
 				rsync_err_2="$?"
@@ -54,6 +58,7 @@ moveDPX ()
 				printf "%srsync exit status is: %s%s\n" "$biwhite" "$rsync_err_2" "$color_off"
 
 		 	if [[ "$rsync_err_2" == 0 ]] ; then
+				echo
 				printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "$biwhite" "${md5##*/}" "$color_off" "$biwhite" "$target_folder" "$color_off"
 				echo
 			else
@@ -61,6 +66,7 @@ moveDPX ()
 			fi
 		done
 		printf "moving on\n"
+		echo
 		shift
 
 	done
