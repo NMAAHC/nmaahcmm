@@ -25,11 +25,14 @@ makeLTOtree ()
 		contents_tree="$folder/${target}_contents_tree_$today.txt"
 		contents_treeShort="$folder/${target}_contents_treeShort_$today.txt"
 		touch "$contents" "$contents_tree" "$contents_treeShort"
-		echo "The results of 'du -ch' on ${drive}:" >> "$contents"
-		du -ch "$drive" >> "$contents" &&
+		echo "**** THE CONTENTS OF ${drive}:"
+		ls "$drive"/* >> "$contents"
 		echo -en '\n' >> "$contents"
-		echo "The results of 'df -ch' on ${drive}:" >> "$contents"
+		echo "**** THE RESULTS OF 'df -ch' FOR ${drive}:" >> "$contents"
 		df -h "$drive" >> "$contents" &&
+		echo -en '\n' >> "$contents"
+		echo "**** THE RESULTS OF 'du -ch' FOR ${drive}:" >> "$contents"
+		du -ch "$drive" >> "$contents" &&
 		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_tree_$today.txt" &&
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
 		printf "\n\t<<Done writing content files.>>"
@@ -47,8 +50,10 @@ makeLTOtree ()
 	echo
 	rsync -avPhi "$folder" "$drive"
 	echo
-	printf "%smakeLTOtree is finished writing to %s%s" "$biwhite" "$drive" "$color_off"
+	printf "%smakeLTOtree is finished writing to %s%s\n" "$biwhite" "$drive"
 	echo
+	printf "Unmounting %s" "$drive" "$color_off"
+	umount "$drive"
 exit
 }
 
