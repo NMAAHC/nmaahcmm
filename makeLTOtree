@@ -50,11 +50,13 @@ makeLTOtree ()
 	echo
 	rsync -avPhi "$folder" "$drive"
 	echo
-	printf "%smakeLTOtree is finished writing to %s%s\n" "$biwhite" "$drive"
+	printf "%smakeLTOtree is finished writing to %s\n" "$biwhite" "$drive"
 	echo
 	printf "Unmounting %s%s\n" "$drive" "$color_off"
 	umount "$drive"
 exit
+sleep 5m
+mountlto
 }
 
 #call the function(s)
