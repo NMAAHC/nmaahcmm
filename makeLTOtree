@@ -25,7 +25,7 @@ makeLTOtree ()
 		contents_tree="$folder/${target}_contents_tree_$today.txt"
 		contents_treeShort="$folder/${target}_contents_treeShort_$today.txt"
 		touch "$contents" "$contents_tree" "$contents_treeShort"
-		echo "**** THE CONTENTS OF ${drive}:"
+		echo "**** THE CONTENTS OF ${drive}:" >> "$contents"
 		ls "$drive"/* >> "$contents"
 		echo -en '\n' >> "$contents"
 		echo "**** THE RESULTS OF 'df -ch' FOR ${drive}:" >> "$contents"
