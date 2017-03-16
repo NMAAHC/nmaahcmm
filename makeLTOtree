@@ -52,7 +52,7 @@ makeLTOtree ()
 	echo
 	printf "%smakeLTOtree is finished writing to %s%s\n" "$biwhite" "$drive"
 	echo
-	printf "Unmounting %s" "$drive" "$color_off"
+	printf "Unmounting %s%s\n" "$drive" "$color_off"
 	umount "$drive"
 exit
 }
