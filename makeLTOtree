@@ -55,7 +55,7 @@ makeLTOtree ()
 	printf "Unmounting %s%s\n" "$drive" "$color_off"
 	umount "$drive"
 exit
-sleep 5m
+sleep 2m
 mountlto
 }
 
