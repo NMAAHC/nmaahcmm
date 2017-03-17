@@ -32,13 +32,11 @@ read -r input
 
 case "$reelnumber" in
 	1 )
-<<<<<<< Updated upstream
 	#make $destination directory ex. 2012_79_1_54__Something_to_Build_On
 	destination=("$dest"/"$dpxid"__"$title"/)
-=======
 	#make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
 	destination=("$dest"/"$dpxid"__"$title")
->>>>>>> Stashed changes
+
 	mkdir "$destination"
 	#make $aud directory ex. 2012_79_1_54__Something_to_Build_On__Audio
 	aud=("$destination"/"$dpxid"__"$title"__Audio)
@@ -118,11 +116,11 @@ case "$reelnumber" in
 	mkdir -p "$dpxR2"
 
 	echo
-<<<<<<< HEAD
+
 	printf "%sMoving files from%s %s" "$biwhite" "$color_off" "$input"
-=======
+
 	printf "%sMoving files from%s $input\n" "$biwhite" "$color_off"
->>>>>>> origin/master
+
 
 	if [ -d "$audR1" ] ; then
 		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
@@ -218,11 +216,11 @@ case "$reelnumber" in
 	mkdir -p "$dpxR3"
 
 	echo
-<<<<<<< HEAD
+
 	printf "%sMoving files from%s %s" "$biwhite" "$color_off" "$input"
-=======
+
 	printf "%sMoving files from%s $input\n" "$biwhite" "$color_off"
->>>>>>> origin/master
+
 
 	if [ -d "$audR1" ] ; then
 		find "$input" -name "*R1*.wav" -exec mv -vi {} "$audR1" \;
