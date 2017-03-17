@@ -1,23 +1,17 @@
-biwhite=$(tput bold)$(tput setaf 7)
-#bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
-date="$(date +%Y%m%d)"
+#!/usr/bin/env bash
 
-
-while [[ $# -gt 0 ]] ; do
-
-input="$1" #name $input as the first arugment sent to script
-
-if [ -d "$input" ] ; then 	#if argment is a directory, run md5deep
-  target="${input%/}" #strip the trailing /, if any
-  target="${target##*/}" #drop the leading directory componenets i.e. get basename
-  output="$input"/"$target"_"$date"_checksums.md5 #set .md5 file to $output
-  echo
-  printf "%s%s%s is a directory.\n" "$biwhite" "${input##*/}" "$color_off"
-  printf "Making checksums of all files in %s%s%s\n" "$biwhite" "$input" "$color_off"
-  printf "Writing to %s%s%s\n" "$biwhite" "$output" "$color_off"
-  md5deep -bre "$input" >> "$output" #create md5 hash (hashes) of $input and write results to $output
-fi
-shift
-
-done
+scriptdir="$HOME" # get dirname of $0 ($0 is the name of the current script)
+#touch $scriptdir/foo.sh
+#echo "'echo' hello world" >> $scriptdir/foo.sh
+#chmod +x $scriptdir/foo.sh
+. "$scriptdir/foo.sh" echo $? ||
+{ echo "Missing '$scriptdir/foo.sh'. Exiting." ;
+exit 1 ;} # The right side of && will only be evaluated if the exit status of the left side is zero.
+          # || is the opposite: it will evaluate the right side only if the left side exit status is nonzero.
+echo "$scriptdir/foo.sh is present"
+#echo
+#rm "$scriptdir/foo.sh"
+#. "$scriptdir/foo.sh" ||
+# { echo "Missing '$scriptdir/foo.sh'. Exiting." ;
+#exit 1 ;} # The right side of && will only be evaluated if the exit status of the left side is zero.
+          # || is the opposite: it will evaluate the right side only if the left side exit status is nonzero.
