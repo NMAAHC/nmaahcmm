@@ -19,58 +19,60 @@ moveDPX ()
 		mkdir -p "$target_folder"
 
 		if [ ! -d "$target_folder" ] ; then
-			printf "%sCreating %s" "$biwhite" "$target_folder"
+			echo
+			printf "Creating:\t%s%s%s\n" "$biwhite" "$target_folder" "$color_off"
 		fi
 
 		for file in "$dpx_folder"/*DPX*/* ; do
 			if [ -f "$target_folder"/*.dpx ] ; then
-				printf "%s%s exists, verifying checksum" "$biwhite" "${file##*/}"
+				echo
+				printf "%s%s%s exists, verifying checksum.\n" "$biwhite" "${file##*/}" "$color_off"
 				rsync -aPhic "$file" "$target_folder"
 				rsync_err_1="$?"
 			else
 				rsync -aPhi "$file" "$target_folder"
 				rsync_err_1="$?"
 			fi
-			printf "%srsync exit status is: %s" "$biwhite" "$rsync_err_1"
+			printf "%srsync exit status is: %s%s\n" "$biwhite" "$rsync_err_1" "$color_off"
 
 			if [[ "$rsync_err_1" == 0 ]]; then
-				#statements
-				printf "%sMOVED: %s" "$biwhite" "${file##*/}"
-			        printf "%sTO DIRECTORY: %s" "$biwhite" "$target_folder"
+				echo
+				printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "$biwhite" "${file##*/}" "$color_off" "$biwhite" "$target_folder" "$color_off"
 			  echo
 		 	else
-				printf "%sERRORS" "$bired"
+				printf "%sERRORS%s\n" "$bired" "$color_off"
 			fi
 			break 1
 		done
 
 		for md5 in "$dpx_folder"/*.md5 ; do
 			if [ -f "$target_folder"/*.md5 ] ; then
-				printf "%s%s exists, verifying checksum" "$biwhite" "${md5##*/}"
+				echo
+				printf "%s%s%s exists, verifying checksum." "$biwhite" "${md5##*/}" "$color_off"
 				rsync -aPhic "$md5" "$target_folder"
 				rsync_err_2="$?"
 			else
 				rsync -aPhi "$md5" "$target_folder"
 				rsync_err_2="$?"
 			fi
-				printf "%srsync exit status is: %s" "$biwhite" "$rsync_err_2"
+				printf "%srsync exit status is: %s%s\n" "$biwhite" "$rsync_err_2" "$color_off"
 
 		 	if [[ "$rsync_err_2" == 0 ]] ; then
-		 		#statements
-				printf "%sMOVED: %s" "$biwhite" "${md5##*/}"
-				printf "%sTO DIRECTORY: %s" "$biwhite" "$target_folder"
+				echo
+				printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "$biwhite" "${md5##*/}" "$color_off" "$biwhite" "$target_folder" "$color_off"
 				echo
 			else
-				printf "%sERRORS" "$bired"
+				printf "%sERRORS\n" "$bired" "$color_off"
 			fi
 		done
-		printf "moving on"
+		printf "moving on\n"
+		echo
 		shift
 
 	done
 	echo
-	chmod_folder="/Users/medialab/Desktop/07_DPX_checksums"
-	printf "%schanged permissions on the following files in directory %s to 777:" "$biwhite" "${chmod_folder##*/}"
+	chmod_folder="$HOME/Google_Drive/07_DPX_checksums"
+	printf "%schanged permissions on the following files in directory %s to 777:%s\n" "$biwhite" "${chmod_folder##*/}" "$color_off"
 	chmod -vR 777 "$chmod_folder"
 }
 
