@@ -21,7 +21,7 @@ local folder=$HOME/Google_Drive/05_DriveContents/
       output=${drive##*/}_contents_"$date".txt
       output="$folder/$output"
 			if [ -d $folder ] ; then
-      	tree --filelimit 30 --si --du -U -Q -o "$output" "$drive"
+      	tree --filelimit 50 --si --du -U -Q -o "$output" "$drive"
         if grep "0 directories, 0 files" "$output" ; then
           printf "%s$drive is empty. Adding EMPTY to file name.\n%s" "$biwhite" "$color_off" &&
           outputE="$folder/${drive##*/}_contents_"$date"_EMPTY.txt" &&
