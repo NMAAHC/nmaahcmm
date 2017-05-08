@@ -141,19 +141,19 @@ alias sulbime='sublime'
 # functions
 	# rsync transfer for DAMS uploads
 function rsyncDAMS () {
-	rsync -avvPhi --no-p "$@"
+	rsync -avvPhi --no-p --stats "$@"
 }
 export -f rsyncDAMS
 
 	# general rsync transfer
 function rsyncT () {
-	rsync -avvPhi "$@"
+	rsync -avvPhi --stats "$@"
 }
 export -f rsyncT
 
 	# general rsync transfer with deletion of source files
 function rsyncD () {
-	rsync -avvPhi --remove-source-files "$@"
+	rsync -avvPhi --remove-source-files --stats "$@"
 }
 export -f rsyncD
 
