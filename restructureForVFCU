@@ -4,7 +4,7 @@
 
 ### CONSTANTS
 
-biwhite=$(tput bold)$(tput setaf 7)
+biyellow=$(tput bold)$(tput setaf 3)
 bired=$(tput bold)$(tput setaf 1)
 gray=$(tput setaf 7)
 color_off=$(tput sgr0)
@@ -24,8 +24,8 @@ echo
 	md5="/Users/medialab/Google_Drive/07_DPX_checksums/"
 
 	if [ -d "$input" ] ; then
-	  printf "%s%s%s is a directory.\n" "$biwhite" "$input" "$color_off"
-	  printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "$biwhite" "$audio" "$derivatives" "$color_off" "$biwhite" "$dpx" "$color_off"
+	  printf "%s%s%s is a directory.\n" "$biyellow" "$input" "$color_off"
+	  printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "$biyellow" "$audio" "$derivatives" "$color_off" "$biyellow" "$dpx" "$color_off"
 		echo
 		printf "%s" "$gray"
 	  mv -vi "$audio"/* "$derivatives"/* "$dpx" #move all file in the audio and derivatives directories to the DPX directory
@@ -38,13 +38,13 @@ echo
 	fi
 echo
 	if [ -d "$md5" ] ; then
-		printf "Moving .md5 to %s%s%s\n" "$biwhite" "$dpx" "$color_off" #place .md5 in DPX directory to initiate DPX pickup
+		printf "Moving .md5 to %s%s%s\n" "$biyellow" "$dpx" "$color_off" #place .md5 in DPX directory to initiate DPX pickup
 		echo
 		printf "%s" "$gray"
 		rsync -avvPhi --stats "$md5/${input##*/}"/*.md5 "$dpx"
 		printf "%s" "$color_off"
 		echo
-		printf "Done moving .md5 to %s%s%s.\nVFCU will begin picking up your files shortly." "$biwhite" "$dpx" "$color_off"
+		printf "Done moving .md5 to %s%s%s.\nVFCU will begin picking up your files shortly." "$biyellow" "$dpx" "$color_off"
 		echo
 		printf "%sPlease make sure your templates have been set correctly!%s" "$bired" "$color_off"
 		echo
