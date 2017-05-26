@@ -34,50 +34,55 @@ case "$reelnumber" in
 	1 )
 	#make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
 	destination=("$dest"/"$dpxid"__"$title")
-
 	mkdir "$destination"
 	#make $aud directory ex. 2012_79_1_54__Something_to_Build_On__Audio
-	aud=("$destination"/"$dpxid"__"$title"__Audio)
-	mkdir $aud
+	#aud=("$destination"/"$dpxid"__"$title"__Audio)
+	#mkdir $aud
 	#make $der directory ex. 2012_79_1_54__Something_to_Build_On__Derivatives
-	der=("$destination"/"$dpxid"__"$title"__Derivatives)
-	mkdir "$der"
+	#der=("$destination"/"$dpxid"__"$title"__Derivatives)
+	#mkdir "$der"
 	#make $dpx directory ex. 2012_79_1_54__Something_to_Build_On__DPX
-	dpx=("$destination"/"$dpxid"__"$title"__DPX)
-	mkdir "$dpx"
+	#dpx=("$destination"/"$dpxid"__"$title"__DPX)
+	#mkdir "$dpx"
 
 	echo
 	printf "%sMoving files from %s $input\n" "$biwhite" "$color_off"
-	#move any .wav files from the $input to the $aud directory
-	if [ -d "$aud" ] ; then
-		find "$input" -name "*.wav" -exec mv -vi {} "$aud" \;
+	#move WAV directory from $input to $destination and rename
+	if [ -d "$destination" ] ; then
+		find "$input" -type d -name "*WAV" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__Audio  \;
+		aud=("$destination"/"$dpxid"__"$title"__Audio)
 	else
-		printf "%sMissing%s %s" "$bired" "$color_off" "$aud"
+		printf "%sMissing%s %s" "$bired" "$color_off" "$destination"
 		exit 1
 	fi
-	#move any .mov files from the $input to the $der directory
-	if [ -d "$der" ] ; then
-		find "$input" -name "*.mov" -exec mv -vi {} "$der" \;
+	#move MOV directory from $input to $destination and rename
+	if [ -d "$destination" ] ; then
+		find "$input" -type d -name "*MOV" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__Derivatives \;
+		der=("$destination"/"$dpxid"__"$title"__Derivatives)
 	else
-		printf "%sMissing%s %s" "$bired" "$color_off" "$der"
+		printf "%sMissing%s %s" "$bired" "$color_off" "$destination"
 		exit 1
 	fi
-	#move any .dpx files from the $input to the $dpx directory
-	if [ -d "$dpx" ] ; then
-		find "$input" -name "*.dpx" -exec mv -vi {} "$dpx" \;
+	#move DPX directory from $input to $destination and rename
+	#
+	if [ -d "$destination" ] ; then
+		find "$input" -type d -name "*DPX" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__DPX \;
+		dpx=("$destination"/"$dpxid"__"$title"__DPX)
 	else
-		echo "%sMissing%s " "$bired" "$color_off" "$dpx"
+		printf "%sMissing%s %s" "$bired" "$color_off" "$destination"
 		exit 1
 	fi
 
 	echo
-	printf "%sReaming files in %s%\n" "$biwhite" "$color_off" "$destination"
+	printf "%sReaming files in %s% \n" "$biwhite" "$color_off" "$destination"
 	#find the .wav and .mov files and rename them according to NMAAHC naming structures
 	find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
 	find "$der" -name "*ProResHQ.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
-	find "$der" -name "*DER_01.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
+	#find "$der" -name "*DER_01.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
 	find "$der" -name "*Uncompressed.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
-	find "$der" -name "*DER_02.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
+	#find "$der" -name "*DER_02.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
+
+
 
 	echo
 	printf "%sRemoving %s%s\n" "$biwhite" "$color_off" "$input"
