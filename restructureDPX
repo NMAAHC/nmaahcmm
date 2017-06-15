@@ -35,15 +35,6 @@ case "$reelnumber" in
 	#make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
 	destination=("$dest"/"$dpxid"__"$title")
 	mkdir "$destination"
-	#make $aud directory ex. 2012_79_1_54__Something_to_Build_On__Audio
-	#aud=("$destination"/"$dpxid"__"$title"__Audio)
-	#mkdir $aud
-	#make $der directory ex. 2012_79_1_54__Something_to_Build_On__Derivatives
-	#der=("$destination"/"$dpxid"__"$title"__Derivatives)
-	#mkdir "$der"
-	#make $dpx directory ex. 2012_79_1_54__Something_to_Build_On__DPX
-	#dpx=("$destination"/"$dpxid"__"$title"__DPX)
-	#mkdir "$dpx"
 
 	echo
 	printf "%sMoving files from %s $input\n" "$biwhite" "$color_off"
@@ -64,7 +55,6 @@ case "$reelnumber" in
 		exit 1
 	fi
 	#move DPX directory from $input to $destination and rename
-	#
 	if [ -d "$destination" ] ; then
 		find "$input" -type d -name "*DPX" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__DPX \;
 		dpx=("$destination"/"$dpxid"__"$title"__DPX)
@@ -72,21 +62,15 @@ case "$reelnumber" in
 		printf "%sMissing%s %s" "$bired" "$color_off" "$destination"
 		exit 1
 	fi
-
 	echo
-	printf "%sReaming files in %s% \n" "$biwhite" "$color_off" "$destination"
 	#find the .wav and .mov files and rename them according to NMAAHC naming structures
+	printf "%sReaming files in %s% \n" "$biwhite" "$color_off" "$destination"
 	find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
 	find "$der" -name "*ProResHQ.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
-	#find "$der" -name "*DER_01.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
 	find "$der" -name "*Uncompressed.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
-	#find "$der" -name "*DER_02.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
-
-
-
 	echo
-	printf "%sRemoving %s%s\n" "$biwhite" "$color_off" "$input"
 	#remove the $input directory
+	printf "%sRemoving %s%s\n" "$biwhite" "$color_off" "$input"
 	rm -vri "$input"
 	;;
 
