@@ -14,7 +14,7 @@ color_off=$(tput sgr0)
 makedrivetree()
 {
 local drive ; #set local variable $drive
-local folder=$HOME/Google_Drive/05_DriveContents/
+local folder=/Volumes/UtilitySAN/05_DriveContents
   for drive ; do
     	drive="${drive%/}" #strip trailing / if any
     if [ -d "$drive" ] ; then
@@ -23,21 +23,21 @@ local folder=$HOME/Google_Drive/05_DriveContents/
 			if [ -d $folder ] ; then
       	tree --filelimit 50 --si --du -U -Q -o "$output" "$drive"
         if grep "0 directories, 0 files" "$output" ; then
-          printf "%s$drive is empty. Adding EMPTY to file name.\n%s" "$biwhite" "$color_off" &&
+          printf "%s%s is empty. Adding EMPTY to file name.\n%s" "$biwhite" "$drive" "$color_off" &&
           outputE="$folder/${drive##*/}_contents_"$date"_EMPTY.txt" &&
           mv -v "$output" "$outputE"
-          printf "%sMoving ${outputE##*/} to $drive\n%s" "$biwhite" "$color_off"
+          printf "%sMoving %s to %s\n%s" "$biwhite" "${outputE##*/}" "$drive" "$color_off"
           cp -v "$outputE" "$drive"
         else
-          printf "%s$drive is not empty\n%s" "$biwhite" "$color_off"
+          printf "%s%s is not empty\n%s" "$biwhite" $drive "$color_off"
           cp -va "$output" "$drive"
         fi
 			else
-        printf "%sError $folder does not exist\n" "$bired" >&2
+        printf "%sError %s does not exist. Exiting.\n" "$bired" "$folder" >&2
 				exit
       fi
     else
-      printf "%sError $drive does not exist.\n" "$bired" >&2
+      printf "%sError %s does not exist. Exiting.\n" "$bired" $drive >&2
 			exit
     fi
   done
