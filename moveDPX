@@ -15,7 +15,13 @@ moveDPX ()
 	while [ "${*}" != "" ] ; do
 
 		dpx_folder="${1}"
-		target_folder="/Users/medialab/Google_Drive/07_DPX_checksums/${dpx_folder##*/}"
+		target="/Volumes/UtilitySAN/06_DPX_checksums"
+		if [ ! -d "$target" ] ; then
+			echo
+			printf "%s%s does not exist. Exiting." "$bired" "$target" >&2
+			exit
+		fi
+		target_folder="/Volumes/UtilitySAN/06_DPX_checksums/${dpx_folder##*/}"
 		mkdir -p "$target_folder"
 
 		if [ ! -d "$target_folder" ] ; then
@@ -40,7 +46,7 @@ moveDPX ()
 				printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "$biwhite" "${file##*/}" "$color_off" "$biwhite" "$target_folder" "$color_off"
 			  echo
 		 	else
-				printf "%sERRORS%s\n" "$bired" "$color_off"
+				printf "%sERRORS%s\n" "$bired" "$color_off" >&2
 			fi
 			break 1
 		done
@@ -62,7 +68,7 @@ moveDPX ()
 				printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "$biwhite" "${md5##*/}" "$color_off" "$biwhite" "$target_folder" "$color_off"
 				echo
 			else
-				printf "%sERRORS\n" "$bired" "$color_off"
+				printf "%sERRORS\n" "$bired" "$color_off" >&2
 			fi
 		done
 		printf "moving on\n"
@@ -71,7 +77,7 @@ moveDPX ()
 
 	done
 	echo
-	chmod_folder="$HOME/Google_Drive/07_DPX_checksums"
+	chmod_folder="/Volumes/UtilitySAN/06_DPX_checksums"
 	printf "%schanged permissions on the following files in directory %s to 777:%s\n" "$biwhite" "${chmod_folder##*/}" "$color_off"
 	chmod -vR 777 "$chmod_folder"
 }
