@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# a script to create a manifest of contents on an LTO tape, copy it to the tape and then copy it to a specified adtional folder
+
+### CONSTANTS
+
+biwhite=$(tput bold)$(tput setaf 7)
+bired=$(tput bold)$(tput setaf 1)
+color_off=$(tput sgr0)
+today=$(date +"%Y%m%d")
+
+### FUNCTIONS
+
+makeLTOtree ()
+
+{
+	drive="$1"
+	target="${drive%/}" #strip the trailing /, if any
+	target="${target##*/}" #name $target as the basename of $drive
+	folder="$HOME/Google_Drive/00_LTO_filemetadata/${target}_filemetadata" #specify folder location
+	mkdir -p "$folder" #create folder
+	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
+		printf "\nwriting:\n\t%s%s_contents\n\t%s_contents_tree\n\t%s_contents_treeShort%s\n" "$biwhite" "$target" "$target" "$target" "$color_off"
+		contents="$folder/${target}_contents_${today}.txt"
+		contents_tree="$folder/${target}_contents_tree_$today.txt"
+		contents_treeShort="$folder/${target}_contents_treeShort_$today.txt"
+		touch "$contents" "$contents_tree" "$contents_treeShort"
+		echo "**** THE CONTENTS OF ${drive}:" >> "$contents"
+		ls "$drive"/* >> "$contents"
+		echo -en '\n' >> "$contents"
+		echo "**** THE RESULTS OF 'df -ch' FOR ${drive}:" >> "$contents"
+		df -h "$drive" >> "$contents" &&
+		echo -en '\n' >> "$contents"
+		echo "**** THE RESULTS OF 'du -ch' FOR ${drive}:" >> "$contents"
+		du -ch "$drive" >> "$contents" &&
+		tree -RapugD --si --du "$drive" >> "$folder/${target}_contents_tree_$today.txt" &&
+		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
+		printf "\n\t<<Done writing content files.>>"
+	else
+		printf "%s%s does not exist. Exiting.%s" "$bired" "$drive" "$color_off"
+		exit
+	fi
+	echo #write metadata to $folder and then write $folder to $target
+	printf "\nwriting:\n\t%s%s.schema\n\t%s_writelto.txt\n\t%s_ReadBack_checksum.md5\n%sto:\n\t%s%s%s\n" "$biwhite" "$target" "$target" "$target" "$color_off" "$biwhite" "$folder" "$color_off"
+	find "$HOME"/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
+	printf "\n\t<<changing %s%s%s permissions to 777>>\n" "$biwhite" "${folder##*/}" "$color_off"
+	echo
+	chmod -vR 777 "$folder"
+	printf "\nwriting contents of:\n\t%s%s%s\nto:\n\t%s%s%s\n" "$biwhite" "${folder##*/}" "$color_off" "$biwhite" "$drive" "$color_off"
+	echo
+	rsync -avPhi "$folder" "$drive"
+	echo
+	printf "%smakeLTOtree is finished writing to %s\n" "$biwhite" "$drive"
+	echo
+	printf "Unmounting %s%s\n" "$drive" "$color_off"
+	umount "$drive"
+	printf "\nWaiting 5min for %s to unmount and next tape to load.\n" "$drive"
+sleep 150
+mountlto
+exit
+}
+
+#call the function(s)
+
+makeLTOtree "$@"
+
+exit "$?"
