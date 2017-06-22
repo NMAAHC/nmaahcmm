@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# a script to create a manifest of contents on an LTO tape, copy it to the tape and then copy it to a specified adtional folder (Google Drive)
+# a script to create a manifest of contents on an LTO tape, copy it to the tape and then copy it to a specified adtional folder
 
 ### CONSTANTS
 
