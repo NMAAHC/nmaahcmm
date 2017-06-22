@@ -17,7 +17,7 @@ makeLTOtree ()
 	drive="$1"
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
-	folder="$HOME/Google_Drive/00_LTO_filemetadata/${target}_filemetadata" #specify folder location
+	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/${target}_filemetadata" #specify folder location
 	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
 		printf "\nwriting:\n\t%s%s_contents\n\t%s_contents_tree\n\t%s_contents_treeShort%s\n" "$biwhite" "$target" "$target" "$target" "$color_off"
