@@ -33,7 +33,7 @@ prepareLTO ()
 		rm -vfr "$drive/$target"_filemetadata
 		echo
 		#copy checksum file from $drive
-		if [ !-d $ulto ] ; then
+		if [ ! -d $ulto ] ; then
 			printf "%s%s does not exist. Creating %s%s" "$biwhite" "$ulto" "$ulto" "$color_off"
 			mkdir -pv $ulto
 		fi
