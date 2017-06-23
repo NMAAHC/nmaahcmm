@@ -34,9 +34,9 @@ prepareLTO ()
 		rm -vfr "$drive/$target"_filemetadata
 		echo
 		#copy checksum file from $drive
-		if [ ! -d $ulto ] ; then
+		if [ ! -d "$ulto" ] ; then
 			printf "%s%s does not exist. Creating %s%s\n" "$biwhite" "$ulto" "$ulto" "$color_off"
-			mkdir -pv $ulto
+			mkdir -pv "$ulto"
 		fi
 		printf "%scopying checksum file from %s to %s%s\n" "$biwhite" "$target" "$ulto" "$color_off"
 		cp -v "$drive/$target/"*.txt "$ulto"
@@ -59,7 +59,7 @@ prepareLTO ()
 	echo
 	#combine checksum files in $ulto into one file and sort
 	mv -vi /Volumes/UtilitySAN/LTO/LTO/* "$ulto"
-  find "$ulto" -name "*.md5" -exec cat {} >> "$ulto"/*.txt
+  find "$ulto" -name "*.md5" -exec cat {} >> "$ulto"/*.txt \;
 	sort -k 2 -o "$ultotxt" "$ultotxt"
 	echo
 	printf "%s%s is now ready to write to.%s\n" "$biwhite" "$target" "$color_off"
