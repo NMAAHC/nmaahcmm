@@ -25,39 +25,39 @@ prepareLTO ()
 	if [ -d "$drive" ] ; then
 		#delete .DS_Store from $drive
 		echo
-		printf "finding .DS_Store on %s and deleting" "$target"
+		printf "%sfinding .DS_Store on %s and deleting%s\n" "$biwhite" "$target" "$color_off"
 	 	find "$drive" -name ".DS_Store" -exec rm -vfr {} \;
 		echo
 		#delete filemetadata from $drive
-		printf "deleting %s filemetadata from %s" "$target" "$drive"
-		rm -vri "$drive/$target"_filemetadata
+		printf "%sdeleting %s filemetadata from %s%s\n" "$biwhite" "$target" "$drive" "$color_off"
+		rm -vfr "$drive/$target"_filemetadata
 		echo
 		#copy checksum file from $drive
-		printf "copying checksum file from %s to %s" "$target" "$ulto"
+		printf "%scopying checksum file from %s to %s%s\n" "$biwhite" "$target" "$ulto" "$color_off"
 		if [ ! $ulto ] ; then
 			mkdir -pv $ulto
 		fi
 		cp -v "$drive/$target/"*.txt "$ulto"
 		echo
 		#delete checksum file from $drive
-		printf "deleting checksum file from %s" "$target"
+		printf "%sdeleting checksum file from %s%s\n" "$biwhite" "$target" "$color_off"
 		rm -vri "$drive/$target"*.txt
 		echo
 	else
-		printf "%s%s does not exist. Exiting.%s" "$bired" "$drive" "$color_off"
+		printf "%s%s does not exist. Exiting.%s\n" "$bired" "$drive" "$color_off"
 		exit
 	fi
 	#delete the old filemetatdata folder in $folder
-	printf "deleting old %s filemetatdata folder in %s" "$target" "$folder"
+	printf "%sdeleting old %s filemetatdata folder in %s%s\n" "$biwhite" "$target" "$folder" "$color_off"
 	find "$folder" -name "$target"* -exec rm -vri {} \;
 	echo
 	#delete old readbackchecksum file in $chksumfolder
-	printf "deleting old %s readbackchecksum file in %s" "$target" "$chksumfolder"
+	printf "%sdeleting old %s readbackchecksum file in %s%s\n" "$biwhite" "$target" "$chksumfolder" "$color_off"
 	find "$chksumfolder" -name "$target"* -exec rm -vi {} \;
 	echo
 	#combine checksum files in $ulto into one file
-	printf "%s is now ready to write to.\n" "$target"
-	read -e -p "press return if you would like to now write $ulto to $drive. Press any other key to exit program."
+	printf "%s%s is now ready to write to.%s\n" "$biwhite" "$target" "$color_off"
+	read -e -p "press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
 
 	if [[ "$REPLY" == "" ]] ; then
 		time writelto -v -e N -t "$target" "$lto"
