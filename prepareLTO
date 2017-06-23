@@ -19,6 +19,7 @@ prepareLTO ()
 	target="${target##*/}" #name $target as the basename of $drive
 	lto="/Volumes/UtilitySAN/LTO/LTO/"
 	ulto="/Volumes/UtilitySAN/LTO/LTO/$target/"
+	ultotxt="/Volumes/UtilitySAN/LTO/LTO/$target/$target"_checksums.txt
 	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/"
 	chksumfolder="$HOME/Documents/lto_indexes/readback_checksums/"
 
@@ -34,7 +35,7 @@ prepareLTO ()
 		echo
 		#copy checksum file from $drive
 		if [ ! -d $ulto ] ; then
-			printf "%s%s does not exist. Creating %s%s" "$biwhite" "$ulto" "$ulto" "$color_off"
+			printf "%s%s does not exist. Creating %s%s\n" "$biwhite" "$ulto" "$ulto" "$color_off"
 			mkdir -pv $ulto
 		fi
 		printf "%scopying checksum file from %s to %s%s\n" "$biwhite" "$target" "$ulto" "$color_off"
@@ -56,7 +57,11 @@ prepareLTO ()
 	printf "%sdeleting old %s readbackchecksum file in %s%s\n" "$biwhite" "$target" "$chksumfolder" "$color_off"
 	find "$chksumfolder" -name "$target"* -exec rm -vi {} \;
 	echo
-	#combine checksum files in $ulto into one file
+	#combine checksum files in $ulto into one file and sort
+	mv -vi /Volumes/UtilitySAN/LTO/LTO/* "$ulto"
+  find "$ulto" -name "*.md5" -exec cat {} >> "$ulto"/*.txt
+	sort -k 2 -o "$ultotxt" "$ultotxt"
+	echo
 	printf "%s%s is now ready to write to.%s\n" "$biwhite" "$target" "$color_off"
 	read -e -p "press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
 
