@@ -33,10 +33,11 @@ prepareLTO ()
 		rm -vfr "$drive/$target"_filemetadata
 		echo
 		#copy checksum file from $drive
-		printf "%scopying checksum file from %s to %s%s\n" "$biwhite" "$target" "$ulto" "$color_off"
-		if [ ! $ulto ] ; then
+		if [ !-d $ulto ] ; then
+			printf "%s%s does not exist. Creating %s%s" "$biwhite" "$ulto" "$ulto" "$color_off"
 			mkdir -pv $ulto
 		fi
+		printf "%scopying checksum file from %s to %s%s\n" "$biwhite" "$target" "$ulto" "$color_off"
 		cp -v "$drive/$target/"*.txt "$ulto"
 		echo
 		#delete checksum file from $drive
@@ -62,6 +63,7 @@ prepareLTO ()
 	if [[ "$REPLY" == "" ]] ; then
 		time writelto -v -e N -t "$target" "$lto"
 	else
+		echo
 		echo "Exiting program."
 		exit 1
 	fi
