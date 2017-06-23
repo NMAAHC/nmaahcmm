@@ -20,7 +20,7 @@ prepareLTO ()
 	lto="/Volumes/UtilitySAN/LTO/LTO/"
 	ulto="/Volumes/UtilitySAN/LTO/LTO/$target"
 	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/"
-	chksumfolder="$HOME/Documents/lto_indexes/readbackchecksums/"
+	chksumfolder="$HOME/Documents/lto_indexes/readback_checksums/"
 
 	if [ -d "$drive" ] ; then
 		#delete .DS_Store from $drive
