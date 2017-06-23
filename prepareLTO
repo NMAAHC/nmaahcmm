@@ -59,14 +59,14 @@ prepareLTO ()
 	echo
 	#combine checksum files in $ulto into one file and sort
 	mv -vi /Volumes/UtilitySAN/LTO/LTO/* "$ulto"
-  find "$ulto" -name "*.md5" -exec cat {} >> "$ulto"/*.txt \;
-	sort -k 2 -o "$ultotxt" "$ultotxt"
 	echo
 	printf "%s%s is now ready to write to.%s\n" "$biwhite" "$target" "$color_off"
 	read -e -p "press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
 
 	if [[ "$REPLY" == "" ]] ; then
 		find "$ulto" -name ".*" -exec rm -vfr {} \;
+		find "$ulto" -name "*.md5" -exec cat {} >> "$ulto"/*.txt \;
+		sort -k 2 -o "$ultotxt" "$ultotxt"
 		time writelto -v -e N -t "$target" "$lto"
 	else
 		echo
