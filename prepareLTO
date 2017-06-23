@@ -18,7 +18,7 @@ prepareLTO ()
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
 	lto="/Volumes/UtilitySAN/LTO/LTO/"
-	ulto="/Volumes/UtilitySAN/LTO/LTO/$target"
+	ulto="/Volumes/UtilitySAN/LTO/LTO/$target/"
 	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/"
 	chksumfolder="$HOME/Documents/lto_indexes/readback_checksums/"
 
@@ -41,7 +41,7 @@ prepareLTO ()
 		echo
 		#delete checksum file from $drive
 		printf "%sdeleting checksum file from %s%s\n" "$biwhite" "$target" "$color_off"
-		rm -vri "$drive/$target"*.txt
+		rm -vri "$drive/$target/"*.txt
 		echo
 	else
 		printf "%s%s does not exist. Exiting.%s\n" "$bired" "$drive" "$color_off"
