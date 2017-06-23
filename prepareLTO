@@ -66,6 +66,7 @@ prepareLTO ()
 	read -e -p "press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
 
 	if [[ "$REPLY" == "" ]] ; then
+		find "$ulto" -name ".*" -exec rm -vfr {} \;
 		time writelto -v -e N -t "$target" "$lto"
 	else
 		echo
