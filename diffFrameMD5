@@ -9,4 +9,4 @@ exit 1 ;} # The right side of && will only be evaluated if the exit status of th
 input1="$1"
 input2="$2"
 
-diff --side-by-side --width=200 --suppress-common-lines <(cat "$input1" | cut -d, -f 6) <(cat "$input2" | cut -d, -f 6)asdfasd
+diff --side-by-side --width=200 --suppress-common-lines <(cat "$input1" | cut -d, -f 6) <(cat "$input2" | cut -d, -f 6)
