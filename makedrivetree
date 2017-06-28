@@ -14,7 +14,7 @@ color_off=$(tput sgr0)
 makedrivetree()
 {
 local drive ; #set local variable $drive
-local folder=/Volumes/UtilitySAN/05_DriveContents
+local folder=/Volumes/UtilitySAN/05_driveContents
   for drive ; do
     	drive="${drive%/}" #strip trailing / if any
     if [ -d "$drive" ] ; then
