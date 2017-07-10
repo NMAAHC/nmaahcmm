@@ -2,6 +2,8 @@
 
 # a script to copy .md5 checksum files and the first .dpx file in a stack to a designated directory
 
+#change
+
 ### CONSTANTS
 
 biwhite=$(tput bold)$(tput setaf 7)
