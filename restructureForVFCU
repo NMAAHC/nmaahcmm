@@ -23,6 +23,8 @@ echo
 	dpx="$input/${input##*/}"__DPX
 	md5="/Volumes/UtilitySAN/06_DPX_checksums/"
 
+while [[ $# -gt 0 ]] ; do
+
 	if [ -d "$input" ] ; then
 	  printf "%s%s%s is a directory.\n" "$biyellow" "$input" "$color_off"
 	  printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "$biyellow" "$audio" "$derivatives" "$color_off" "$biyellow" "$dpx" "$color_off"
@@ -53,6 +55,8 @@ echo
 		printf "%s%s does not exist. Exiting" "$bired" "$md5"
 		exit
 	fi
+	shift
+done
 
 }
 
