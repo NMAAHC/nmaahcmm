@@ -21,7 +21,7 @@ echo
 	audio="$input/${input##*/}"__Audio
 	derivatives="$input/${input##*/}"__Derivatives
 	dpx="$input/${input##*/}"__DPX
-	md5="/Users/medialab/Google_Drive/07_DPX_checksums/"
+	md5="/Volumes/UtilitySAN/06_DPX_checksums/"
 
 	if [ -d "$input" ] ; then
 	  printf "%s%s%s is a directory.\n" "$biyellow" "$input" "$color_off"
