@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
-read -e -p "press return if you would like to now write $ulto to $drive. Press N to exit program without writing."
+#folder="$HOME/Desktop/foo"
+md5deep="md5deep -bre"
 
-echo reply = $REPLY
+find $HOME/foo -type f -exec "${md5deep[@]}"  {} \;
+
+exit

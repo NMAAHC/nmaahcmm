@@ -17,15 +17,14 @@ restrutureForVFCU ()
 {
 echo
 
-for input in "$@" ;
+for arg in "$@" ;
 do
-
 	input="$1" #name $input as the first arugment sent to script
 	audio="$input/${input##*/}"__Audio
 	derivatives="$input/${input##*/}"__Derivatives
 	dpx="$input/${input##*/}"__DPX
 	md5="/Volumes/UtilitySAN/06_DPX_checksums/"
-	
+
 	if [ -d "$input" ] ; then
 	  printf "%s%s%s is a directory.\n" "$biyellow" "$input" "$color_off"
 	  printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "$biyellow" "$audio" "$derivatives" "$color_off" "$biyellow" "$dpx" "$color_off"
