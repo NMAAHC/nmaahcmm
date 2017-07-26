@@ -74,7 +74,7 @@ _report_schema_db(){
         _premis_event_list
         table_name="ltoSchema"
         if [ -z "${xmlschema}" ] ; then
-            xmlschema="$LTO_LOGS/${TAPE_SERIAL}.schema"
+            xmlschema="${LTO_LOGS}/schema/${TAPE_SERIAL}.schema"
         fi
         schema_sorted=$(xml sel -t -m ".//file" -v "concat(name,'|',length, '|', modifytime)" -o "|" -m "ancestor-or-self::directory" -v "name" -o "/" -b -n "${xmlschema}")
         schema_tape=$(basename "${xmlschema}" | cut -d'.' -f1)
@@ -327,7 +327,7 @@ _open_mysql_plist(){
 }
 
 _version_schema(){
-    SCHEMA_FILE="$LTO_LOGS/${TAPE_SERIAL}.schema"
+    SCHEMA_FILE="${LTO_LOGS}/schema/${TAPE_SERIAL}.schema"
     if [ -f "${SCHEMA_FILE}" ] ; then
         echo "${GREEN}Creating a new version of the ltfs schema file.${NC}"
         LASTSCHEMA="${SCHEMA_FILE%.*}_$(stat -t '%Y%m%d-%H%M%S' -l "${SCHEMA_FILE}" | awk '{print $6}').schema"
