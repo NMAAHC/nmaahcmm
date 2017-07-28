@@ -1,5 +1,3 @@
-# NMAAHCmmfunctions
-
 # assign variables
 SCRIPTNAME=$(basename "${0}")
 SCRIPTDIR=$(dirname "${0}")
@@ -19,6 +17,24 @@ _cleanup_mount_dir(){
         echo calling umount
         umount "${MOUNT_DIR}"
         rmdir "${MOUNT_DIR}"
+    fi
+}
+
+_check_for_lto_md5_flags(){
+    if [ -z "${LTO_MD5_FLAGS}" ] ; then
+        LTO_MD5_FLAGS="md5deep -rel"
+    else
+        LTO_MD5_FLAGS="${LTO_MD5_FLAGS}"
+    fi
+}
+
+_check_for_lto_index_dir(){
+    if [ -z "${LTO_INDEX_DIR}" ] ; then
+        echo "LTO_INDEX_DIR is not set in mmconfig. Default of ${HOME}/Documents/lto_indexes will be used."
+        echo "If a different location is desired please set this in mmconfig"
+        LTO_INDEX_DIR="${HOME}/Documents/lto_indexes"
+    else
+        LTO_INDEX_DIR="${LTO_INDEX_DIR}"
     fi
 }
 
@@ -74,7 +90,7 @@ _report_schema_db(){
         _premis_event_list
         table_name="ltoSchema"
         if [ -z "${xmlschema}" ] ; then
-            xmlschema="${LTO_LOGS}/schema/${TAPE_SERIAL}.schema"
+            xmlschema="$LTO_LOGS/${TAPE_SERIAL}.schema"
         fi
         schema_sorted=$(xml sel -t -m ".//file" -v "concat(name,'|',length, '|', modifytime)" -o "|" -m "ancestor-or-self::directory" -v "name" -o "/" -b -n "${xmlschema}")
         schema_tape=$(basename "${xmlschema}" | cut -d'.' -f1)
@@ -327,7 +343,7 @@ _open_mysql_plist(){
 }
 
 _version_schema(){
-    SCHEMA_FILE="${LTO_LOGS}/schema/${TAPE_SERIAL}.schema"
+    SCHEMA_FILE="$LTO_LOGS/${TAPE_SERIAL}.schema"
     if [ -f "${SCHEMA_FILE}" ] ; then
         echo "${GREEN}Creating a new version of the ltfs schema file.${NC}"
         LASTSCHEMA="${SCHEMA_FILE%.*}_$(stat -t '%Y%m%d-%H%M%S' -l "${SCHEMA_FILE}" | awk '{print $6}').schema"
