@@ -42,7 +42,7 @@ makeLTOtree ()
 	fi
 	echo #write metadata to $folder and then write $folder to $target
 	printf "\nwriting:\n\t%s%s.schema\n\t%s_writelto.txt\n\t%s_ReadBack_checksum.md5\n%sto:\n\t%s%s%s\n" "$biwhite" "$target" "$target" "$target" "$color_off" "$biwhite" "$folder" "$color_off"
-	find "$HOME"/Documents/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
+	find /Volumes/UtilitySAN/08_LTO_indexes/ -name "$target"* -type f -exec rsync -avPhi {} "$folder" \;
 	printf "\n\t<<changing %s%s%s permissions to 777>>\n" "$biwhite" "${folder##*/}" "$color_off"
 	echo
 	chmod -vR 777 "$folder"

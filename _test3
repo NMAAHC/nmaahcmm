@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+folder="/Users/medialab/Desktop/foo"
+md5deep="md5deep -bre"
