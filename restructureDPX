@@ -2,6 +2,11 @@
 
 #a script to create a the desired directory structure and filenames for DPX packages received from VFS
 
+## check for nmaachmmfunctions
+
+SCRIPTDIR=$(dirname "${0}")
+. "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ; }
+
 ### CONSTANTS
 
 biwhite=$(tput bold)$(tput setaf 7)
@@ -38,18 +43,30 @@ case "$reelnumber" in
 
 	echo
 	printf "%sMoving files from %s $input\n" "$biwhite" "$color_off"
-	#move WAV directory from $input to $destination and rename
+	#find and move any .wav files fom $input to $destination
 	if [ -d "$destination" ] ; then
-		find "$input" -type d -name "*WAV" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__Audio  \;
-		aud=("$destination"/"$dpxid"__"$title"__Audio)
+		if [ -f "$input"/**/*.wav ] ; then
+			mkdir "$destination"/"$dpxid"__"$title"__Audio &&
+			find "$input" -type f -name "*.wav" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__Audio  \;
+			aud=("$destination"/"$dpxid"__"$title"__Audio)
+			printf "\n\t%sFound .wav file. Moving to %s.%s\n" "$biwhite" "$aud" "$color_off"
+		else
+			printf "\n\t%sNo .wav file found.%s\n" "$biwhite" "$color_off"
+		fi
 	else
 		printf "%sMissing%s %s" "$bired" "$color_off" "$destination"
 		exit 1
 	fi
-	#move MOV directory from $input to $destination and rename
+	#find and move and .mov files from $input to $destination
 	if [ -d "$destination" ] ; then
-		find "$input" -type d -name "*MOV" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__Derivatives \;
-		der=("$destination"/"$dpxid"__"$title"__Derivatives)
+		if [ -f "$input"/**/*.mov ] ; then
+			mkdir "$destination"/"$dpxid"__"$title"__Derivatives &&
+			find "$input" -type f -name "*.mov" -exec mv -vi {} "$destination"/"$dpxid"__"$title"__Derivatives \;
+			der=("$destination"/"$dpxid"__"$title"__Derivatives)
+			printf "\n\t%sFound .mov file. Moving to %s.%s\n" "$biwhite" "$der" "$color_off"
+		else
+			printf "\n\t%sNo .mov file found.%s\n" "$biwhite" "$color_off"
+		fi
 	else
 		printf "%sMissing%s %s" "$bired" "$color_off" "$destination"
 		exit 1
@@ -65,7 +82,10 @@ case "$reelnumber" in
 	echo
 	#find the .wav and .mov files and rename them according to NMAAHC naming structures
 	printf "%sReaming files in %s%s\n" "$biwhite" "$color_off" "$destination"
-	find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
+	if [ -d "$aud" ] ; then
+		find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
+		printf "\n\t%srenamed audio file to %s%s\n"
+	fi
 	find "$der" -name "*ProRes*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
 	find "$der" -name "*Uncompressed.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
 	echo

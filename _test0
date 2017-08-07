@@ -1,17 +1,8 @@
 #!/usr/bin/env bash
 
-scriptdir="$HOME" # get dirname of $0 ($0 is the name of the current script)
-#touch $scriptdir/foo.sh
-#echo "'echo' hello world" >> $scriptdir/foo.sh
-#chmod +x $scriptdir/foo.sh
-. "$scriptdir/foo.sh" echo $? ||
-{ echo "Missing '$scriptdir/foo.sh'. Exiting." ;
-exit 1 ;} # The right side of && will only be evaluated if the exit status of the left side is zero.
-          # || is the opposite: it will evaluate the right side only if the left side exit status is nonzero.
-echo "$scriptdir/foo.sh is present"
-#echo
-#rm "$scriptdir/foo.sh"
-#. "$scriptdir/foo.sh" ||
-# { echo "Missing '$scriptdir/foo.sh'. Exiting." ;
-#exit 1 ;} # The right side of && will only be evaluated if the exit status of the left side is zero.
-          # || is the opposite: it will evaluate the right side only if the left side exit status is nonzero.
+if [ -f "$1"/**/*.mov ] ; then
+  echo "find found"
+else
+  echo "no file found"
+fi
+exit
