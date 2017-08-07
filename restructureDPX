@@ -64,7 +64,7 @@ case "$reelnumber" in
 	fi
 	echo
 	#find the .wav and .mov files and rename them according to NMAAHC naming structures
-	printf "%sReaming files in %s% \n" "$biwhite" "$color_off" "$destination"
+	printf "%sReaming files in %s%\n" "$biwhite" "$color_off" "$destination"
 	find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
 	find "$der" -name "*ProResHQ.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
 	find "$der" -name "*Uncompressed.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
