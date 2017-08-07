@@ -92,8 +92,6 @@ export PS1="\[$BICyan\]≈:≈\[$Color_Off\] "
 
 export LESS='-MN'
 
-source /usr/local/git/contrib/completion/git-completion.bash
-
 # must use double quotes here so Unix expands $PATH and doesn't read it as a directory
 # default OS X PATH: /usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin
 
