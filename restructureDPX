@@ -66,7 +66,7 @@ case "$reelnumber" in
 	#find the .wav and .mov files and rename them according to NMAAHC naming structures
 	printf "%sReaming files in %s%\n" "$biwhite" "$color_off" "$destination"
 	find "$aud" -name "*.wav" -exec mv -vi {} "$aud"/"$dpxid"_AUD.wav \;
-	find "$der" -name "*ProResHQ.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
+	find "$der" -name "*ProRes*.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_01.mov \;
 	find "$der" -name "*Uncompressed.mov" -exec mv -vi {} "$der"/"$dpxid"_DER_02.mov \;
 	echo
 	#remove the $input directory
@@ -145,10 +145,10 @@ case "$reelnumber" in
 	echo
 	printf "%sReaming files in %s%s\n" "$biwhite" "$color_off" "$destination"
 	find "$audR1" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
-	find "$derR1" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
+	find "$derR1" -name "*R1*ProRes*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$derR1" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
 	find "$audR2" -name "*R2*.wav" -exec mv -vi {} "$audR2"/"$dpxid"_R2_AUD.wav \;
-	find "$derR2" -name "*R2*ProResHQ*.mov" -exec mv -vi {} "$derR2"/"$dpxid"_R2_DER_01.mov \;
+	find "$derR2" -name "*R2*ProRes*.mov" -exec mv -vi {} "$derR2"/"$dpxid"_R2_DER_01.mov \;
 	find "$derR2" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "$derR2"/"$dpxid"_R2_DER_02.mov \;
 
 	echo
@@ -259,13 +259,13 @@ case "$reelnumber" in
 	echo
 	printf "%sReaming files in %s%s\n" "$biwhite" "$color_off" "$destination"
 	find "$audR1" -name "*R1*.wav" -exec mv -vi {} "$audR1"/"$dpxid"_R1_AUD.wav \;
-	find "$derR1" -name "*R1*ProResHQ*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
+	find "$derR1" -name "*R1*ProRes*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_01.mov \;
 	find "$derR1" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "$derR1"/"$dpxid"_R1_DER_02.mov \;
 	find "$audR2" -name "*R2*.wav" -exec mv -vi {} "$audR2"/"$dpxid"_R2_AUD.wav \;
-	find "$derR2" -name "*R2*ProResHQ*.mov" -exec mv -vi {} "$derR2"/"$dpxid"_R2_DER_01.mov \;
+	find "$derR2" -name "*R2*ProRes*.mov" -exec mv -vi {} "$derR2"/"$dpxid"_R2_DER_01.mov \;
 	find "$derR2" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "$derR2"/"$dpxid"_R2_DER_02.mov \;
 	find "$audR3" -name "*R3*.wav" -exec mv -vi {} "$audR3"/"$dpxid"_R3_AUD.wav \;
-	find "$derR3" -name "*R3*ProResHQ*.mov" -exec mv -vi {} "$derR3"/"$dpxid"_R3_DER_01.mov \;
+	find "$derR3" -name "*R3*ProRes*.mov" -exec mv -vi {} "$derR3"/"$dpxid"_R3_DER_01.mov \;
 	find "$derR3" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "$derR3"/"$dpxid"_R3_DER_02.mov \;
 
 	echo
