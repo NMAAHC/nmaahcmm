@@ -120,7 +120,7 @@ alias ls='ls -1'
 alias home='cd ~'
 alias up='cd ..'
 alias h='history'
-alias subl='/Applications/Sublime\ Text\ 2.app/Contents/SharedSupport/bin/subl'
+alias subl='/Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl'
 
 # command option aliases
 alias mv='mv -iv'
