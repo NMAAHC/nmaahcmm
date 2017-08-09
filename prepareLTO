@@ -58,7 +58,7 @@ prepareLTO ()
 	find "$chksumfolder" -name "$target"* -exec rm -vi {} \;
 	echo
 	#combine checksum files in $ulto into one file and sort
-	mv -vi /Volumes/UtilitySAN/LTO/LTO/* "$ulto"
+	#mv -vi /Volumes/UtilitySAN/LTO/LTO/* "$ulto"
 	echo
 	printf "%s%s is now ready to write to.%s\n" "$biwhite" "$target" "$color_off"
 	read -e -p "press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
