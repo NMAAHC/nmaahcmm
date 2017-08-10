@@ -43,7 +43,7 @@ prepareLTO ()
 		echo
 		#delete checksum file from $drive
 		printf "%sdeleting checksum file from %s%s\n" "$biwhite" "$target" "$color_off"
-		rm -vri "$drive/$target/"*.txt
+		rm -vrf "$drive/$target/"*.txt
 		echo
 	else
 		printf "%s%s does not exist. Exiting.%s\n" "$bired" "$drive" "$color_off"
@@ -51,19 +51,19 @@ prepareLTO ()
 	fi
 	#delete the old filemetatdata folder in $folder
 	printf "%sdeleting old %s filemetatdata folder in %s%s\n" "$biwhite" "$target" "$folder" "$color_off"
-	find "$folder" -name "$target"* -exec rm -vri {} \;
+	find "$folder" -name "$target"* -exec rm -vrf {} \;
 	echo
 	#delete old readbackchecksum file in $chksumfolder
 	printf "%sdeleting old %s readbackchecksum file in %s%s\n" "$biwhite" "$target" "$chksumfolder" "$color_off"
-	find "$chksumfolder" -name "$target"* -exec rm -vi {} \;
+	find "$chksumfolder" -name "$target"* -exec rm -vf {} \;
 	echo
 	#combine checksum files in $ulto into one file and sort
 	#mv -vi /Volumes/UtilitySAN/LTO/LTO/* "$ulto"
 	echo
 	printf "%s%s is now ready to write to.%s\n" "$biwhite" "$target" "$color_off"
-	read -e -p "press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
+	read -e -p "type "write" and press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
 
-	if [[ "$REPLY" == "" ]] ; then
+	if [[ "$REPLY" == "write" ]] ; then
 		find "$ulto" -name ".*" -exec rm -vfr {} \;
 		find "$ulto" -name "*.md5" -exec cat {} >> "$ulto"/*.txt \;
 		sort -k 2 -o "$ultotxt" "$ultotxt"
