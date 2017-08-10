@@ -17,9 +17,9 @@ prepareLTO ()
 	drive="$1"
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
-	lto="/Volumes/UtilitySAN/LTO/LTO/"
-	ulto="/Volumes/UtilitySAN/LTO/LTO/$target/"
-	ultotxt="/Volumes/UtilitySAN/LTO/LTO/$target/$target"_checksums.txt
+	lto="/Volumes/UtilitySAN/LTO_write/"
+	ulto="/Volumes/UtilitySAN/LTO_write/$target/"
+	ultotxt="/Volumes/UtilitySAN/LTO_write/$target/$target"_checksums.txt
 	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/"
 	chksumfolder="/Volumes/UtilitySAN/08_LTO_indexes/readback_checksums/"
 
