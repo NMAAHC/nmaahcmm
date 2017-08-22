@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-if [ -f "$1"/**/*.mov ] ; then
-  echo "find found"
-else
-  echo "no file found"
-fi
-exit
+for file in $(find /Volumes/ScanSan/00_Great_Migration_SC_0001 -type f) ; do
+file="${file##*/}"
+echo "$file"
+done
