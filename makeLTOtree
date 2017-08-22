@@ -20,6 +20,8 @@ makeLTOtree ()
 	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/${target}_filemetadata" #specify folder location
 	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
+		printf "\nremoving any hidden files from %s\n" "$target"
+		find "$drive" -name ".*" -exec rm -vfr {} \;
 		printf "\nwriting:\n\t%s%s_contents\n\t%s_contents_tree\n\t%s_contents_treeShort%s\n" "$biwhite" "$target" "$target" "$target" "$color_off"
 		contents="$folder/${target}_contents_${today}.txt"
 		contents_tree="$folder/${target}_contents_tree_$today.txt"

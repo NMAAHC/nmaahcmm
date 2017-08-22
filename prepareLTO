@@ -20,7 +20,7 @@ prepareLTO ()
 	lto="/Volumes/UtilitySAN/LTO_write/"
 	ulto="/Volumes/UtilitySAN/LTO_write/$target/"
 	ultotxt="/Volumes/UtilitySAN/LTO_write/$target/$target"_checksums.txt
-	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/"
+	folder="/Volumes/nmaahc-borndigital/07_LTO_filemetadata/"
 	chksumfolder="/Volumes/UtilitySAN/08_LTO_indexes/readback_checksums/"
 
 	if [ -d "$drive" ] ; then
