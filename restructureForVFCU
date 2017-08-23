@@ -38,6 +38,7 @@ do
 			mv -vi "$derivatives"/* "$dpx" #move all file in the derivatives directory to the DPX directory
 			rm -vri "$derivatives"
 		printf "%s" "$color_off"
+	fi
   else
 		echo
 		printf "%s%s is not a directory. Exiting" "$bired" "$input"
