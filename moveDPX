@@ -19,6 +19,7 @@ moveDPX ()
 		dpx_folder="${1}"
 		target="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 		target_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums/${dpx_folder##*/}"
+		chmod_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 
 		if [ ! -d "$target" ] ; then
 			echo
@@ -80,7 +81,6 @@ moveDPX ()
 
 	done
 	echo
-	chmod_folder="/Volumes/UtilitySAN/06_DPX_checksums"
 	printf "%schanged permissions on the following files in directory %s to 777:%s\n" "$biwhite" "${chmod_folder##*/}" "$color_off"
 	chmod -vR 777 "$chmod_folder"
 }
