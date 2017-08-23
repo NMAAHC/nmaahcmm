@@ -30,8 +30,13 @@ do
 	  printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "$biyellow" "$audio" "$derivatives" "$color_off" "$biyellow" "$dpx" "$color_off"
 		echo
 		printf "%s" "$gray"
-	  mv -vi "$audio"/* "$derivatives"/* "$dpx" #move all file in the audio and derivatives directories to the DPX directory
-		rm -vri "$audio" "$derivatives"
+		if [ -d "$audio" ] ; then
+	  	mv -vi "$audio"/* "$dpx" #move all file in the audio directory to the DPX directory
+			rm -vri "$audio"
+		fi
+		if [ -d "$derivatives" ] ; then
+			mv -vi "$derivatives"/* "$dpx" #move all file in the derivatives directory to the DPX directory
+			rm -vri "$derivatives"
 		printf "%s" "$color_off"
   else
 		echo
