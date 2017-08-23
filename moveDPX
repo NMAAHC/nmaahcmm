@@ -18,27 +18,28 @@ moveDPX ()
 
 		dpx_folder="${1}"
 		target="/Volumes/nmaahc-borndigital/06_DPX_checksums"
+		target_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums/${dpx_folder##*/}"
+
 		if [ ! -d "$target" ] ; then
 			echo
 			printf "%s%s does not exist. Exiting." "$bired" "$target" >&2
 			exit
 		fi
-		target_folder="/Volumes/UtilitySAN/06_DPX_checksums/${dpx_folder##*/}"
-		mkdir -p "$target_folder"
 
 		if [ ! -d "$target_folder" ] ; then
 			echo
 			printf "Creating:\t%s%s%s\n" "$biwhite" "$target_folder" "$color_off"
+			mkdir -p "$target_folder"
 		fi
 
 		for file in "$dpx_folder"/*DPX*/* ; do
 			if [ -f "$target_folder"/*.dpx ] ; then
 				echo
 				printf "%s%s%s exists, verifying checksum.\n" "$biwhite" "${file##*/}" "$color_off"
-				rsync -aPhic "$file" "$target_folder"
+				rsync -avPhic "$file" "$target_folder"
 				rsync_err_1="$?"
 			else
-				rsync -aPhi "$file" "$target_folder"
+				rsync -avPhi "$file" "$target_folder"
 				rsync_err_1="$?"
 			fi
 			printf "%srsync exit status is: %s%s\n" "$biwhite" "$rsync_err_1" "$color_off"
@@ -56,11 +57,11 @@ moveDPX ()
 		for md5 in "$dpx_folder"/*.md5 ; do
 			if [ -f "$target_folder"/*.md5 ] ; then
 				echo
-				printf "%s%s%s exists, verifying checksum." "$biwhite" "${md5##*/}" "$color_off"
-				rsync -aPhic "$md5" "$target_folder"
+				printf "%s%s%s exists, verifying checksum.\n" "$biwhite" "${md5##*/}" "$color_off"
+				rsync -avPhic "$md5" "$target_folder"
 				rsync_err_2="$?"
 			else
-				rsync -aPhi "$md5" "$target_folder"
+				rsync -avPhi "$md5" "$target_folder"
 				rsync_err_2="$?"
 			fi
 				printf "%srsync exit status is: %s%s\n" "$biwhite" "$rsync_err_2" "$color_off"
