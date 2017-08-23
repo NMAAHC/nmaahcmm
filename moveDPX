@@ -17,7 +17,7 @@ moveDPX ()
 	while [ "${*}" != "" ] ; do
 
 		dpx_folder="${1}"
-		target="/Volumes/UtilitySAN/06_DPX_checksums"
+		target="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 		if [ ! -d "$target" ] ; then
 			echo
 			printf "%s%s does not exist. Exiting." "$bired" "$target" >&2
