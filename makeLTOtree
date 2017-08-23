@@ -17,7 +17,7 @@ makeLTOtree ()
 	drive="$1"
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
-	folder="/Volumes/UtilitySAN/07_LTO_filemetadata/${target}_filemetadata" #specify folder location
+	folder="/Volumes/nmaahc-borndigital/07_LTO_filemetadata/${target}_filemetadata" #specify folder location
 	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
 		printf "\nremoving any hidden files from %s\n" "$target"
