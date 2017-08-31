@@ -46,7 +46,7 @@ case "$reelnumber" in
 	printf "%sMoving files from %s $input\n" "$biwhite" "$color_off"
 	#find and move any .wav files fom $input to $destination
 	if [[ -d "$destination" ]] ; then
-		if [[ -f "$input"/**/*.wav ] ; then
+		if [[ -f "$input"/**/*.wav ]] ; then
 			mkdir "$destination"/"$dpxid"__"$title"__Audio &&
 			aud=("$destination"/"$dpxid"__"$title"__Audio) &&
 			printf "\n\t%sFound .wav file.\n\tMoving to:\n\t%s%s\n" "$biwhite" "$aud" "$color_off" &&
