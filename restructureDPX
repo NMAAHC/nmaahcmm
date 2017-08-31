@@ -62,11 +62,12 @@ case "$reelnumber" in
 		exit 1
 	fi
 	#find and move and .mov files from $input to $destination
-	if [ -d "$destination" ] ; then
-		if [ -f "$input"/**/*.mov ] ; then
+	if [[ -d "$destination" ]] ; then
+		if [[ -f "$input"/**/*.mov ]] ; then
 			mkdir "$destination"/"$dpxid"__"$title"__Derivatives &&
 			der=("$destination"/"$dpxid"__"$title"__Derivatives) &&
 			printf "\n\t%sFound .mov file.\n\tMoving to:\n\t%s%s\n" "$biwhite" "$der" "$color_off" &&
+			echo
 			find "$input" -type f -name "*.mov" -exec mv -i {} "$der" \;
 			else
 				printf "\n\t%sNo .mov file found.%s\n" "$biwhite" "$color_off"
@@ -80,7 +81,7 @@ case "$reelnumber" in
 		exit 1
 	fi
 	#move DPX directory from $input to $destination and rename
-	if [ -d "$destination" ] ; then
+	if [[ -d "$destination" ]] ; then
 		mkdir "$destination"/"$dpxid"__"$title"__DPX &&
 		dpx=("$destination"/"$dpxid"__"$title"__DPX) &&
 		find "$input" -type d -name "*DPX" -exec mv -i {} "$dpx" \;
