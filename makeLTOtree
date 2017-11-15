@@ -17,12 +17,12 @@ makeLTOtree ()
 	drive="$1"
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
-	folder="/Volumes/nmaahc-borndigital/07_LTO_filemetadata/${target}_filemetadata" #specify folder location
-	mkdir -p "$folder" #create folder
 	if [ ! -d "/Volumes/nmaahc-borndigital" ] ; then
-		printf "\t%sMust be connected to nmaahc-borndigital drive for script to run. exiting.%s" "$bired" "$color_off"
+		printf "\t\n%sMust be connected to nmaahc-borndigital drive for script to run. exiting.%s" "$bired" "$color_off"
 		exit
 	fi
+	folder="/Volumes/nmaahc-borndigital/07_LTO_filemetadata/${target}_filemetadata" #specify folder location
+	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
 		printf "\nremoving any hidden files from %s\n" "$target"
 		find "$drive" -name ".*" -exec rm -vfr {} \;
@@ -43,7 +43,7 @@ makeLTOtree ()
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
 		printf "\n\t<<Done writing content files.>>"
 	else
-		printf "%s%s does not exist. Exiting.%s" "$bired" "$drive" "$color_off"
+		printf "\t%s%s does not exist. Exiting.%s" "$bired" "$drive" "$color_off"
 		exit
 	fi
 	echo #write metadata to $folder and then write $folder to $target
