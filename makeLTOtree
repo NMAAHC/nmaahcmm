@@ -13,7 +13,11 @@ if [[ -d "/Volumes/nmaahc-borndigital/" ]] ; then
 	exit
 	echo
 fi
-
+if [[ -d "/Volumes/UtilitySAN/" ]] ; then
+	printf "\t\n%sMust be connected to UtilitySAN drive for script to run. exiting.%s" "$bired" "$color_off"
+	exit
+	echo
+fi
 ### FUNCTIONS
 
 makeLTOtree ()
