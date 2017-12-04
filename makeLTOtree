@@ -8,7 +8,20 @@ biwhite=$(tput bold)$(tput setaf 7)
 bired=$(tput bold)$(tput setaf 1)
 color_off=$(tput sgr0)
 today=$(date +"%Y%m%d")
+<<<<<<< HEAD
 
+=======
+if [[ -d "/Volumes/nmaahc-borndigital/" ]] ; then
+	printf "\t\n%sMust be connected to nmaahc-borndigital drive for script to run. exiting.%s" "$bired" "$color_off"
+	exit
+	echo
+fi
+if [[ -d "/Volumes/UtilitySAN/" ]] ; then
+	printf "\t\n%sMust be connected to UtilitySAN drive for script to run. exiting.%s" "$bired" "$color_off"
+	exit
+	echo
+fi
+>>>>>>> df90b247f40bfe102469b9ad45bc82441e2a2ce1
 ### FUNCTIONS
 
 makeLTOtree ()
