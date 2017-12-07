@@ -29,19 +29,26 @@ prepareLTO ()
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
 
+#for "$drive" ; do
 	if [ -d "$drive" ] ; then
-		#delete .DS_Store from $drive
+		#delete hidden files from $drive
 		echo
-		printf "%sfinding .DS_Store on %s and deleting%s\n" "$biwhite" "$target" "$color_off"
+		printf "%sFinding hidden files on %s and deleting.%s\n" "$biwhite" "$target" "$color_off"
 	 	removehidden "$drive"
 	else
-		printf "$drive is not a valid input. exiting"
+		printf "%s%s is not a valid input. exiting%s" "$drive" "$bired" "$color_off"
 		exit
 	fi
-checksumtxt="$drive"/"$target"_checksums.txt
-	find "$drive" -name "*.md5" -exec cat {} >> "$checksumtxt"
-	find "$drive" -name "*.md5" -exec md5deep -bre {} >> "$checksumtxt"
-	sortk2
+	checksumtxt="$drive"/"$target"_checksums.txt
+	touch "$checksumtxt"
+	echo
+	printf "%sConcatenating and hashing all .md5 in %s into %s and sorting.%s" "$biwhite" "$target" "${checksumtxt##*/}" "$color_off"
+	find "$drive" -name "*.md5" -exec cat {} >> "$checksumtxt" \;
+	find "$drive" -name "*.md5" -exec md5deep -bre {} >> "$checksumtxt" \;
+	sortk2 "$checksumtxt"
+	echo
+	cowsay "Done. $target is ready to write to LTO."
+#done
 }
 
 #call the function(s)
