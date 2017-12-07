@@ -18,3 +18,12 @@ _mkdir(){
         shift
     done
 }
+
+function removehidden () {
+	if [ -z "$1" ] ; then
+		cowsay "no argument provided. tootles."
+	else
+		find "${1}" -name ".*" -exec rm -vfr {} \;
+		cowsay "hidden files removed. tootles."
+	fi
+}
