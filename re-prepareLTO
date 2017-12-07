@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+# a script to create a manifest of contents on an LTO tape, copy it to the tape and then copy it to a specified adtional folder
+
+### CONSTANTS
+
+biwhite=$(tput bold)$(tput setaf 7)
+bired=$(tput bold)$(tput setaf 1)
+color_off=$(tput sgr0)
+today=$(date +"%Y%m%d")
+
+### FUNCTIONS
+
+prepareLTO ()
+
+{
+	drive="$1"
+	target="${drive%/}" #strip the trailing /, if any
+	target="${target##*/}" #name $target as the basename of $drive
+	lto="/Volumes/UtilitySAN/LTO_write/"
+	ulto="/Volumes/UtilitySAN/LTO_write/$target/"
+	ultotxt="/Volumes/UtilitySAN/LTO_write/$target/$target"_checksums.txt
+	folder="/Volumes/nmaahc-borndigital/07_LTO_filemetadata/"
+	chksumfolder="/Volumes/UtilitySAN/08_LTO_indexes/readback_checksums/"
+
+	if [ -d "$drive" ] ; then
+		#delete .DS_Store from $drive
+		echo
+		printf "%sfinding .DS_Store on %s and deleting%s\n" "$biwhite" "$target" "$color_off"
+	 	find "$drive" -name ".DS_Store" -exec rm -vfr {} \;
+		echo
+		#delete filemetadata from $drive
+		printf "%sdeleting %s filemetadata from %s%s\n" "$biwhite" "$target" "$drive" "$color_off"
+		rm -vfr "$drive/$target"_filemetadata
+		echo
+		#copy checksum file from $drive
+		if [ ! -d "$ulto" ] ; then
+			printf "%s%s does not exist. Creating %s%s\n" "$biwhite" "$ulto" "$ulto" "$color_off"
+			mkdir -pv "$ulto"
+		fi
+		printf "%scopying checksum file from %s to %s%s\n" "$biwhite" "$target" "$ulto" "$color_off"
+		cp -v "$drive/$target/"*.txt "$ulto"
+		echo
+		#delete checksum file from $drive
+		printf "%sdeleting checksum file from %s%s\n" "$biwhite" "$target" "$color_off"
+		rm -vrf "$drive/$target/"*.txt
+		echo
+	else
+		printf "%s%s does not exist. Exiting.%s\n" "$bired" "$drive" "$color_off"
+		exit
+	fi
+	#delete the old filemetatdata folder in $folder
+	printf "%sdeleting old %s filemetatdata folder in %s%s\n" "$biwhite" "$target" "$folder" "$color_off"
+	find "$folder" -name "$target"* -exec rm -vrf {} \;
+	echo
+	#delete old readbackchecksum file in $chksumfolder
+	printf "%sdeleting old %s readbackchecksum file in %s%s\n" "$biwhite" "$target" "$chksumfolder" "$color_off"
+	find "$chksumfolder" -name "$target"* -exec rm -vf {} \;
+	echo
+	#combine checksum files in $ulto into one file and sort
+	#mv -vi /Volumes/UtilitySAN/LTO/LTO/* "$ulto"
+	echo
+	printf "%s%s is now ready to write to.%s\n" "$biwhite" "$target" "$color_off"
+	read -e -p "type "write" and press return if you would like to now write $ulto to $drive. Press any other key to exit program >> "
+
+	if [[ "$REPLY" == "write" ]] ; then
+		find "$ulto" -name ".*" -exec rm -vfr {} \;
+		find "$ulto" -name "*.md5" -exec cat {} >> "$ulto"/*.txt \;
+		sort -k 2 -o "$ultotxt" "$ultotxt"
+		time writelto -v -e N -t "$target" "$lto"
+	else
+		echo
+		echo "Exiting program."
+		exit 1
+	fi
+}
+
+#call the function(s)
+
+prepareLTO "$@"
+
+exit "$?"
