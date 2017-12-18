@@ -42,6 +42,8 @@ makeLTOtree ()
 		contents_tree="$folder/${target}_contents_tree_$today.txt"
 		contents_treeShort="$folder/${target}_contents_treeShort_$today.txt"
 		touch "$contents" "$contents_tree" "$contents_treeShort"
+		echo "$date" >> "$contents"
+		echo -en '\n' >> "$contents"
 		echo "**** THE CONTENTS OF ${drive}:" >> "$contents"
 		ls "$drive"/* >> "$contents"
 		echo -en '\n' >> "$contents"
