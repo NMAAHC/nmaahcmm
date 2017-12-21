@@ -9,6 +9,16 @@ bired=$(tput bold)$(tput setaf 1)
 color_off=$(tput sgr0)
 today=$(date +"%Y%m%d")
 
+if [[ ! -d "/Volumes/nmaahc-borndigital/" ]] ; then
+	printf "\t\n%sMust be connected to nmaahc-borndigital drive for script to run. exiting.%s" "$bired" "$color_off"
+	exit
+	echo
+fi
+if [[ ! -d "/Volumes/UtilitySAN/" ]] ; then
+	printf "\t\n%sMust be connected to UtilitySAN drive for script to run. exiting.%s" "$bired" "$color_off"
+	exit
+	echo
+fi
 ### FUNCTIONS
 
 makeLTOtree ()
@@ -17,6 +27,11 @@ makeLTOtree ()
 	drive="$1"
 	target="${drive%/}" #strip the trailing /, if any
 	target="${target##*/}" #name $target as the basename of $drive
+	if [[ ! -d "/Volumes/nmaahc-borndigital/" ]] ; then
+		printf "\n\t%sMust be connected to nmaahc-borndigital drive for script to run. exiting.%s" "$bired" "$color_off"
+		echo
+		exit
+	fi
 	folder="/Volumes/nmaahc-borndigital/07_LTO_filemetadata/${target}_filemetadata" #specify folder location
 	mkdir -p "$folder" #create folder
 	if [ -d "$drive" ] ; then #if the drive is a directory, run tree and ls commands
@@ -27,6 +42,8 @@ makeLTOtree ()
 		contents_tree="$folder/${target}_contents_tree_$today.txt"
 		contents_treeShort="$folder/${target}_contents_treeShort_$today.txt"
 		touch "$contents" "$contents_tree" "$contents_treeShort"
+		echo "$date" >> "$contents"
+		echo -en '\n' >> "$contents"
 		echo "**** THE CONTENTS OF ${drive}:" >> "$contents"
 		ls "$drive"/* >> "$contents"
 		echo -en '\n' >> "$contents"
@@ -39,7 +56,7 @@ makeLTOtree ()
 		tree --filelimit 30 --si --du -UQRapugD "$drive" >> "$folder/${target}_contents_treeShort_$today.txt" ;
 		printf "\n\t<<Done writing content files.>>"
 	else
-		printf "%s%s does not exist. Exiting.%s" "$bired" "$drive" "$color_off"
+		printf "\t%s%s does not exist. Exiting.%s" "$bired" "$drive" "$color_off"
 		exit
 	fi
 	echo #write metadata to $folder and then write $folder to $target
