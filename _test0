@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-for file in $(find /Volumes/ScanSan/00_Great_Migration_SC_0001 -type f) ; do
-file="${file##*/}"
-echo "$file"
-done
+mkdir -p "${HOME}"/foo/xxfoo/
+
+bar="${HOME}"/foo
+bar1="${HOME}"/foo/*foo
+
+echo bar is $bar bar1 is $bar
