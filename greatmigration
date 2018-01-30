@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+#a script to create a directory structure for NMAAHC Great Migration appointments
+
+### CONSTANTS
