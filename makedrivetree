@@ -40,6 +40,7 @@ local folder=/Volumes/UtilitySAN/05_driveContents
       printf "%sError %s does not exist. Exiting.\n" "$bired" $drive >&2
 			exit
     fi
+    
   done
 }
 
