@@ -8,6 +8,7 @@ biwhite=$(tput bold)$(tput setaf 7)
 bired=$(tput bold)$(tput setaf 1)
 color_off=$(tput sgr0)
 today=$(date +"%Y%m%d")
+date=$(date +"%Y-%m-%d")
 
 script_path=${0%/*}
 # script_path will be the directory path of {0} which is the script being called
@@ -27,13 +28,65 @@ makegm ()
 {
 	GM_DIR=${GM_DIR}/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}
 	mkdir -p $GM_DIR
+	generalNotes="$GM_DIR/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_generalNotes.txt"
+	touch ${generalNotes}
+	echo "These are general notes concerning the appointment of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} on ${date}. They were written by the operator, ${GM_OPERATOR}, and contain observations about the appointment and information relayed by ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST}." >> ${generalNotes}
+
 	if [ "$GM_FORMATS_VHS" = "1" ] ; then
 		mkdir -p "$GM_DIR/VHS/ACCESS"
 		mkdir -p "$GM_DIR/VHS/PRESERVATION"
+		VHSnotes="$GM_DIR/VHS/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_VHSnotes.txt"
+		touch ${VHSnotes}
+		echo "These are notes concerning the VHS tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were digitized on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted buy the operator at the time of initial inspection and digitization, not content of the tapes." >> ${VHSnotes}
+	fi
+	if [ "$GM_FORMATS_MiniDV" = "1" ] ; then
+	  mkdir -p "$GM_DIR/MiniDV/ACCESS"
+	  mkdir -p "$GM_DIR/MiniDV/PRESERVATION"
+	  MiniDVnotes="$GM_DIR/MiniDV/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_MiniDVnotes.txt"
+		touch ${MiniDVnotes}
+		echo "These are notes concerning the MiniDV tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were digitized on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted buy the operator at the time of initial inspection and digitization, not content of the tapes." >> ${MiniDVnotes}
+	fi
+	if [ "$GM_FORMATS_Umatic" = "1" ] ; then
+	  mkdir -p "$GM_DIR/Umatic/ACCESS"
+	  mkdir -p "$GM_DIR/Umatic/PRESERVATION"
+	  UmaticNotes="$GM_DIR/Umatic/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Umaticnotes.txt"
+		touch ${UmaticNotes}
+		echo "These are notes concerning the U-matic tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were digitized on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted buy the operator at the time of initial inspection and digitization, not content of the tapes." >> ${UmaticNotes}
+	fi
+	if [ "$GM_FORMATS_S8" = "1" ] ; then
+	  mkdir -p "$GM_DIR/S8/ACCESS"
+	  mkdir -p "$GM_DIR/S8/PRESERVATION"
+	  S8notes="$GM_DIR/S8/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_S8notes.txt"
+		touch ${S8notes}
+		echo "These are notes concerning the Super 8 films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were scanned on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted buy the operator at the time of initial inspection and scanning, not content of the films." >> ${S8notes}
 	fi
 	if [ "$GM_FORMATS_R8" = "1" ] ; then
-		mkdir -p "$GM_DIR/Regular8/ACCESS"
-		mkdir -p "$GM_DIR/Regular8/PRESERVATION"
+	  mkdir -p "$GM_DIR/R8/ACCESS"
+	  mkdir -p "$GM_DIR/R8/PRESERVATION"
+		R8notes="$GM_DIR/R8/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_R8notes.txt"
+	  touch ${R8notes}
+	  echo "These are notes concerning the Regular 8mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were scanned on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted buy the operator at the time of initial inspection and scanning, not content of the films." >> ${R8notes}
+	fi
+	if [ "$GM_FORMATS_16mm" = "1" ] ; then
+	  mkdir -p "$GM_DIR/16mm/ACCESS"
+	  mkdir -p "$GM_DIR/16mm/PRESERVATION"
+	  16mmNotes="$GM_DIR/16mm/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_16mmNotes.txt"
+		touch ${16mmNotes}
+	  echo "These are notes concerning the 16mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were scanned on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted buy the operator at the time of initial inspection and scanning, not content of the films." >> ${16mmNotes}
+	fi
+	if [ "$GM_FORMATS_AudioCassette" = "1" ] ; then
+	  mkdir -p "$GM_DIR/AudioCassette/ACCESS"
+	  mkdir -p "$GM_DIR/AudioCassette/PRESERVATION"
+	  AudioCassetteNotes="$GM_DIR/AudioCassette/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_AudioCassetteNotes.txt"
+		touch ${AudioCassetteNotes}
+	  echo "These are notes concerning the Audio Cassette tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were digitized on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted buy the operator at the time of initial inspection and digitization, not content of the tapes." >> ${AudioCassetteNotes}
+	fi
+	if [ "$GM_FORMATS_QuarterInchOpenReel" = "1" ] ; then
+	  mkdir -p "$GM_DIR/QuarterInchOpenReel/ACCESS"
+	  mkdir -p "$GM_DIR/QuarterInchOpenReel/PRESERVATION"
+	  QuarterInchOpenReelNotes="$GM_DIR/QuarterInchOpenReel/${today}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_QuarterInchOpenReelnotes.txt"
+		touch ${QuarterInchOpenReelNotes}
+		echo "These are notes concerning the 1/4\" Open Reel tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} \n which were digitized on ${date} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted buy the operator at the time of initial inspection and digitization, not content of the tapes." >> ${QuarterInchOpenReelNotes}
 	fi
 }
 

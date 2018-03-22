@@ -86,8 +86,8 @@ GM_DIR.x = 20
 GM_DIR.y = 570
 GM_DIR.type = openbrowser
 GM_DIR.label = Please navigate to and select the Great Migration directory to save to:
-GM_DIR.width = 270
-GM_DIR.default = ${GM_DIR}
+GM_DIR.width = 600
+GM_DIR.default = /Volumes/ScanSAN/00_Great_Migration_SC_0001/2018
 
 #GM_FORMATS
 GM_FORMATS.text = Please choose the formats for this Great Migration appointment:
@@ -179,6 +179,16 @@ GM_PROFILE_FIRST.option = N
 GM_PROFILE_FIRST.width = 125
 GM_PROFILE_FIRST.default = ${GM_PROFILE_FIRST}
 
+#GM_OPERATOR
+GM_OPERATOR.x = 20
+GM_OPERATOR.y = 100
+GM_OPERATOR.type = textfield
+GM_OPERATOR.label = Enter the name of the technician running the appointment:
+GM_OPERATOR.option = Y
+GM_OPERATOR.option = N
+GM_OPERATOR.width = 125
+GM_OPERATOR.default = ${GM_OPERATOR}
+
 # VOLADJUST
 # VOLADJUST.x = 600
 # VOLADJUST.y = 80
@@ -220,6 +230,7 @@ if [[ "${RUNPASHUA}" = "Y" ]] ; then
         echo "GM_FORMATS_QuarterInchOpenReelAudio=\"${GM_FORMATS_QuarterInchOpenReelAudio}\""
         echo "GM_PROFILE_LAST=\"${GM_PROFILE_LAST}\""
         echo "GM_PROFILE_FIRST=\"${GM_PROFILE_FIRST}\""
+        echo "GM_OPERATOR=\"${GM_OPERATOR}\""
 
     } > "${GM_CONFIG_FILE}"
 else
