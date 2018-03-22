@@ -1,10 +1,18 @@
 # assign variables
 SCRIPTNAME=$(basename "${0}")
 SCRIPTDIR=$(dirname "${0}")
-# MM_CONFIG_FILE="${SCRIPTDIR}/mm.conf"
+GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
-_mkdir(){
+# load configuration file
+if [ -f "${GM_CONFIG_FILE}" ] ; then
+    . "${GM_CONFIG_FILE}"
+elif [ ! "${CONFIG}" = "Y" -a "${REQUIRECONFIG}" = "Y" ] ; then
+    echo "The configuration file is not set. You must first create ${GM_CONFIG_FILE} by running gmconfig." 1>&2
+    exit 1
+fi
+
+function _mkdir () {
     local DIR2MAKE=""
     while [ "${*}" != "" ] ; do
         DIR2MAKE="${1}"
@@ -19,7 +27,7 @@ _mkdir(){
     done
 }
 
-function removehidden () {
+function _removehidden () {
 	if [ -z "$1" ] ; then
 		cowsay "no argument provided to remove hidden files. tootles."
 	else
@@ -28,11 +36,55 @@ function removehidden () {
 	fi
 }
 
-function sortk2 () {
+function _sortk2 () {
 	if [ -z "$1" ]; then
 		cowsay "no argument provided to sort. tootles."
 	else
 		sort -k 2 -o "${1}" "${1}"
 		#cowsay "file sorting is done. tootles."
 	fi
+}
+
+function _pashua_run () {
+    # Wrapper function for interfacing to Pashua. Written by Carsten
+    # Bluem <carsten@bluem.net> in 10/2003, modified in 12/2003 (including
+    # a code snippet contributed by Tor Sigurdsson), 08/2004 and 12/2004.
+    # Write config file
+
+    # Find Pashua binary. We do search both . and dirname "${0}"
+    # , as in a doubleclickable application, cwd is /
+    # BTW, all these quotes below are necessary to handle paths
+    # containing spaces.
+    BUNDLEPATH="Pashua.app/Contents/MacOS/Pashua"
+    MYPATH=$(dirname "${0}")
+    for SEARCHPATH in "${MYPATH}/Pashua" "${MYPATH}/${BUNDLEPATH}" "./${BUNDLEPATH}" \
+                      "/Applications/${BUNDLEPATH}" "${HOME}/Applications/${BUNDLEPATH}"
+    do
+        if [ -f "${SEARCHPATH}" -a -x "${SEARCHPATH}" ] ; then
+            PASHUAPATH=${SEARCHPATH}
+            break
+        fi
+    done
+    if [ ! "${PASHUAPATH}" ] && [[ "$(uname -s)" = "Darwin" ]] ; then
+        echo "Error: Pashua is used to edit but is not found."
+        if [[ "${PASHUAINSTALL}" = "" ]] ; then
+            echo "Attempting to run: brew cask install pashua"
+            if [[ "${PASHUAINSTALL}" != "Y" ]] && [[ "${PASHUAFAIL}" != "Y" ]] ; then
+                brew cask install pashua && PASHUAINSTALL="Y" || PASHUAFAIL=Y
+                _pashua_run
+            fi
+        fi
+    else
+        ENCODING=""
+        # Get result
+        RESULT=$("${PASHUAPATH}" ${ENCODING} ${PASHUA_CONFIGFILE} | sed 's/ /;;;/g')
+        # Parse result
+        for LINE in ${RESULT} ; do
+            KEY=$(echo ${LINE} | sed 's/^\([^=]*\)=.*$/\1/')
+            VALUE=$(echo ${LINE} | sed 's/^[^=]*=\(.*\)$/\1/' | sed 's/;;;/ /g')
+            VARNAME="${KEY}"
+            VARVALUE="${VALUE}"
+            eval $VARNAME='$VARVALUE'
+        done
+    fi
 }
