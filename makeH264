@@ -136,7 +136,7 @@ EOF
 	for file in $@ ; do
 		if [[ -f "$file" ]]; then #run ffmpeg command on $input and set output to $output
 			# -vf scale=-2:1484
-			ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "$file" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "$crfvalue" -preset "$presetspeed" -maxrate "$maxrate"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "$output"
+			ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "$file" -movflags faststart -c:v libx264 -vf "yadif,format=yuv420p" -crf "$crfvalue" -preset "$presetspeed" -maxrate "$maxrate"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "$output"
 		elif [[ -d "$file" ]]; then
 			ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "$file"/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "$crfvalue" -preset "$presetspeed" -maxrate "$maxrate"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "$output"
 		fi
