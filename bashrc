@@ -3,6 +3,8 @@
 # source ~/.bashrc
 # fi
 
+# ln -s /usr/local/bin/bashrc ~/.bashrc
+
 Color_Off='\e[0m'       # Text Reset
 
 # Regular Colors
