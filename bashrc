@@ -190,7 +190,7 @@ export -f sortk2
 
 function shortinfo() {
    mediainfo --Inform="General;FileName==%FileNameExtension%\nFileSize=%FileSize%\nDuration=%Duration%" "$@";
-   # mediainfo --Inform="Video;Resolution=%Width%x%Height%\nCodec=%CodecID%" "$@";
+   # mediainfo --Inform="Video;Resolution=Codec=%CodecID%" "$@";
 }
 
 export -f shortinfo
