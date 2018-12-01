@@ -3,6 +3,8 @@
 # source ~/.bashrc
 # fi
 
+# ln -s /usr/local/bin/bashrc ~/.bashrc
+
 Color_Off='\e[0m'       # Text Reset
 
 # Regular Colors
@@ -184,3 +186,11 @@ function sortk2 () {
 	fi
 }
 export -f sortk2
+
+
+function shortinfo() {
+   mediainfo --Inform="General;FileName=%FileNameExtension%\nFileSize=%FileSize%\nDuration=%Duration%" "$@";
+   mediainfo --Inform="Video;Resolution=Codec=%CodecID%" "$@";
+}
+
+export -f shortinfo
