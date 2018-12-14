@@ -142,7 +142,7 @@ alias sulbime='sublime'
 # functions
 	# brew reinstall --HEAD nmaahcmm
 function nmaahcmm () {
-	brew reinstall --HEAD nmaahcmm
+	brew reinstall nmaahcmm
 }
 export -f nmaahcmm
 
