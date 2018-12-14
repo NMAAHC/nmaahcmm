@@ -97,7 +97,7 @@ export LESS='-MN'
 # must use double quotes here so Unix expands $PATH and doesn't read it as a directory
 # default OS X PATH: /usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/X11/bin
 
-export PATH="~/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/X11/bin"
+export PATH="~/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/X11/bin"
 export EDITOR="/Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl"
 # history modifications
 export HISTSIZE=1000 #500 is default
