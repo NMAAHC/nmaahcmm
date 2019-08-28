@@ -8,8 +8,8 @@ while [ "${*}" != "" ] ; do
 	INPUT="${1}"
 
 	if [ -d "${INPUT}" ] ; then
-		for file in "$1"/**/*.mov ; do 
-    	ffmpeg -i "$file" -an -f framemd5 "${file}.framemd5.md5"
+		for file in "${1}"/**/*.mov ; do 
+    	ffmpeg -i "${file}" -an -f framemd5 "${file}.framemd5.md5"
     	done
 	elif [ -f "${INPUT}" ]; then
     	ffmpeg -i "${INPUT}" -an -f framemd5 "${INPUT}.framemd5.md5"

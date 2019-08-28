@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 scriptdir="${0%/*}" # get dirname of $0 ($0 is the name of the current script)
-. "$scriptdir/nmaahcmmfunctions" ||
-{ echo "Missing '$scriptdir/nmaahcmmfunctions'. Exiting." ;
+. "${scriptdir}/nmaahcmmfunctions" ||
+{ echo "Missing '${scriptdir}/nmaahcmmfunctions'. Exiting." ;
 exit 1 ;} # The right side of && will only be evaluated if the exit status of the left side is zero.
           # || is the opposite: it will evaluate the right side only if the left side exit status is nonzero.
 
-input1="$1"
-input2="$2"
+input1="${1}"
+input2="${2}"
 
-diff --side-by-side --width=200 --suppress-common-lines <(cat "$input1" | cut -d, -f 6) <(cat "$input2" | cut -d, -f 6)
+diff --side-by-side --width=200 --suppress-common-lines <(cat "${input1}" | cut -d, -f 6) <(cat "${input2}" | cut -d, -f 6)

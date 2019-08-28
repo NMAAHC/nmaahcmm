@@ -2,7 +2,7 @@
 
 
 while getopts ":o:b" OPT ; do
-    case $OPT in
+    case "${OPT}" in
         o)
             echo "-o was triggered"
             ;;
@@ -10,11 +10,11 @@ while getopts ":o:b" OPT ; do
             echo "fuck me! -b was triggered"
             ;;
         \?)
-            echo "Invalid option: -$OPTARG" >&2
+            echo "Invalid option: -${OPTARG}" >&2
             exit 1
             ;;
         :)
-            echo "Option -$OPTARG requires an argument." >&2
+            echo "Option -${OPTARG} requires an argument." >&2
             exit 1
             ;;
     esac

@@ -28,7 +28,7 @@ function _mkdir () {
 }
 
 function _removehidden () {
-	if [ -z "$1" ] ; then
+	if [ -z "${1}" ] ; then
 		cowsay "no argument provided to remove hidden files. tootles."
 	else
 		find "${1}" -name ".*" -exec rm -vfr {} \;
@@ -37,7 +37,7 @@ function _removehidden () {
 }
 
 function _sortk2 () {
-	if [ -z "$1" ]; then
+	if [ -z "${1}" ]; then
 		cowsay "no argument provided to sort. tootles."
 	else
 		sort -k 2 -o "${1}" "${1}"
