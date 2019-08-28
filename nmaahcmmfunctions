@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # assign variables
 SCRIPTNAME=$(basename "${0}")
 SCRIPTDIR=$(dirname "${0}")

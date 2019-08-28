@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # “a” and “arga” have optional arguments with default values.
 # “b” and “argb” have no arguments, acting as sort of a flag.
