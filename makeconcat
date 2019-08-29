@@ -25,27 +25,27 @@ script_path=${0%/*}
 makeconcat ()
 
 {
-	echo
-	printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s" "${biwhite}" "${color_off}"
-	read -r concatfile
-	## $concatfile will be the name of both the $txtfile and the outputed concatenated file. Name well.
-	echo
-	while [ "${*}" != "" ] ; do ## while the number of arguments is not zero do X
-		for file in "${1}" ; do ## for the first argument do X
-			suffix="${file##*.}" ## set $suffix to whatever the extension of your $file is
-			path="${file%/*}" ## the $path is set as the dirname of the first argument
-			txtfile="${path}/${concatfile}.txt" ## the $txtfile will be created in the same dir as the first agument and named after $concatfile
-			touch "${txtfile}" ## the $txtfile is created, aka "touched"
-			printf "file '${file}'\n" >> "${txtfile}" ## the first arugment is written to $txtfile in the appropraite syntax for ffmpeg
-			shift ## the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
-		done
-	done
-	concatfile="${path}/${concatfile}.$suffix"
-	ffmpeg -f concat -safe 0 -i "${txtfile}" -c copy "${concatfile}" ## ffmpeg creates the concated file in the same directory as $files
-	echo
-	cowsay "Done. Your concatenated video file is ready fo action." ## cowsay tells it like it is.
-	echo
-	printf "Your concatenated file is: %s" "${concatfile}"
+    echo
+    printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s" "${biwhite}" "${color_off}"
+    read -r concatfile
+    ## $concatfile will be the name of both the $txtfile and the outputed concatenated file. Name well.
+    echo
+    while [ "${*}" != "" ] ; do ## while the number of arguments is not zero do X
+        for file in "${1}" ; do ## for the first argument do X
+            suffix="${file##*.}" ## set $suffix to whatever the extension of your $file is
+            path="${file%/*}" ## the $path is set as the dirname of the first argument
+            txtfile="${path}/${concatfile}.txt" ## the $txtfile will be created in the same dir as the first agument and named after $concatfile
+            touch "${txtfile}" ## the $txtfile is created, aka "touched"
+            printf "file '${file}'\n" >> "${txtfile}" ## the first arugment is written to $txtfile in the appropraite syntax for ffmpeg
+            shift ## the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
+        done
+    done
+    concatfile="${path}/${concatfile}.$suffix"
+    ffmpeg -f concat -safe 0 -i "${txtfile}" -c copy "${concatfile}" ## ffmpeg creates the concated file in the same directory as $files
+    echo
+    cowsay "Done. Your concatenated video file is ready fo action." ## cowsay tells it like it is.
+    echo
+    printf "Your concatenated file is: %s" "${concatfile}"
 
 }
 

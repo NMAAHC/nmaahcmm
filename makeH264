@@ -54,95 +54,96 @@ usage ()
 
 makeh264 ()
 {
-	#user_input="${*}" # i'm unclear what the purpose of this line is...so I commented it out
-	OPTIND=1 # command-line options to set mediaid and original variables
-	while getopts ":lrv:o:d:e:E:nhY" OPT ; do
-	    case "${OPT}" in
-	        l) AUDIOMAP="L";;
-	        r) AUDIOMAP="R";;
-	        v) VOLADJUST="${OPTARG}";;
-	        o) OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced ;;
-	        d) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
-	        e) EMAILADDRESS_DELIVERY="${OPTARG}" && check_emailaddress "${EMAILADDRESS_DELIVERY}" ;;
-	        E) EMAILADDRESS_OUTCOME="${OPTARG}" && check_emailaddress "${EMAILADDRESS_OUTCOME}" ;;
-	        n) DRYRUN=true;;
-	        Y) YOUTUBEUPLOAD="Y";;
-	        h) _usage ;;
-	        *) echo "bad option -${OPTARG}" ; _usage ;;
-	        :) echo "Option -${OPTARG} requires an argument" ; _writeerrorlog "makeyoutube" "The option selected required an argument and none was provided. The script had to exit." ; exit 1 ;;
-	    esac
-	done
-	#shift $(( ${OPTIND} - 1 ))
-	shift "$((OPTIND-1))"
+    #user_input="${*}" # i'm unclear what the purpose of this line is...so I commented it out
+    OPTIND=1 # command-line options to set mediaid and original variables
+    while getopts ":lrv:o:d:e:E:nhY" OPT ; do
+        case "${OPT}" in
+            l) AUDIOMAP="L";;
+            r) AUDIOMAP="R";;
+            v) VOLADJUST="${OPTARG}";;
+            o) OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced ;;
+            d) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
+            e) EMAILADDRESS_DELIVERY="${OPTARG}" && check_emailaddress "${EMAILADDRESS_DELIVERY}" ;;
+            E) EMAILADDRESS_OUTCOME="${OPTARG}" && check_emailaddress "${EMAILADDRESS_OUTCOME}" ;;
+            n) DRYRUN=true;;
+            Y) YOUTUBEUPLOAD="Y";;
+            h) _usage ;;
+            *) echo "bad option -${OPTARG}" ; _usage ;;
+            :) echo "Option -${OPTARG} requires an argument" ; _writeerrorlog "makeyoutube" "The option selected required an argument and none was provided. The script had to exit." ; exit 1 ;;
+        esac
+    done
+    #shift $(( ${OPTIND} - 1 ))
+    shift "$((OPTIND-1))"
 
-	input="${1}" #set $input as the first arugment sent to script
-	if [[ -f "${input}" ]] ; then #if input is a file, set output_dir to input name with extension stripped plus relativepath
-		output_dir="${input%.*}/$relativepath"
-  elif [[ -d "${input}" ]]; then #if input is a directory, set output_dir to input name plus relativepath
-		output_dir="${input}/$relativepath"
-  fi
-  mediaid="${input##*/}" #set $mediaid to basename of $input
-	mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
- 	output="${output_dir}/${mediaid%.*}$suffix.$extension" #set $output
-	if [ -s "${output}" ] ; then #check to see if $output exists
-		printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
-		shift
-	fi
-		printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
-		printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
-		printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir/$mediaid%.*$suffix.$extension}"
+    input="${1}" #set $input as the first arugment sent to script
+    if [[ -f "${input}" ]] ; then #if input is a file, set output_dir to input name with extension stripped plus relativepath
+        output_dir="${input%.*}/$relativepath"
+    elif [[ -d "${input}" ]]; then #if input is a directory, set output_dir to input name plus relativepath
+        output_dir="${input}/$relativepath"
+    fi
+    
+    mediaid="${input##*/}" #set $mediaid to basename of $input
+    mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
+    output="${output_dir}/${mediaid%.*}$suffix.$extension" #set $output
+    if [ -s "${output}" ] ; then #check to see if $output exists
+        printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
+        shift
+    fi
+    printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
+    printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
+    printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir/$mediaid%.*$suffix.$extension}"
 
-	echo
+    echo
 cat <<-EOF
-	A CRF value needs specified.
-	The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
-	A lower value is a higher quality and a subjectively sane range is 18-28.
-	Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input,
-	but it is not technically lossless.
-	The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
-	General usage is to choose the highest CRF value that still provides an acceptable quality.
-	If the output looks good, then try a higher value and if it looks bad then choose a lower value.
+    A CRF value needs specified.
+    The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
+    A lower value is a higher quality and a subjectively sane range is 18-28.
+    Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input,
+    but it is not technically lossless.
+    The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
+    General usage is to choose the highest CRF value that still provides an acceptable quality.
+    If the output looks good, then try a higher value and if it looks bad then choose a lower value.
 EOF
-	echo
-	printf "%sPlease enter a CRF value:%s\n" "${color_off}" "${biwhite}"
-	read -r crfvalue
-	echo
+    echo
+    printf "%sPlease enter a CRF value:%s\n" "${color_off}" "${biwhite}"
+    read -r crfvalue
+    echo
 cat <<-EOF
-	A preset encoding speed needs specified.
-	A preset is a collection of options that will provide a certain encoding speed to compression ratio.
-	A slower preset will provide better compression (compression is quality per filesize).
-	This means that, for example, if you target a certain file size or constant bit rate,
-	you will achieve better quality with a slower preset.
-	Similarly, for constant quality encoding, you will simply save bitrate by choosing a slower preset.
-	The general guideline is to use the slowest preset that you have patience for.
-	Current presets in descending order of speed are:
+    A preset encoding speed needs specified.
+    A preset is a collection of options that will provide a certain encoding speed to compression ratio.
+    A slower preset will provide better compression (compression is quality per filesize).
+    This means that, for example, if you target a certain file size or constant bit rate,
+    you will achieve better quality with a slower preset.
+    Similarly, for constant quality encoding, you will simply save bitrate by choosing a slower preset.
+    The general guideline is to use the slowest preset that you have patience for.
+    Current presets in descending order of speed are:
 EOF
-	printf "%sultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow\n" "${bired}"
-	#printf "%s" "${biwhite}"
-	echo
-	printf "%sPlease enter a preset speed:%s\n" "${color_off}" "${biwhite}"
-	read -r presetspeed
-	echo
+    printf "%sultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow\n" "${bired}"
+    #printf "%s" "${biwhite}"
+    echo
+    printf "%sPlease enter a preset speed:%s\n" "${color_off}" "${biwhite}"
+    read -r presetspeed
+    echo
 cat <<-EOF
-	The maxrate speed is the max bitrate at which your video will be encoded. It is written in kbps.
-	A good maxrate for Youtube type delivery is 8000.
+    The maxrate speed is the max bitrate at which your video will be encoded. It is written in kbps.
+    A good maxrate for Youtube type delivery is 8000.
 EOF
-	echo
-	printf "%sPlease enter a maxrate speed:%s\n" "${color_off}" "${biwhite}"
-	read -r maxrate
-	printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" #have script say what is about to do
-	mkdir -p "${output_dir}"
+    echo
+    printf "%sPlease enter a maxrate speed:%s\n" "${color_off}" "${biwhite}"
+    read -r maxrate
+    printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" #have script say what is about to do
+    mkdir -p "${output_dir}"
 
-	for file in $@ ; do
-		if [[ -f "${file}" ]]; then #run ffmpeg command on $input and set output to $output
-			# -vf scale=-2:1484
-			ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -c:v libx264 -vf "yadif,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-		elif [[ -d "${file}" ]]; then
-			ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}"/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-		fi
-		printf '\n%sdone. moving to next file.%s\n' "${biwhite}" "${color_off}"
-		shift
-	done
+    for file in $@ ; do
+        if [[ -f "${file}" ]]; then #run ffmpeg command on $input and set output to $output
+            # -vf scale=-2:1484
+            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -c:v libx264 -vf "yadif,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
+        elif [[ -d "${file}" ]]; then
+            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}"/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
+        fi
+        printf '\n%sdone. moving to next file.%s\n' "${biwhite}" "${color_off}"
+        shift
+    done
 
 }
 

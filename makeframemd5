@@ -4,17 +4,17 @@ shopt -s globstar
 
 while [ "${*}" != "" ] ; do
 
-	#name input as the first arugment sent to script
-	INPUT="${1}"
+    #name input as the first arugment sent to script
+    INPUT="${1}"
 
-	if [ -d "${INPUT}" ] ; then
-		for file in "${1}"/**/*.mov ; do 
-    	ffmpeg -i "${file}" -an -f framemd5 "${file}.framemd5.md5"
-    	done
-	elif [ -f "${INPUT}" ]; then
-    	ffmpeg -i "${INPUT}" -an -f framemd5 "${INPUT}.framemd5.md5"
-	fi
+    if [ -d "${INPUT}" ] ; then
+        for file in "${1}"/**/*.mov ; do 
+        ffmpeg -i "${file}" -an -f framemd5 "${file}.framemd5.md5"
+        done
+    elif [ -f "${INPUT}" ]; then
+        ffmpeg -i "${INPUT}" -an -f framemd5 "${INPUT}.framemd5.md5"
+    fi
 
-	shift
+    shift
 
 done

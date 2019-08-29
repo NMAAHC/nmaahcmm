@@ -15,30 +15,28 @@ makedrivetree()
 {
 local drive ; #set local variable $drive
 local folder=/Volumes/UtilitySAN/05_driveContents
-  for drive ; do
-    	drive="${drive%/}" #strip trailing / if any
+for drive ; do
+    drive="${drive%/}" #strip trailing / if any
     if [ -d "${drive}" ] ; then
-      output="${drive##*/}_contents_${date}.txt"
-      output="${folder}/${output}"
-			if [ -d "${folder}" ] ; then
-      	tree --filelimit 50 --si --du -U -Q -o "${output}" "${drive}"
-        if grep "0 directories, 0 files" "${output}" ; then
-          printf "%s%s is empty. Adding EMPTY to file name.\n%s" "${biwhite}" "${drive}" "${color_off}" &&
-          outputE="${folder}/${drive##*/}_contents_${date}_EMPTY.txt" &&
-          mv -v "${output}" "${output}E"
-          printf "%sMoving %s to %s\n%s" "${biwhite}" "${outputE##*/}" "${drive}" "${color_off}"
-          cp -v "${outputE}" "${drive}"
-        else
-          printf "%s%s is not empty\n%s" "${biwhite}" "${drive}" "${color_off}"
-          cp -va "${output}" "${drive}"
-        fi
-			else
-        printf "%sError %s does not exist. Exiting.\n" "${bired}" "${folder}" >&2
-				exit
-      fi
+        output="${drive##*/}_contents_${date}.txt"
+        output="${folder}/${output}"
+            if [ -d "${folder}" ] ; then
+                tree --filelimit 50 --si --du -U -Q -o "${output}" "${drive}"
+                if grep "0 directories, 0 files" "${output}" ; then
+                    printf "%s%s is empty. Adding EMPTY to file name.\n%s" "${biwhite}" "${drive}" "${color_off}" && outputE="${folder}/${drive##*/}_contents_${date}_EMPTY.txt" && mv -v "${output}" "${output}E"
+                    printf "%sMoving %s to %s\n%s" "${biwhite}" "${outputE##*/}" "${drive}" "${color_off}"
+                    cp -v "${outputE}" "${drive}"
+                else
+                    printf "%s%s is not empty\n%s" "${biwhite}" "${drive}" "${color_off}"
+                    cp -va "${output}" "${drive}"
+                fi
+            else
+                printf "%sError %s does not exist. Exiting.\n" "${bired}" "${folder}" >&2
+                exit
+            fi
     else
-      printf "%sError %s does not exist. Exiting.\n" "${bired}" "${drive}" >&2
-			exit
+        printf "%sError %s does not exist. Exiting.\n" "${bired}" "${drive}" >&2
+        exit
     fi
     
   done
