@@ -39,7 +39,7 @@ case "${reelnumber}" in
 	1 )
 	#make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
 	echo
-	destination=("$dest"/"${dpxid}"__"${title}")
+	destination=("$dest/${dpxid}__${title}")
 	mkdir "${destination}"
 
 	echo
@@ -52,9 +52,9 @@ case "${reelnumber}" in
 				echo
 			else
 				while [[ -d "${wav}" ]] ; do
-					aud=("${destination}"/"${dpxid}"__"${title}"__Audio) &&
+					aud=("${destination}/${dpxid}__${title}__Audio") &&
 					printf "\n\t%sFound .wav directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${aud}" "${color_off}" &&
-					find "${input}" -type d -name "*WAV" -exec mv -i "{}" "${destination}"/"${dpxid}"__"${title}"__Audio \;
+					find "${input}" -type d -name "*WAV" -exec mv -i "{}" "${destination}/${dpxid}__${title}__Audio" \;
 					echo
 				done
 			fi
@@ -71,9 +71,9 @@ case "${reelnumber}" in
 				echo
 			else
 				while [[ -d "$mov" ]] ; do
-					der=("${destination}"/"${dpxid}"__"${title}"__Derivatives) &&
+					der=("${destination}/${dpxid}__${title}__Derivatives") &&
 					printf "\n\t%sFound .mov directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${der}" "${color_off}" &&
-					find "${input}" -type d -name "*MOV" -exec mv -i "{}" "${destination}"/"${dpxid}"__"${title}"__Derivatives \;
+					find "${input}" -type d -name "*MOV" -exec mv -i "{}" "${destination}/${dpxid}__${title}__Derivatives" \;
 					echo
 				done
 			fi
@@ -85,9 +85,9 @@ case "${reelnumber}" in
 				echo
 			else
 				while [[ -d "${dpx}" ]] ; do
-					dpxdir=("${destination}"/"${dpxid}"__"${title}"__DPX) &&
+					dpxdir=("${destination}/${dpxid}__${title}__DPX") &&
 					printf "\n\t%sFound DPX directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${dpx}dir" "${color_off}" &&
-					find "${input}" -type d -name "*DPX" -exec mv -i {} "${destination}"/"${dpxid}"__"${title}"__DPX \;
+					find "${input}" -type d -name "*DPX" -exec mv -i {} "${destination}/${dpxid}__${title}__DPX" \;
 					echo
 				done
 			fi
@@ -97,53 +97,52 @@ case "${reelnumber}" in
 	printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
 	echo
 	if [[ -d "${aud}" ]] ; then
-		find "${aud}" -name "*.wav" -exec mv -i "{}" "${aud}"/"${dpxid}"_AUD.wav \;
-		wav="${aud}"/"${dpxid}"_AUD.wav
+		find "${aud}" -name "*.wav" -exec mv -i "{}" "${aud}/${dpxid}_AUD.wav" \;
+		wav="${aud}/${dpxid}_AUD.wav"
 		printf "\n\t%sRenamed audio file to %s%s\n" "${biwhite}" "${wav}" "${color_off}"
 	fi
 	if [[ -d "${der}" ]] ; then
-		find "${der}" -name "*ProRes*.mov" -exec mv -i "{}" "${der}"/"${dpxid}"_DER_01.mov \;
-		der1="${der}"/"${dpxid}"_DER_01.mov
+		find "${der}" -name "*ProRes*.mov" -exec mv -i "{}" "${der}/${dpxid}_DER_01.mov" \;
+		der1="${der}/${dpxid}_DER_01.mov"
 		printf "\n\t%sRenamed ProRes file to %s%s\n" "${biwhite}" "${der1}" "${color_off}"
 		fi
 	if [[ -d "${der}" ]] ; then
-		find "${der}" -name "*Uncompressed.mov" -exec mv -i "{}" "${der}"/"${dpxid}"_DER_02.mov \;
-		der2="${der}"/"${dpxid}"_DER_02.mov
+		find "${der}" -name "*Uncompressed.mov" -exec mv -i "{}" "${der}/${dpxid}_DER_02.mov" \;
+		der2="${der}/${dpxid}_DER_02.mov"
 		printf "\n\t%sRenamed uncompressed file to %s%s\n" "${biwhite}" "${der2}" "${color_off}"
 		echo
 	fi
-	#remove the ${input} directory
 	#remove the $input directory
 	printf "%sRemoving:\n\t%s%s\n" "${biwhite}" "${color_off}" "${input}"
 	rm -vri "${input}"
 	;;
 
 	2 )
-	destination=("$dest"/"${dpxid}"__"${title}")
+	destination=("$dest/${dpxid}__${title}")
 	mkdir "${destination}"
 
-	R1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1)
+	R1=("${destination}/${dpxid}__${title}_R1/${dpxid}__${title}_R1")
 	mkdir -p "${R1}"
-
-	audR1="${R1}"__Audio
+    
+	audR1="${R1}__Audio"
 	mkdir -p "${audR1}"
 
-	derR1="${R1}"__Derivatives
+	derR1="${R1}__Derivatives"
 	mkdir -p "${derR1}"
-
-	dpxR1="${R1}"__DPX
+    
+	dpxR1="${R1}__DPX"
 	mkdir -p "${dpxR1}"
-
-	R2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2)
+    
+	R2=("${destination}/${dpxid}__${title}_R2/${dpxid}__${title}_R2")
 	mkdir -p "${R2}"
 
-	audR2="${R2}"__Audio
+	audR2="${R2}__Audio"
 	mkdir -p "${audR2}"
 
-	derR2="${R2}"__Derivatives
+	derR2="${R2}__Derivatives"
 	mkdir -p "${derR2}"
 
-	dpxR2="${R2}"__DPX
+	dpxR2="${R2}__DPX"
 	mkdir -p "${dpxR2}"
 	echo
 	printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
@@ -188,12 +187,12 @@ case "${reelnumber}" in
 
 	echo
 	printf "%sReaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
-	find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}"/"${dpxid}"_R1_AUD.wav \;
-	find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}"/"${dpxid}"_R1_DER_01.mov \;
-	find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}"/"${dpxid}"_R1_DER_02.mov \;
-	find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}"/"${dpxid}"_R2_AUD.wav \;
-	find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}"/"${dpxid}"_R2_DER_01.mov \;
-	find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}"/"${dpxid}"_R2_DER_02.mov \;
+	find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}/${dpxid}_R1_AUD.wav" \;
+	find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_01.mov" \;
+	find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_02.mov" \;
+	find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}/${dpxid}_R2_AUD.wav" \;
+	find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_01.mov" \;
+	find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_02.mov" \;
 
 	echo
 	printf "%sRemoving %s\n" "${biwhite}" "${color_off}" "${input}"
@@ -201,43 +200,43 @@ case "${reelnumber}" in
 	;;
 
 	3 )
-	destination=("$dest"/"${dpxid}"__"${title}")
+    destination=("$dest/${dpxid}__${title}")
 	mkdir "${destination}"
 
-	R1=("${destination}"/"${dpxid}"__"${title}"_R1/"${dpxid}"__"${title}"_R1)
+	R1=("${destination}/${dpxid}__${title}_R1/${dpxid}__${title}_R1")
 	mkdir -p "${R1}"
 
-	audR1="${R1}"__Audio
+	audR1="${R1}__Audio"
 	mkdir -p "${audR1}"
 
-	derR1="${R1}"__Derivatives
+	derR1="${R1}__Derivatives"
 	mkdir -p "${derR1}"
 
-	dpxR1="${R1}"__DPX
+	dpxR1="${R1}__DPX"
 	mkdir -p "${dpxR1}"
 
-	R2=("${destination}"/"${dpxid}"__"${title}"_R2/"${dpxid}"__"${title}"_R2)
+	R2=("${destination}/${dpxid}__${title}_R2/${dpxid}__${title}_R2")
 	mkdir -p "${R2}"
 
-	audR2="${R2}"__Audio
+	audR2="${R2}__Audio"
 	mkdir -p "${audR2}"
 
-	derR2="${R2}"__Derivatives
+	derR2="${R2}__Derivatives"
 	mkdir -p "${derR2}"
 
-	dpxR2="${R2}"__DPX
+	dpxR2="${R2}__DPX"
 	mkdir -p "${dpxR2}"
 
-	R3=("${destination}"/"${dpxid}"__"${title}"_R3/"${dpxid}"__"${title}"_R3)
+	R3=("${destination}/${dpxid}__${title}_R3/${dpxid}__${title}_R3")
 	mkdir -p "${R3}"
 
-	audR3="${R3}"__Audio
+	audR3="${R3}__Audio"
 	mkdir -p "${audR3}"
 
-	derR3="${R3}"__Derivatives
+	derR3="${R3}__Derivatives"
 	mkdir -p "${derR3}"
 
-	dpxR3="${R3}"__DPX
+	dpxR3="${R3}__DPX"
 	mkdir -p "${dpxR3}"
 
 	echo
@@ -302,15 +301,15 @@ case "${reelnumber}" in
 
 	echo
 	printf "%sReaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
-	find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}"/"${dpxid}"_R1_AUD.wav \;
-	find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}"/"${dpxid}"_R1_DER_01.mov \;
-	find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}"/"${dpxid}"_R1_DER_02.mov \;
-	find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}"/"${dpxid}"_R2_AUD.wav \;
-	find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}"/"${dpxid}"_R2_DER_01.mov \;
-	find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}"/"${dpxid}"_R2_DER_02.mov \;
-	find "${audR3}" -name "*R3*.wav" -exec mv -vi {} "${audR3}"/"${dpxid}"_R3_AUD.wav \;
-	find "${derR3}" -name "*R3*ProRes*.mov" -exec mv -vi {} "${derR3}"/"${dpxid}"_R3_DER_01.mov \;
-	find "${derR3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}"/"${dpxid}"_R3_DER_02.mov \;
+	find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}/${dpxid}_R1_AUD.wav" \;
+    find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_01.mov" \;
+    find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_02.mov" \;
+	find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}/${dpxid}_R2_AUD.wav" \;
+	find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_01.mov" \;
+	find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R2_DER_02.mov" \;
+	find "${audR3}" -name "*R3*.wav" -exec mv -vi {} "${audR3}/${dpxid}_R3_AUD.wav" \;
+	find "${derR3}" -name "*R3*ProRes*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_01.mov" \;
+	find "${derR3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_02.mov" \;
 
 	echo
 	printf "%sRemoving \n" "${biwhite}" "${color_off}" "${input}"
