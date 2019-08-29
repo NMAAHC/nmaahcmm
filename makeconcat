@@ -22,9 +22,7 @@ script_path=${0%/*}
 
 ### FUNCTIONS
 
-makeconcat ()
-
-{
+makeconcat(){
     echo
     printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s" "${biwhite}" "${color_off}"
     read -r concatfile
@@ -46,7 +44,6 @@ makeconcat ()
     cowsay "Done. Your concatenated video file is ready fo action." ## cowsay tells it like it is.
     echo
     printf "Your concatenated file is: %s" "${concatfile}"
-
 }
 
 #call the function(s)

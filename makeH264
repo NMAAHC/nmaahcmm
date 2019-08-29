@@ -27,8 +27,7 @@ extension="mp4"
 
 ### USAGE
 
-usage ()
-{
+usage(){
     echo
     echo "$(basename "${0}") ${VERSION}"
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube) from a video file or package input with the following options."
@@ -52,8 +51,7 @@ usage ()
 
 ### FUNCTIONS
 
-makeh264 ()
-{
+makeh264(){
     #user_input="${*}" # i'm unclear what the purpose of this line is...so I commented it out
     OPTIND=1 # command-line options to set mediaid and original variables
     while getopts ":lrv:o:d:e:E:nhY" OPT ; do
@@ -144,7 +142,6 @@ EOF
         printf '\n%sdone. moving to next file.%s\n' "${biwhite}" "${color_off}"
         shift
     done
-
 }
 
 #call the function(s)

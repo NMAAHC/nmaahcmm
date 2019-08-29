@@ -11,8 +11,7 @@ color_off=$(tput sgr0)
 
 ### FUNCTIONS
 
-makedrivetree()
-{
+makedrivetree(){
 local drive ; #set local variable $drive
 local folder=/Volumes/UtilitySAN/05_driveContents
 for drive ; do

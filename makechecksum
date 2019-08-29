@@ -11,9 +11,7 @@ date="$(date +%Y%m%d)"
 
 ### FUNCTIONS
 
-makechecksum ()
-
-{
+makechecksum(){
     echo
     while [[ $# -gt 0 ]] ; do
 

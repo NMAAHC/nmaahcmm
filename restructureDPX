@@ -15,9 +15,7 @@ color_off=$(tput sgr0)
 
 ### FUNCTIONS
 
-restructureDPX ()
-
-{
+restructureDPX(){
     printf "%sPlease enter the number of reels your DPX package has: %s" "${biwhite}" "${color_off}"
     read -r reelnumber
     echo

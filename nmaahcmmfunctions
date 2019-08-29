@@ -14,7 +14,7 @@ elif [ ! "${CONFIG}" = "Y" -a "${REQUIRECONFIG}" = "Y" ] ; then
     exit 1
 fi
 
-function _mkdir () {
+function _mkdir(){
     local DIR2MAKE=""
     while [ "${*}" != "" ] ; do
         DIR2MAKE="${1}"
@@ -29,7 +29,7 @@ function _mkdir () {
     done
 }
 
-function _removehidden () {
+function _removehidden(){
     if [ -z "${1}" ] ; then
         cowsay "no argument provided to remove hidden files. tootles."
     else
@@ -38,7 +38,7 @@ function _removehidden () {
     fi
 }
 
-function _sortk2 () {
+function _sortk2(){
     if [ -z "${1}" ]; then
         cowsay "no argument provided to sort. tootles."
     else
@@ -47,7 +47,7 @@ function _sortk2 () {
     fi
 }
 
-function _pashua_run () {
+function _pashua_run(){
     # Wrapper function for interfacing to Pashua. Written by Carsten
     # Bluem <carsten@bluem.net> in 10/2003, modified in 12/2003 (including
     # a code snippet contributed by Tor Sigurdsson), 08/2004 and 12/2004.
