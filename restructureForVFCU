@@ -12,7 +12,7 @@ date="$(date +%Y%m%d)"
 
 ### FUNCTIONS
 
-restrutureForVFCU(){
+restructureForVFCU(){
     echo
 
     for arg in "${@}" ;

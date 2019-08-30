@@ -18,7 +18,7 @@ script_path=${0%/*}
 # This is a common mechanism for implementing shared libraries of shell functions.
 [[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 # will check to see that that nmaahcmmfunctions exists and if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
-dependencies=(ffmpeg ffprobe)
+DEPENDENCIES=(ffmpeg ffprobe)
 echo "script path is ${script_path}"
 _initialize_make
 relativepath="derivative"
