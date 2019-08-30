@@ -8,7 +8,6 @@ biyellow=$(tput bold)$(tput setaf 3)
 bired=$(tput bold)$(tput setaf 1)
 gray=$(tput setaf 7)
 color_off=$(tput sgr0)
-date="$(date +%Y%m%d)"
 
 ### FUNCTIONS
 

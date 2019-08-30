@@ -7,24 +7,6 @@ RELATIVEPATH="access"
 SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
 EXTENSION="mp4"
 
-_initialize_make(){
-    _check_dependencies "${DEPENDENCIES[@]}"
-    unset DEPENDENCIES
-    DELIVERDIR=""
-    DRYRUN=false
-    EMAILADDRESS=""
-    OUTPUTDIR_FORCED=""
-    _cleanup(){
-        _log -a "Process aborted"
-        echo
-        _report -wts "THE PROCESS WAS ABORTED"
-        exit 1
-    }
-    trap _cleanup SIGHUP SIGINT SIGTERM
-}
-
-_get_iso8601(){
-    date +%FT%T
 }
 
 _report(){
@@ -111,7 +93,7 @@ while [ "${*}" != "" ] ; do
 
     #set $OUTPUT
     OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
-    printf  OUTPUT is: "${BIWhite}${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}${Color_Off}"
+    printf "OUTPUT is: ${biwhite}${OUTPUT}${color_off}"
 
     #check to see if $OUTPUT exists
     if [ -s "${OUTPUT}" ] ; then

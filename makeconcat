@@ -5,9 +5,7 @@
 ### CONSTANTS
 
 biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
 color_off=$(tput sgr0)
-today=$(date +"%Y%m%d")
 
 script_path=${0%/*}
 # script_path will be the directory path of {0} which is the script being called
