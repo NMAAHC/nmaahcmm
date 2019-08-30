@@ -75,14 +75,14 @@ makeh264(){
 
     input="${1}" #set $input as the first arugment sent to script
     if [[ -f "${input}" ]] ; then #if input is a file, set output_dir to input name with extension stripped plus relativepath
-        output_dir="${input%.*}/$relativepath"
+        output_dir="${input%.*}/${relativepath}"
     elif [[ -d "${input}" ]]; then #if input is a directory, set output_dir to input name plus relativepath
-        output_dir="${input}/$relativepath"
+        output_dir="${input}/${relativepath}"
     fi
     
     mediaid="${input##*/}" #set $mediaid to basename of $input
     mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
-    output="${output_dir}/${mediaid%.*}$suffix.$extension" #set $output
+    output="${output_dir}/${mediaid%.*}${suffix}.${extension}" #set $output
     if [ -s "${output}" ] ; then #check to see if $output exists
         printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
         shift
@@ -132,7 +132,7 @@ EOF
     printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" #have script say what is about to do
     mkdir -p "${output_dir}"
 
-    for file in $@ ; do
+    for file in "${@}" ; do
         if [[ -f "${file}" ]]; then #run ffmpeg command on $input and set output to $output
             # -vf scale=-2:1484
             ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -c:v libx264 -vf "yadif,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
@@ -146,6 +146,6 @@ EOF
 
 #call the function(s)
 
-makeh264 "$@"
+makeh264 "${@}"
 
 exit "$?"

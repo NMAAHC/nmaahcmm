@@ -16,8 +16,8 @@ moveDPX(){
     while [ "${*}" != "" ] ; do
 
         dpx_folder="${1}"
-        {target}="/Volumes/nmaahc-borndigital/06_DPX_checksums"
-        {target}_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums/${dpx_folder##*/}"
+        target="/Volumes/nmaahc-borndigital/06_DPX_checksums"
+        target_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums/${dpx_folder##*/}"
         chmod_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 
         if [ ! -d "${target}" ] ; then
@@ -86,6 +86,6 @@ moveDPX(){
 
 #call the function(s)
 
-moveDPX "$@"
+moveDPX "${@}"
 
 exit "$?"

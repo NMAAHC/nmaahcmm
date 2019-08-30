@@ -29,7 +29,7 @@ makeconcat(){
     ## $concatfile will be the name of both the $txtfile and the outputed concatenated file. Name well.
     echo
     while [ "${*}" != "" ] ; do ## while the number of arguments is not zero do X
-        for file in "${1}" ; do ## for the first argument do X
+        for file in ${1} ; do ## for the first argument do X
             suffix="${file##*.}" ## set $suffix to whatever the extension of your $file is
             path="${file%/*}" ## the $path is set as the dirname of the first argument
             txtfile="${path}/${concatfile}.txt" ## the $txtfile will be created in the same dir as the first agument and named after $concatfile
@@ -48,6 +48,6 @@ makeconcat(){
 
 #call the function(s)
 
-makeconcat "$@"
+makeconcat "${@}"
 
 exit "$?"

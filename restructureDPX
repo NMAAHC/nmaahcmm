@@ -37,7 +37,7 @@ restructureDPX(){
         1 )
             #make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
             echo
-            destination=("$dest/${dpxid}__${title}")
+            destination="${dest}/${dpxid}__${title}"
             mkdir "${destination}"
 
             echo
@@ -84,7 +84,7 @@ restructureDPX(){
                     else
                         while [[ -d "${dpx}" ]] ; do
                             dpxdir=("${destination}/${dpxid}__${title}__DPX") &&
-                            printf "\n\t%sFound DPX directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${dpx}dir" "${color_off}" &&
+                            printf "\n\t%sFound DPX directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${dpxdir}" "${color_off}" &&
                             find "${input}" -type d -name "*DPX" -exec mv -i {} "${destination}/${dpxid}__${title}__DPX" \;
                             echo
                         done
@@ -288,6 +288,6 @@ restructureDPX(){
 
 #call the function(s)
 
-restructureDPX "$@"
+restructureDPX "${@}"
 
 exit $?

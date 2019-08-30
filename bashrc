@@ -148,19 +148,19 @@ export -f nmaahcmm
 
 	# rsync transfer for DAMS uploads
 function rsyncDAMS () {
-	rsync -avvPhi --no-p --stats "$@"
+	rsync -avvPhi --no-p --stats "${@}"
 }
 export -f rsyncDAMS
 
 	# general rsync transfer
 function rsyncT () {
-	rsync -avvPhi --stats "$@"
+	rsync -avvPhi --stats "${@}"
 }
 export -f rsyncT
 
 	# general rsync transfer with deletion of source files
 function rsyncD () {
-	rsync -avvPhi --remove-source-files --stats "$@"
+	rsync -avvPhi --remove-source-files --stats "${@}"
 }
 export -f rsyncD
 
@@ -188,8 +188,8 @@ export -f sortk2
 
 
 function shortinfo() {
-   mediainfo --Inform="General;FileName=%FileNameExtension%\nFileSize=%FileSize%\nDuration=%Duration%" "$@";
-   mediainfo --Inform="Video;Resolution=Codec=%CodecID%" "$@";
+   mediainfo --Inform="General;FileName=%FileNameExtension%\nFileSize=%FileSize%\nDuration=%Duration%" "${@}";
+   mediainfo --Inform="Video;Resolution=Codec=%CodecID%" "${@}";
 }
 
 export -f shortinfo

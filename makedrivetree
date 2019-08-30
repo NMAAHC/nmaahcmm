@@ -43,6 +43,6 @@ for drive ; do
 
 #call the function(s)
 
-makedrivetree "$@"
+makedrivetree "${@}"
 
 exit "$?"

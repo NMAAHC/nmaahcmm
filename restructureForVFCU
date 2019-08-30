@@ -15,7 +15,7 @@ date="$(date +%Y%m%d)"
 restrutureForVFCU(){
     echo
 
-    for arg in "$@" ;
+    for arg in "${@}" ;
     do
         input="${1}" #name ${input} as the first arugment sent to script
         audio="${input}/${input##*/}"__Audio
@@ -65,6 +65,6 @@ restrutureForVFCU(){
 
 #call the function(s)
 
-restrutureForVFCU "$@"
+restructureForVFCU "${@}"
 
 exit $?
