@@ -63,7 +63,7 @@ _check_outputdir_forced(){
 
 #command-line options to set mediaid and original variables
 OPTIND=1
-while getopts ":o:" OPT ; do
+while getopts ":o:d:" OPT ; do
     case "${OPT}" in
         o)
             OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced
