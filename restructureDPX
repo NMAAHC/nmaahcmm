@@ -19,18 +19,18 @@ restructureDPX(){
     printf "%sPlease enter the number of reels your DPX package has: %s" "${biwhite}" "${color_off}"
     read -r reelnumber
     echo
-    printf '%sPlease enter DPX Object ID Number with underscores:\n' "${biwhite}"
-    printf 'ex. 2015_167_10_1\n%s' "${color_off}"
+    printf "%sPlease enter DPX Object ID Number with underscores:\n" "${biwhite}"
+    printf "ex. 2015_167_10_1\n%s" "${color_off}"
     read -r dpxid
     echo
-    printf '%sPlease enter DPX Object title with underscores:\n' "${biwhite}"
-    printf 'ex. Juke_Joint\n%s' "${color_off}"
+    printf "%sPlease enter DPX Object title with underscores:\n" "${biwhite}"
+    printf "ex. Juke_Joint\n%s" "${color_off}"
     read -r title
     echo
-    printf '%sPlease enter destination for directory tree to be created:\n%s' "${biwhite}" "${color_off}"
+    printf "%sPlease enter destination for directory tree to be created:\n%s" "${biwhite}" "${color_off}"
     read -r dest
     echo
-    printf '%sPlease enter directory to be worked with:\n%s' "${biwhite}" "${color_off}"
+    printf "%sPlease enter directory to be worked with:\n%s" "${biwhite}" "${color_off}"
     read -r input
 
     case "${reelnumber}" in
@@ -278,7 +278,7 @@ restructureDPX(){
             ;;
 
             *   )
-            printf '%sERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later.' "${bired}"
+            printf "%sERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later." "${bired}"
             echo
             cowsay 'SORRY!'
             ;;
