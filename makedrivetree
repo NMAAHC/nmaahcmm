@@ -2,12 +2,11 @@
 
 # a script to write the contents of a directory in tree form and save it to a .txt file
 
-### CONSTANTS
-
-date="$(date +%Y%m%d)"
-biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
 
 ### FUNCTIONS
 

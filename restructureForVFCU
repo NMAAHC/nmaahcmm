@@ -2,12 +2,11 @@
 
 #a script to restructure a DPX package directory for VFCU pickup and place .md5 in driectory
 
-### CONSTANTS
-
-biyellow=$(tput bold)$(tput setaf 3)
-bired=$(tput bold)$(tput setaf 1)
-gray=$(tput setaf 7)
-color_off=$(tput sgr0)
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
 
 ### FUNCTIONS
 

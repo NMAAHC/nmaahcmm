@@ -6,6 +6,14 @@ SCRIPTDIR=$(dirname "${0}")
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
+# You can't directly call a function in another shell script. You can move your function definitions into a separate file and then load them into your script using the . command, like this:
+# . /path/to/functions.sh
+# The script will interpret functions.sh as if its content were actually present in your file at this point. It is a common mechanism for implementing shared libraries of shell functions, and is how each script in nmaahcmm can reference the shared functions in this file.
+# Here is an example specific to NMAAHC:
+## script_path=${0%/*}      # script_path will be the directory path of {0} which is the script being called
+## . "${script_path}/nmaahcmmfunctions"         # loads the functions in nmaahcmmfunctions into this script
+## [[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};        # checks to see that that nmaahcmmfunctions exists; if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
+
 # load configuration file
 if [ -f "${GM_CONFIG_FILE}" ] ; then
     . "${GM_CONFIG_FILE}"
@@ -14,6 +22,15 @@ elif [ ! "${CONFIG}" = "Y" -a "${REQUIRECONFIG}" = "Y" ] ; then
     exit 1
 fi
 
+function _setcolors(){
+    date="$(date +%Y%m%d)"
+    biwhite=$(tput bold)$(tput setaf 7)
+    bired=$(tput bold)$(tput setaf 1)
+    biyellow=$(tput bold)$(tput setaf 3)
+    gray=$(tput setaf 7)
+    color_off=$(tput sgr0)
+}
+
 function _mkdir(){
     local DIR2MAKE=""
     while [ "${*}" != "" ] ; do
@@ -21,7 +38,7 @@ function _mkdir(){
         if [ ! -d "${DIR2MAKE}" ] ; then
             mkdir -p "${DIR2MAKE}"
             if [ "${?}" -ne 0 ]; then
-                _report -wt "${0}: Can't create directory at ${DIR2MAKE}"
+                printf "${bired}" "${0}: Can't create directory at ${DIR2MAKE}"
                 exit 1
             fi
         fi

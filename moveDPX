@@ -2,13 +2,12 @@
 
 # a script to copy .md5 checksum files and the first .dpx file in a stack to a designated directory
 
+# load nmaahcmmfunctions into this script
+SCRIPTDIR=$(dirname "${0}")
+. "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+
 #change
-
-### CONSTANTS
-
-biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
 
 ### FUNCTIONS
 

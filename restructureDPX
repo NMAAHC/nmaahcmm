@@ -2,16 +2,11 @@
 
 #a script to create a the desired directory structure and filenames for DPX packages received from VFS
 
-## check for nmaachmmfunctions
-
-SCRIPTDIR=$(dirname "${0}")
-. "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ; }
-
-### CONSTANTS
-
-biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
 
 ### FUNCTIONS
 

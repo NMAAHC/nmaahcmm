@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-BIWhite='\e[1;97m'
-BIRed='\e[1;91m'
-Color_Off='\e[0m'
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+
 RELATIVEPATH="access"
 SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
 EXTENSION="mp4"
@@ -11,7 +14,7 @@ EXTENSION="mp4"
 
 _check_outputdir_forced(){
     if [ ! -d "${OUTPUTDIR_FORCED}" ] ; then
-        printf "${BIRed}" "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}")." "${Color_Off}"
+        printf "${bired}" "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}")." "${color_off}"
        #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
     fi
 }
@@ -54,15 +57,15 @@ while [ "${*}" != "" ] ; do
     else
         OUTPUT_DIR="${OUTPUTDIR_FORCED}"
     fi
-    printf "output directory is: ${BIWhite}${OUTPUT_DIR}${Color_Off}"
+    printf "output directory is: ${biwhite}${OUTPUT_DIR}${color_off}"
     mkdir -p "${OUTPUT_DIR}"
     PARENTDIR="$(dirname "${OUTPUT_DIR}")"
-    printf "parent directory is: ${BIWhite}${PARENTDIR}${Color_Off}"
+    printf "parent directory is: ${biwhite}${PARENTDIR}${color_off}"
     #mv -v "${INPUT}" "${PARENTDIR}"
 
     #set $MEDIAID to basename of $INPUT with extension stripped
     MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
-    printf "MEDIAID is: ${BIWhite}$(basename "${INPUT}" | cut -d. -f1)${Color_Off}"
+    printf "MEDIAID is: ${biwhite}$(basename "${INPUT}" | cut -d. -f1)${color_off}"
 
     #set $OUTPUT
     OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
@@ -70,7 +73,7 @@ while [ "${*}" != "" ] ; do
 
     #check to see if $OUTPUT exists
     if [ -s "${OUTPUT}" ] ; then
-        printf "${BIRed}WARNING ${OUTPUT} already exists, skipping transcode${Color_Off}"
+        printf "${bired}WARNING ${OUTPUT} already exists, skipping transcode${color_off}"
     fi
     echo
 cat <<-EOF
@@ -80,7 +83,7 @@ cat <<-EOF
     Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input but it is not technically lossless.
 EOF
     echo
-    printf "${BIWhite}Please enter a CRF value:${Color_Off}"
+    printf "${biwhite}Please enter a CRF value:${color_off}"
     read CRFVALUE
     echo
 cat <<-EOF
@@ -93,18 +96,18 @@ cat <<-EOF
     The general guideline is to use the slowest preset that you have patience for.
     Current presets in descending order of speed are:
 EOF
-printf "${BIRed}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${Color_Off}"
+printf "${bired}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${color_off}"
 cat <<-EOF
     The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
     General usage is to choose the highest CRF value that still provides an acceptable quality.
     If the output looks good, then try a higher value and if it looks bad then choose a lower value.
 EOF
     echo
-    printf "${BIWhite}Please enter a preset speed:${Color_Off}"
+    printf "${biwhite}Please enter a preset speed:${color_off}"
     read PRESETSPEED
 
     #have script say what is about to do
-    printf "${BIWhite}making .mp4 derivative of ${MEDIAID}${Color_Off}"
+    printf "${biwhite}making .mp4 derivative of ${MEDIAID}${color_off}"
 
     #run ffmpeg command on $INPUT and set output to $OUTPUT
     if [[ -f "${INPUT}" ]]; then

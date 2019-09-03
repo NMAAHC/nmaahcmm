@@ -2,21 +2,11 @@
 
 # a script to concat video files into a single file
 
-### CONSTANTS
-
-biwhite=$(tput bold)$(tput setaf 7)
-color_off=$(tput sgr0)
-
+# load nmaahcmmfunctions into this script
 script_path=${0%/*}
-# script_path will be the directory path of {0} which is the script being called
 . "${script_path}/nmaahcmmfunctions"
-# You can't directly call a function in another shell script.
-# You can move your function definitions into a separate file and then load them into your script using the . command, like this:
-# . /path/to/functions.sh
-# This will interpret functions.sh as if it's content were actually present in your file at this point.
-# This is a common mechanism for implementing shared libraries of shell functions.
 [[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-# will check to see that that nmaahcmmfunctions exists and if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
 
 ### FUNCTIONS
 
