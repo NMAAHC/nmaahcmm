@@ -5,6 +5,7 @@ script_path=${0%/*}
 . "${script_path}/nmaahcmmfunctions"
 [[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
 
 RELATIVEPATH="access"
 SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename

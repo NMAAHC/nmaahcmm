@@ -31,6 +31,15 @@ function _setcolors(){
     color_off=$(tput sgr0)
 }
 
+# this function helps the system gracefully exit the script; it will only run when the operator presses ctrl+C
+function _initialize_make(){
+    _cleanup(){
+            printf "\n${bired}Process cancelled\n${color_off}" # tell operator that script is ending, then turn all colors off
+        exit 1
+    }
+    trap _cleanup SIGHUP SIGINT SIGTERM # "termination signals" that ask the system to clean up and safely kill the ongoing process, with increasing urgency
+}
+
 function _mkdir(){
     local DIR2MAKE=""
     while [ "${*}" != "" ] ; do

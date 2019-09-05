@@ -6,6 +6,7 @@
 SCRIPTDIR=$(dirname "${0}")
 . "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
 
 #change
 
