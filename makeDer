@@ -73,20 +73,21 @@ while [ "${*}" != "" ] ; do
     printf "OUTPUT is: ${biwhite}${OUTPUT}${color_off}"
 
     #check to see if $OUTPUT exists
-    if [ -s "${OUTPUT}" ] ; then
-        printf "${bired}WARNING ${OUTPUT} already exists, skipping transcode${color_off}"
-    fi
-    echo
+    if [[ -s "${OUTPUT}" ]] ; then
+        printf "${bired}WARNING ${OUTPUT} already exists, skipping transcode\n"
+        printf "Moving to next file if present...\n${color_off}"
+    else
+        echo
 cat <<-EOF
     A CRF value needs specified.
     The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
     A lower value is a higher quality and a subjectively sane range is 18-28.
     Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input but it is not technically lossless.
 EOF
-    echo
-    printf "${biwhite}Please enter a CRF value:${color_off}"
-    read CRFVALUE
-    echo
+        echo
+        printf "${biwhite}Please enter a CRF value:${color_off}"
+        read CRFVALUE
+        echo
 cat <<-EOF
     A preset encoding speed needs specified.
     A preset is a collection of options that will provide a certain encoding speed to compression ratio.
@@ -97,37 +98,39 @@ cat <<-EOF
     The general guideline is to use the slowest preset that you have patience for.
     Current presets in descending order of speed are:
 EOF
-printf "${bired}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${color_off}"
+    printf "${bired}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${color_off}"
 cat <<-EOF
     The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
     General usage is to choose the highest CRF value that still provides an acceptable quality.
     If the output looks good, then try a higher value and if it looks bad then choose a lower value.
 EOF
-    echo
-    printf "${biwhite}Please enter a preset speed:${color_off}"
-    read PRESETSPEED
+        echo
+        printf "${biwhite}Please enter a preset speed:${color_off}"
+        read PRESETSPEED
 
-    #have script say what is about to do
-    printf "${biwhite}making .mp4 derivative of ${MEDIAID}${color_off}"
+        #have script say what is about to do
+        printf "${biwhite}making .mp4 derivative of ${MEDIAID}${color_off}"
 
-    #run ffmpeg command on $INPUT and set output to $OUTPUT
-    if [[ -f "${INPUT}" ]]; then
-        #statements
-        ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
-        #mv -v -n "${INPUT}" "${PARENTDIR}"
-    elif [[ -d "${INPUT}" ]]; then
-        #statements
-        ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+        #run ffmpeg command on $INPUT and set output to $OUTPUT
+        if [[ -f "${INPUT}" ]]; then
+            #statements
+            ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+            #mv -v -n "${INPUT}" "${PARENTDIR}"
+        elif [[ -d "${INPUT}" ]]; then
+            #statements
+            ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+        fi
+
+        printf "${biwhite}renaming $(basename ${OUTPUT}) ${color_off}(if needed)"
+        #rename file to indcate derivative
+        cd "${OUTPUT_DIR}"
+        rename 's/PM/DER_02/' *.mp4
+        rename 's/DER_01/DER_03/' *.mp4
+        cd ~
+
+        printf "Success! Derivative ${biwhite}$(basename ${OUTPUT})${color_off} created.\n"
     fi
-
-    printf "${biwhite}renaming $(basename ${OUTPUT}) ${color_off}(if needed)"
-    #rename file to indcate derivative
-    cd "${OUTPUT_DIR}"
-    rename 's/PM/DER_02/' *.mp4
-    rename 's/DER_01/DER_03/' *.mp4
-    cd ~
-
-    echo "done. moving to next file."
-
     shift
 done
+
+printf "${biwhite}makeDer process complete.${color_off}\n"
