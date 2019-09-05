@@ -15,7 +15,7 @@ EXTENSION="mp4"
 
 _check_outputdir_forced(){
     if [ ! -d "${OUTPUTDIR_FORCED}" ] ; then
-        printf "${bired}" "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}")." "${color_off}"
+        printf "\n${bired}" "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${color_off}\n"
        #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
     fi
 }
@@ -58,19 +58,19 @@ while [ "${*}" != "" ] ; do
     else
         OUTPUT_DIR="${OUTPUTDIR_FORCED}"
     fi
-    printf "output directory is: ${biwhite}${OUTPUT_DIR}${color_off}"
+    printf "output directory is: ${biwhite}${OUTPUT_DIR}${color_off}\n"
     mkdir -p "${OUTPUT_DIR}"
     PARENTDIR="$(dirname "${OUTPUT_DIR}")"
-    printf "parent directory is: ${biwhite}${PARENTDIR}${color_off}"
+    printf "parent directory is: ${biwhite}${PARENTDIR}${color_off}\n"
     #mv -v "${INPUT}" "${PARENTDIR}"
 
     #set $MEDIAID to basename of $INPUT with extension stripped
     MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
-    printf "MEDIAID is: ${biwhite}$(basename "${INPUT}" | cut -d. -f1)${color_off}"
+    printf "MEDIAID is: ${biwhite}$(basename "${INPUT}" | cut -d. -f1)${color_off}\n"
 
     #set $OUTPUT
     OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
-    printf "OUTPUT is: ${biwhite}${OUTPUT}${color_off}"
+    printf "OUTPUT is: ${biwhite}${OUTPUT}${color_off}\n"
 
     #check to see if $OUTPUT exists
     if [[ -s "${OUTPUT}" ]] ; then
@@ -85,7 +85,7 @@ cat <<-EOF
     Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input but it is not technically lossless.
 EOF
         echo
-        printf "${biwhite}Please enter a CRF value:${color_off}"
+        printf "${biwhite}Please enter a CRF value: ${color_off}"
         read CRFVALUE
         echo
 cat <<-EOF
@@ -105,11 +105,11 @@ cat <<-EOF
     If the output looks good, then try a higher value and if it looks bad then choose a lower value.
 EOF
         echo
-        printf "${biwhite}Please enter a preset speed:${color_off}"
+        printf "${biwhite}Please enter a preset speed: ${color_off}"
         read PRESETSPEED
 
         #have script say what is about to do
-        printf "${biwhite}making .mp4 derivative of ${MEDIAID}${color_off}"
+        printf "\n${biwhite}making .mp4 derivative of $(basename ${MEDIAID})${color_off}\n"
 
         #run ffmpeg command on $INPUT and set output to $OUTPUT
         if [[ -f "${INPUT}" ]]; then
@@ -121,14 +121,14 @@ EOF
             ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
         fi
 
-        printf "${biwhite}renaming $(basename ${OUTPUT}) ${color_off}(if needed)"
+        printf "\n${biwhite}renaming $(basename ${OUTPUT}) ${color_off}(if needed)\n"
         #rename file to indcate derivative
         cd "${OUTPUT_DIR}"
         rename 's/PM/DER_02/' *.mp4
         rename 's/DER_01/DER_03/' *.mp4
         cd ~
 
-        printf "Success! Derivative ${biwhite}$(basename ${OUTPUT})${color_off} created.\n"
+        printf "\nSuccess! Derivative ${biwhite}$(basename ${OUTPUT})${color_off} created.\n\n"
     fi
     shift
 done
