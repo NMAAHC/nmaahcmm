@@ -121,11 +121,14 @@ EOF
             ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
         fi
 
-        printf "\n${biwhite}renaming $(basename ${OUTPUT}) ${color_off}(if needed)\n"
         #rename file to indcate derivative
         cd "${OUTPUT_DIR}"
-        rename 's/PM/DER_02/' *.mp4
-        rename 's/DER_01/DER_03/' *.mp4
+        if [[ -n $(find . -type f -name "*PM*.mp4" ) ]]; then # find all mp4s with "PM" in the name within the output directory; the "if" executes if the find statement executes to non-empty ("-n")
+            rename 's/PM/DER_02/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name : PM to DER_02${color_off}\n"
+        fi
+        if [[ -n $(find . -type f -name "*DER_01*.mp4" ) ]]; then # find all mp4s with "DER_01" in the name within the output directory; the "if" executes if the find statement executes to non-empty ("-n")
+            rename 's/DER_01/DER_03/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name conventions: DER_01 to DER_03${color_off}\n"
+        fi
         cd ~
 
         printf "\nSuccess! Derivative ${biwhite}$(basename ${OUTPUT})${color_off} created.\n\n"
