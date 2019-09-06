@@ -59,10 +59,8 @@ while [ "${*}" != "" ] ; do
         OUTPUT_DIR="${OUTPUTDIR_FORCED}"
     fi
     printf "output directory is: ${biwhite}${OUTPUT_DIR}${color_off}\n"
-    mkdir -p "${OUTPUT_DIR}"
     PARENTDIR="$(dirname "${OUTPUT_DIR}")"
     printf "parent directory is: ${biwhite}${PARENTDIR}${color_off}\n"
-    #mv -v "${INPUT}" "${PARENTDIR}"
 
     #set $MEDIAID to basename of $INPUT with extension stripped
     MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
@@ -110,6 +108,8 @@ EOF
 
         #have script say what is about to do
         printf "\n${biwhite}making .mp4 derivative of $(basename ${MEDIAID})${color_off}\n"
+        mkdir -p "${OUTPUT_DIR}"
+        #mv -v "${INPUT}" "${PARENTDIR}"
 
         #run ffmpeg command on $INPUT and set output to $OUTPUT
         if [[ -f "${INPUT}" ]]; then
