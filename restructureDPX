@@ -145,38 +145,38 @@ restructureDPX(){
             echo
             printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
 
-            if [ -d "${audR1}" ] ; then
+            if [[ -d "${audR1}" ]] ; then
                 find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
             else
                 printf "%sMissing ${audR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${derR1}" ] ; then
+            if [[ -d "${derR1}" ]] ; then
                 find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
             else
                 printf "%sMissing ${derR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${dpxR1}" ] ; then
+            if [[ -d "${dpxR1}" ]] ; then
                 find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
             else
                 printf "%sMissing ${dpxR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
 
-            if [ -d "${audR2}" ] ; then
+            if [[ -d "${audR2}" ]] ; then
                 find "${input}" -name "*R2*.wav" -exec mv -vi {} "${audR2}" \;
             else
                 printf "%sMissing ${audR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${derR2}" ] ; then
+            if [[ -d "${derR2}" ]] ; then
                 find "${input}" -name "*R2*.mov" -exec mv -vi {} "${derR2}" \;
             else
                 printf "%sMissing ${derR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${dpxR2}" ] ; then
+            if [[ -d "${dpxR2}" ]] ; then
                 find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
             else
                 printf "%sMissing ${dpxR2}%s" "${bired}" "${color_off}"
@@ -217,13 +217,13 @@ restructureDPX(){
             echo
             printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
 
-            if [ -d "${audR1}" ] ; then
+            if [[ -d "${audR1}" ]] ; then
                 find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
             else
                 printf "%sMissing ${audR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${derR1}" ] ; then
+            if [[ -d "${derR1}" ]] ; then
                 find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
             else
                 printf "%sMissing ${derR1}%s" "${bired}" "${color_off}"
@@ -236,38 +236,38 @@ restructureDPX(){
                 exit 1
             fi
 
-            if [ -d "${audR2}" ] ; then
+            if [[ -d "${audR2}" ]] ; then
                 find "${input}" -name "*R2*.wav" -exec mv -vi {} "${audR2}" \;
             else
                 printf "%sMissing ${audR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${derR2}" ] ; then
+            if [[ -d "${derR2}" ]] ; then
                 find "${input}" -name "*R2*.mov" -exec mv -vi {} "${derR2}" \;
             else
                 printf "%sMissing ${derR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${dpxR2}" ] ; then
+            if [[ -d "${dpxR2}" ]] ; then
                 find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
             else
                 printf "%sMissing ${dpxR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
 
-            if [ -d "${audR3}" ] ; then
+            if [[ -d "${audR3}" ]] ; then
                 find "${input}" -name "*R3*.wav" -exec mv -vi {} "${audR3}" \;
             else
                 printf "%sMissing ${audR3}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${derR3}" ] ; then
+            if [[ -d "${derR3}" ]] ; then
                 find "${input}" -name "*R3*.mov" -exec mv -vi {} "${derR3}" \;
             else
                 printf "%sMissing ${derR3}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${dpxR3}" ] ; then
+            if [[ -d "${dpxR3}" ]] ; then
                 find "${input}" -name "*R3*.dpx" -exec mv -vi {} "${dpxR3}" \;
             else
                 printf "%sMissing ${dpxR3}%s" "${bired}" "${color_off}"

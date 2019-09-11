@@ -19,8 +19,8 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
 # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+[[ "${#}" = 0 ]] && usage # if the the command is run with no arguments then usage is called
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -42,17 +42,17 @@ restructureForVFCU(){
         dpx="${input}/${input##*/}"__DPX
         md5="/Volumes/nmaahc-borndigital/06_DPX_checksums/"
 
-        if [ -d "${input}" ] ; then
+        if [[ -d "${input}" ]] ; then
             printf "%s%s%s is a directory.\n" "${biyellow}" "${input}" "${color_off}"
             printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "${biyellow}" "${audio}" "${derivatives}" "${color_off}" "${biyellow}" "${dpx}" "${color_off}"
             echo
             printf "%s" "${gray}"
-            if [ -d "${audio}" ] ; then
                 mv -vi "${audio}"/* "${dpx}" #move all file in the audio directory to the DPX directory
+            if [[ -d "${audio}" ]] ; then
                 rm -vri "${audio}"
             fi
-            if [ -d "${derivatives}" ] ; then
                 mv -vi "${derivatives}"/* "${dpx}" #move all file in the derivatives directory to the DPX directory
+            if [[ -d "${derivatives}" ]] ; then
                 rm -vri "${derivatives}"
             printf "%s" "${color_off}"
             fi
@@ -62,8 +62,8 @@ restructureForVFCU(){
             exit
         fi
     echo
-        if [ -d "${md5}" ] ; then
             printf "Moving .md5 to %s%s%s\n" "${biyellow}" "${dpx}" "${color_off}" #place .md5 in DPX directory to initiate DPX pickup
+        if [[ -d "${md5}" ]] ; then
             echo
             printf "%s" "${gray}"
             rsync -avvPhi --stats "${md5}/${input##*/}"/*.md5 "${dpx}"

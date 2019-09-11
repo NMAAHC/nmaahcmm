@@ -33,27 +33,27 @@ shift $(( ${OPTIND} - 1 ))
 ### FUNCTIONS
 
 moveDPX(){
-    while [ "${*}" != "" ] ; do
+    while [[ "${*}" != "" ]] ; do
 
         dpx_folder="${1}"
         target="/Volumes/nmaahc-borndigital/06_DPX_checksums"
         target_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums/${dpx_folder##*/}"
         chmod_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 
-        if [ ! -d "${target}" ] ; then
+        if [[ ! -d "${target}" ]] ; then
             echo
             printf "%s%s does not exist. Exiting." "${bired}" "${target}" >&2
             exit
         fi
 
-        if [ ! -d "${target_folder}" ] ; then
+        if [[ ! -d "${target_folder}" ]] ; then
             echo
             printf "Creating:\t%s%s%s\n" "${biwhite}" "${target_folder}" "${color_off}"
             mkdir -p "${target_folder}"
         fi
 
         for file in "${dpx_folder}"/*DPX*/* ; do
-            if [ -f "${target_folder}"/*.dpx ] ; then
+            if [[ -f "${target_folder}"/*.dpx ]] ; then
                 echo
                 printf "%s%s%s exists, verifying checksum.\n" "${biwhite}" "${file##*/}" "${color_off}"
                 rsync -avPhic "${file}" "${target_folder}"
@@ -64,7 +64,7 @@ moveDPX(){
             fi
             printf "%srsync exit status is: %s%s\n" "${biwhite}" "${rsync_err_1}" "${color_off}"
 
-            if [[ "${rsync_err_1}" == 0 ]]; then
+            if [[ "${rsync_err_1}" == 0 ]] ; then
                 echo
                 printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "${biwhite}" "${file##*/}" "${color_off}" "${biwhite}" "${target_folder}" "${color_off}"
               echo
@@ -75,7 +75,7 @@ moveDPX(){
         done
 
         for md5 in "${dpx_folder}"/*.md5 ; do
-            if [ -f "${target_folder}"/*.md5 ] ; then
+            if [[ -f "${target_folder}"/*.md5 ]] ; then
                 echo
                 printf "%s%s%s exists, verifying checksum.\n" "${biwhite}" "${md5##*/}" "${color_off}"
                 rsync -avPhic "${md5}" "${target_folder}"
