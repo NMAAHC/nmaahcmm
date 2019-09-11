@@ -9,11 +9,31 @@ script_path=${0%/*}
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
+### USAGE
+
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will concatenate multiple video files into a single video file. It takes two or more video files as arguments, all of which must be stored in the same directory. Be sure to list the video files in order. You will be asked to supply the name of the new concatenated file."
+    echo "Usage: $(basename ${0}) file1 file2 [ file3... ]"
+    echo
+    exit
+}
+[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
+# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;;
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
 ### FUNCTIONS
 
 makeconcat(){
     echo
-    printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s" "${biwhite}" "${color_off}"
+    printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s " "${biwhite}" "${color_off}"
     read -r concatfile
     ## $concatfile will be the name of both the $txtfile and the outputed concatenated file. Name well.
     echo
@@ -32,7 +52,7 @@ makeconcat(){
     echo
     cowsay "Done. Your concatenated video file is ready fo action." ## cowsay tells it like it is.
     echo
-    printf "Your concatenated file is: %s" "${concatfile}"
+    printf "Your concatenated file is: %s" "${concatfile}\n"
 }
 
 #call the function(s)

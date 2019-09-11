@@ -9,6 +9,26 @@ script_path=${0%/*}
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
+### USAGE
+
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will restructure a DPX package directory for VFCU pickup and place .md5s in a directory. It takes one or more DPX directories as arguments."
+    echo "Usage: $(basename ${0}) dpxdirectory1 [ dpxdirectory2 ... ]"
+    echo
+    exit
+}
+[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
+# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;;
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
 ### FUNCTIONS
 
 restructureForVFCU(){

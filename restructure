@@ -21,6 +21,8 @@
 # @author Joseph Perry <joseph@artefactual.com>
 # @version svn: $Id: 9e1ecac84215aaafd740d15eb0cbdc4c17b7fa1e $
 
+### no usage yet as script is in development
+
 while [ "${*}" != "" ] ; do
     # get context about the input
     TARGET="${1}"

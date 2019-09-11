@@ -1,5 +1,25 @@
 #!/usr/bin/env bash
 
+### USAGE
+
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will generate frame MD5s for all frames in a video file. It takes a video file or package as an argument. (If a package, the application will generate frame MD5s for all .mov files in the package.) The frame MD5s will be stored as text in a file with extension .framemd5.md5"
+    echo "Usage: $(basename ${0}) fileorpackage"
+    echo
+    exit
+}
+[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
+# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;;
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
 shopt -s globstar
 
 while [ "${*}" != "" ] ; do

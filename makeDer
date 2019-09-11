@@ -11,14 +11,19 @@ RELATIVEPATH="access"
 SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
 EXTENSION="mp4"
 
-}
+### USAGE
 
-_check_outputdir_forced(){
-    if [ ! -d "${OUTPUTDIR_FORCED}" ] ; then
-        printf "\n${bired}" "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${color_off}\n"
-       #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
-    fi
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes a video file or package as input."
+    echo "The script expects that any packages will hold only one .mov file and will only create a derivative for the first .mov file it finds within the package."
+    echo "The derivative will be named according to the input (i.e. it will have the same name as the master file or package)."
+    echo "Usage: $(basename ${0}) [ -d /path/to/deliver/to/ ] fileorpackage1 [ fileorpackage2 ...]"
+    echo
+    exit
 }
+[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
 
 #command-line options to set mediaid and original variables
 OPTIND=1
@@ -31,6 +36,9 @@ while getopts ":o:d:" OPT ; do
         d)
             DELIVERDIR="${OPTARG}" && _check_deliverdir
             ;;
+        h)
+            usage # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+            ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
             exit 1
@@ -42,6 +50,15 @@ while getopts ":o:d:" OPT ; do
     esac
 done
 shift $(( ${OPTIND} - 1 ))
+
+### FUNCTIONS
+
+_check_outputdir_forced(){
+    if [ ! -d "${OUTPUTDIR_FORCED}" ] ; then
+        printf "\n${bired}" "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${color_off}\n"
+       #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
+    fi
+}
 
 while [ "${*}" != "" ] ; do
 
@@ -118,6 +135,7 @@ EOF
             #mv -v -n "${INPUT}" "${PARENTDIR}"
         elif [[ -d "${INPUT}" ]]; then
             #statements
+            # this command currently only works for the first file the "find" command locates within a directory
             ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
         fi
 
