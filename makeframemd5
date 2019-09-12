@@ -11,7 +11,7 @@ usage(){
     exit
 }
 [ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+# getopts loop: if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -20,21 +20,20 @@ while getopts ":h" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
+## SCRIPT ACTIONS
+
 shopt -s globstar
 
 while [ "${*}" != "" ] ; do
-
-    #name input as the first arugment sent to script
+    #name input as the first argument sent to script
     INPUT="${1}"
-
     if [ -d "${INPUT}" ] ; then
-        for file in "${1}"/**/*.mov ; do 
-        ffmpeg -i "${file}" -an -f framemd5 "${file}.framemd5.md5"
+        for file in "${1}"/**/*.mov ; do # find the first .mov file two subdirectories down from the input
+            ffmpeg -i "${file}" -an -f framemd5 "${file}.framemd5.md5"
         done
     elif [ -f "${INPUT}" ]; then
         ffmpeg -i "${INPUT}" -an -f framemd5 "${INPUT}.framemd5.md5"
     fi
-
     shift
-
 done
+printf "${biwhite}makeframemd5 process complete.${color_off}\n"

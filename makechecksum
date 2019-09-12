@@ -20,7 +20,7 @@ usage(){
     exit
 }
 [ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+# getopts loop - if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -34,33 +34,33 @@ shift $(( ${OPTIND} - 1 ))
 makechecksum(){
     echo
     while [[ $# -gt 0 ]] ; do
+        1
+        input="${1}" #name $input as the first argument sent to script
 
-        input="${1}" #name $input as the first arugment sent to script
-
-        if [ -d "${input}" ] ; then     #if argment is a directory, run md5deep
+        if [ -d "${input}" ] ; then #if argument is a directory, run md5deep
             target="${input%/}" #strip the trailing /, if any
-            target="${target##*/}" #drop the leading directory componenets i.e. get basename
-            output="${input}/${target}_${date}_checksums.md5" #set .md5 file to $output
+            target="${target##*/}" #drop the leading directory components i.e. get basename
+            output="${input}/${target}_${date}_checksums.md5" #set .md5 file as $output
             printf "%s%s%s is a directory.\n" "${biwhite}" "${target}" "${color_off}"
             printf "Making checksums of all files in %s%s%s\n" "${biwhite}" "${target}" "${color_off}"
             printf "Writing to %s%s%s\n" "${biwhite}" "${output}" "${color_off}"
-            md5deep -bre "${input}" >> "${output}" #create md5 hash (hashes) of $input and write results to $output
+            md5deep -bre "${input}" >> "${output}" #create md5 hash (hashes) of $input and write results to $output. -b=strip leading directory info, -r=recursive, -e=display progress indicator
         fi
 
-        if [ -f "${input}" ] ; then #if argment is a file, run md5deep
-            target="${input##*/}" #get basname of $input
-            target="${target%.*}" #strip extention from $target
+        if [ -f "${input}" ] ; then #if argument is a file, run md5deep
+            target="${input##*/}" #get basename of $input
+            target="${target%.*}" #strip extension from $target
             output="${input%/*}" #get full path parent dirname of $input
-            output="${output}/${target}_${date}_checksums.md5" #set .md5 file to $output
+            output="${output}/${target}_${date}_checksums.md5" #set .md5 file as $output
             printf "%s%s%s is a file.\n" "${biwhite}" "${input##*/}" "${color_off}"
             printf "Making checksum of %s%s%s\n" "${biwhite}" "${input##*/}" "${color_off}"
             printf "Writing to %s%s%s\n" "${biwhite}" "${output}" "${color_off}"
-            md5deep -bre "${input}" >> "${output}" #create md5 hash (hashes) of $input and write results to $output
+            md5deep -bre "${input}" >> "${output}" #create md5 hash (hashes) of $input and write results to $output. -b=strip leading directory info, -r=recursive, -e=display progress indicator
         fi
 
         echo
-        printf "Sorting %s%s%s\n" "${biwhite}" "${output##*/}" "${color_off}" #sort $output
-        sort -k 2 -o "${output}" "${output}"
+        printf "Sorting %s%s%s\n" "${biwhite}" "${output##*/}" "${color_off}"
+        sort -k 2 -o "${output}" "${output}" #sort $output. -k 2=sort on the second field, -o=write output to file (instead of standard terminal output)
         shift
         echo
             if [[ $# -gt 0 ]] ; then
@@ -75,8 +75,8 @@ makechecksum(){
     done
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
 makechecksum "${@}"
-
+printf "${biwhite}makechecksum process complete.${color_off}\n"
 exit $?

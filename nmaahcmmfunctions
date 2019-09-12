@@ -22,6 +22,7 @@ elif [ ! "${CONFIG}" = "Y" -a "${REQUIRECONFIG}" = "Y" ] ; then
     exit 1
 fi
 
+# set text colors; can be used to differentiate statements that display in the terminal window
 function _setcolors(){
     date="$(date +%Y%m%d)"
     biwhite=$(tput bold)$(tput setaf 7)
@@ -40,6 +41,7 @@ function _initialize_make(){
     trap _cleanup SIGHUP SIGINT SIGTERM # "termination signals" that ask the system to clean up and safely kill the ongoing process, with increasing urgency
 }
 
+# a substitute for the plain mkdir tool; adds a more explicit warning to the operator if there is already a directory at that location
 function _mkdir(){
     local DIR2MAKE=""
     while [ "${*}" != "" ] ; do
@@ -55,6 +57,7 @@ function _mkdir(){
     done
 }
 
+# removes hidden files (always identified with a period at the beginning of the filename - ".*")
 function _removehidden(){
     if [ -z "${1}" ] ; then
         cowsay "no argument provided to remove hidden files. tootles."
@@ -68,8 +71,8 @@ function _sortk2(){
     if [ -z "${1}" ]; then
         cowsay "no argument provided to sort. tootles."
     else
-        sort -k 2 -o "${1}" "${1}"
-        #cowsay "file sorting is done. tootles."
+        sort -k 2 -o "${1}" "${1}" # -k 2=sort on the second field, -o=write output to file (instead of standard terminal output)
+        cowsay "file sorting is done. tootles."
     fi
 }
 

@@ -8,9 +8,7 @@ SCRIPTDIR=$(dirname "${0}")
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
-#change
-
-### USAGE
+## USAGE
 
 usage(){
     echo
@@ -21,7 +19,7 @@ usage(){
     exit
 }
 [ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+# getopts loop: if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -30,19 +28,19 @@ while getopts ":h" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
-### FUNCTIONS
+## FUNCTIONS
 
 moveDPX(){
     while [[ "${*}" != "" ]] ; do
 
         dpx_folder="${1}"
-        target="/Volumes/nmaahc-borndigital/06_DPX_checksums"
-        target_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums/${dpx_folder##*/}"
+        target_folder_parent="/Volumes/nmaahc-borndigital/06_DPX_checksums"
+        target_folder="${target_folder_parent}/${dpx_folder##*/}"
         chmod_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 
-        if [[ ! -d "${target}" ]] ; then
+        if [[ ! -d "${target_folder_parent}" ]] ; then 
             echo
-            printf "%s%s does not exist. Exiting." "${bired}" "${target}" >&2
+            printf "%s%s does not exist. Exiting." "${bired}" "${target_folder_parent}" >&2 # tell operator if the hardcoded parent folder cannot be found - e.g. no longer exists or is moved
             exit
         fi
 
@@ -52,22 +50,22 @@ moveDPX(){
             mkdir -p "${target_folder}"
         fi
 
-        for file in "${dpx_folder}"/*DPX*/* ; do
-            if [[ -f "${target_folder}"/*.dpx ]] ; then
+        for file in "${dpx_folder}"/*DPX*/* ; do # for all files in a DPX subdirectory (expected to be named with the word "DPX" in it), do the following:
+            if [[ -f "${target_folder}"/*.dpx ]] ; then # if .dpx file is found as expected, do:
                 echo
                 printf "%s%s%s exists, verifying checksum.\n" "${biwhite}" "${file##*/}" "${color_off}"
-                rsync -avPhic "${file}" "${target_folder}"
-                rsync_err_1="$?"
+                rsync -avPhic "${file}" "${target_folder}" # move file securely to the target folder. -a="archive," -v=verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes, -c=with a built-in checksum check
+                rsync_err_1="$?" # assign rsync output code to a variable
             else
-                rsync -avPhi "${file}" "${target_folder}"
-                rsync_err_1="$?"
+                rsync -avPhi "${file}" "${target_folder}" # move file securely to the target folder (no checksum check)
+                rsync_err_1="$?" # assign rsync output code to a variable
             fi
             printf "%srsync exit status is: %s%s\n" "${biwhite}" "${rsync_err_1}" "${color_off}"
 
-            if [[ "${rsync_err_1}" == 0 ]] ; then
+            if [[ "${rsync_err_1}" == 0 ]] ; then # if rsync output code indicated the rsync transfer was successful, tell operator
                 echo
                 printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "${biwhite}" "${file##*/}" "${color_off}" "${biwhite}" "${target_folder}" "${color_off}"
-              echo
+                echo
             else
                 printf "%sERRORS%s\n" "${bired}" "${color_off}" >&2
             fi
@@ -75,18 +73,18 @@ moveDPX(){
         done
 
         for md5 in "${dpx_folder}"/*.md5 ; do
-            if [[ -f "${target_folder}"/*.md5 ]] ; then
+            if [[ -f "${target_folder}"/*.md5 ]] ; then # if .md5 checksum file is found as expected, do:
                 echo
-                printf "%s%s%s exists, verifying checksum.\n" "${biwhite}" "${md5##*/}" "${color_off}"
+                printf "%s%s%s exists, verifying checksum.\n" "${biwhite}" "${md5##*/}" "${color_off}" # move file securely to the target folder (with built-in checksum check)
                 rsync -avPhic "${md5}" "${target_folder}"
-                rsync_err_2="$?"
+                rsync_err_2="$?" # assign rsync output code to a variable
             else
-                rsync -avPhi "${md5}" "${target_folder}"
-                rsync_err_2="$?"
+                rsync -avPhi "${md5}" "${target_folder}"  # move file securely to the target folder (no checksum check)
+                rsync_err_2="$?" # assign rsync output code to a variable
             fi
                 printf "%srsync exit status is: %s%s\n" "${biwhite}" "${rsync_err_2}" "${color_off}"
 
-            if [[ "${rsync_err_2}" == 0 ]] ; then
+            if [[ "${rsync_err_2}" == 0 ]] ; then # if rsync output code indicated the rsync transfer was successful, tell operator
                 echo
                 printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "${biwhite}" "${md5##*/}" "${color_off}" "${biwhite}" "${target_folder}" "${color_off}"
                 echo
@@ -94,18 +92,18 @@ moveDPX(){
                 printf "%sERRORS\n" "${bired}" "${color_off}" >&2
             fi
         done
-        printf "moving on\n"
+        printf "Moving to next DPX directory if supplied...\n"
         echo
         shift
 
     done
     echo
-    printf "%schanged permissions on the following files in directory %s to 777:%s\n" "${biwhite}" "${chmod_folder##*/}" "${color_off}"
-    chmod -vR 777 "${chmod_folder}"
+    printf "%sChanged permissions on the following files in directory %s to 777:%s\n" "${biwhite}" "${chmod_folder##*/}" "${color_off}"
+    chmod -vR 777 "${chmod_folder}" # set permissions on the target parent directory (set above) to read-write-execute for all users. -v=verbose, -R=recursive
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
 moveDPX "${@}"
-
+printf "${biwhite}moveDPX process complete.${color_off}\n"
 exit "$?"

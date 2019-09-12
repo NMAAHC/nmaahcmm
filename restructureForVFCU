@@ -15,12 +15,12 @@ usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will restructure a DPX package directory for VFCU pickup and place .md5s in a directory. It takes one or more DPX directories as arguments."
-    echo "Usage: $(basename ${0}) dpxdirectory1 [ dpxdirectory2 ... ]"
+    echo "Usage: $(basename ${0}) dpxdirectory1 [[ dpxdirectory2 ... ]"
     echo
     exit
 }
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 [[ "${#}" = 0 ]] && usage # if the the command is run with no arguments then usage is called
+# getopts loop: if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -36,7 +36,8 @@ restructureForVFCU(){
 
     for arg in "${@}" ;
     do
-        input="${1}" #name ${input} as the first arugment sent to script
+        input="${1}" # name $input as the first argument sent to script
+        # create subdirectories for each component
         audio="${input}/${input##*/}"__Audio
         derivatives="${input}/${input##*/}"__Derivatives
         dpx="${input}/${input##*/}"__DPX
@@ -47,13 +48,13 @@ restructureForVFCU(){
             printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "${biyellow}" "${audio}" "${derivatives}" "${color_off}" "${biyellow}" "${dpx}" "${color_off}"
             echo
             printf "%s" "${gray}"
-                mv -vi "${audio}"/* "${dpx}" #move all file in the audio directory to the DPX directory
             if [[ -d "${audio}" ]] ; then
-                rm -vri "${audio}"
+                mv -vi "${audio}"/* "${dpx}" # move all files in the audio directory to the DPX directory. -v=verbose, -i=interactive (prompts before overwriting)
+                rm -vri "${audio}" # removes the audio directory and any files left in it. -v=verbose, -r=recursive, -i=interactive (prompts before overwriting)
             fi
-                mv -vi "${derivatives}"/* "${dpx}" #move all file in the derivatives directory to the DPX directory
             if [[ -d "${derivatives}" ]] ; then
-                rm -vri "${derivatives}"
+                mv -vi "${derivatives}"/* "${dpx}" # move all files in the derivatives directory to the DPX directory
+                rm -vri "${derivatives}" # removes the derivatives directory and any files left within it
             printf "%s" "${color_off}"
             fi
         else
@@ -61,15 +62,15 @@ restructureForVFCU(){
             printf "%s%s is not a directory. Exiting" "${bired}" "${input}"
             exit
         fi
-    echo
-            printf "Moving .md5 to %s%s%s\n" "${biyellow}" "${dpx}" "${color_off}" #place .md5 in DPX directory to initiate DPX pickup
+        echo
         if [[ -d "${md5}" ]] ; then
+            printf "Moving .md5 directory to %s%s%s\n" "${biyellow}" "${dpx}" "${color_off}"
             echo
             printf "%s" "${gray}"
-            rsync -avvPhi --stats "${md5}/${input##*/}"/*.md5 "${dpx}"
+            rsync -avvPhi --stats "${md5}/${input##*/}"/*.md5 "${dpx}" # move .md5 directory to DPX directory to initiate DPX pickup. -a="archive," -vv=very verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes
             printf "%s" "${color_off}"
             echo
-            printf "Done moving .md5 to %s%s%s.\nVFCU will begin picking up your files shortly." "${biyellow}" "${dpx}" "${color_off}"
+            printf "Done moving .md5 directory to %s%s%s.\nVFCU will begin picking up your files shortly." "${biyellow}" "${dpx}" "${color_off}"
             echo
             printf "%sPlease make sure your templates have been set correctly!%s" "${bired}" "${color_off}"
             echo
@@ -82,8 +83,8 @@ restructureForVFCU(){
     done
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
 restructureForVFCU "${@}"
-
+printf "${biwhite}restructureForVFCU process complete.${color_off}\n"
 exit $?

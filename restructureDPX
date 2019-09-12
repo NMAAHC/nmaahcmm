@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#a script to create a the desired directory structure and filenames for DPX packages received from VFS
+# a script to create a the desired directory structure and filenames for DPX packages received from VFS
 
 # load nmaahcmmfunctions into this script
 script_path=${0%/*}
@@ -18,7 +18,7 @@ usage(){
     echo
     exit
 }
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+# getopts loop: if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -49,14 +49,14 @@ restructureDPX(){
 
     case "${reelnumber}" in
         1 )
-            #make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
+            # make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
             echo
             destination="${dest}/${dpxid}__${title}"
             mkdir "${destination}"
 
             echo
             printf "%sMoving files from %s ${input}\n" "${biwhite}" "${color_off}"
-            #find and move any .wav files fom $input to $destination
+            # find and move any .wav files fom $input to $destination
             if [[ -d "${destination}" ]] ; then
                 for wav in "${input}"/*WAV ; do
                     if [[ ! -d "${wav}" ]] ; then
@@ -76,7 +76,7 @@ restructureDPX(){
                 echo
                 exit 1
             fi
-            #find and move and .mov files from $input to $destination
+            # find and move and .mov files from $input to $destination
                 for mov in "${input}"/*MOV ; do
                     if [[ ! -d "$mov" ]] ; then
                         printf "\n\t%sNo .mov directory found.%s\n" "${biwhite}" "${color_off}"
@@ -90,7 +90,7 @@ restructureDPX(){
                         done
                     fi
                 done
-            #move DPX directory from $input to $destination and rename
+            # move DPX directory from $input to $destination and rename
                 for dpx in "${input}"/*DPX ; do
                     if [[ ! -d "${dpx}" ]] ; then
                         printf "\n\t%sNo DPX directory found.%s\n" "${biwhite}" "${color_off}"
@@ -105,7 +105,7 @@ restructureDPX(){
                     fi
                 done
             echo
-            #find the .wav and .mov files and rename them according to NMAAHC naming structures
+            # find the .wav and .mov files and rename them according to NMAAHC naming structures. Finds files based on filenaming + extension; assumes each file will have descriptive filename + lowercase extension.
             printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
             echo
             if [[ -d "${aud}" ]] ; then
@@ -124,13 +124,15 @@ restructureDPX(){
                 printf "\n\t%sRenamed uncompressed file to %s%s\n" "${biwhite}" "${der2}" "${color_off}"
                 echo
             fi
-            #remove the $input directory
+            # remove the $input directory
             printf "%sRemoving:\n\t%s%s\n" "${biwhite}" "${color_off}" "${input}"
-            rm -vri "${input}"
+            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
         2 )
+            # make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
             destination=("$dest/${dpxid}__${title}")
+            # make separate subdirectories for R1 and R2, with further subdirectories for the different components
             R1=("${destination}/${dpxid}__${title}_R1/${dpxid}__${title}_R1")
             audR1="${R1}__Audio"
             derR1="${R1}__Derivatives"
@@ -145,6 +147,7 @@ restructureDPX(){
             echo
             printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
 
+            # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
             if [[ -d "${audR1}" ]] ; then
                 find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
             else
@@ -184,7 +187,8 @@ restructureDPX(){
             fi
 
             echo
-            printf "%sReaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
+            # rename files according to NMAAHC filenaming guidelines
+            printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
             find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}/${dpxid}_R1_AUD.wav" \;
             find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_01.mov" \;
             find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_02.mov" \;
@@ -194,11 +198,13 @@ restructureDPX(){
 
             echo
             printf "%sRemoving %s\n" "${biwhite}" "${color_off}" "${input}"
-            rm -vri "${input}"
+            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
         3 )
+            # make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
             destination=("$dest/${dpxid}__${title}")
+            # make separate subdirectories for R1, R2, and R3, with further subdirectories for the different components
             R1=("${destination}/${dpxid}__${title}_R1/${dpxid}__${title}_R1")
             audR1="${R1}__Audio"
             derR1="${R1}__Derivatives"
@@ -217,6 +223,7 @@ restructureDPX(){
             echo
             printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
 
+            # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
             if [[ -d "${audR1}" ]] ; then
                 find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
             else
@@ -229,7 +236,7 @@ restructureDPX(){
                 printf "%sMissing ${derR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-            if [ -d "${dpxR1}" ] ; then
+            if [[ -d "${dpxR1}" ]] ; then
                 find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
             else
                 printf "%sMissing ${dpxR1}%s" "${bired}" "${color_off}"
@@ -275,7 +282,8 @@ restructureDPX(){
             fi
 
             echo
-            printf "%sReaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
+            # rename files according to NMAAHC filenaming guidelines
+            printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
             find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}/${dpxid}_R1_AUD.wav" \;
             find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_01.mov" \;
             find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_02.mov" \;
@@ -288,20 +296,20 @@ restructureDPX(){
 
             echo
             printf "%sRemoving \n" "${biwhite}" "${color_off}" "${input}"
-            rm -vri "${input}"
+            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=prompt before every removal
             ;;
 
             *   )
             printf "%sERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later." "${bired}"
             echo
-            cowsay 'SORRY!'
+            cowsay "SORRY!"
             ;;
 
     esac
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
 restructureDPX "${@}"
-
+printf "${biwhite}restructureDPX process complete.${color_off}\n"
 exit $?

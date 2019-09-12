@@ -8,7 +8,7 @@ _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
 RELATIVEPATH="access"
-SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
+SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
 EXTENSION="mp4"
 
 ### USAGE
@@ -60,32 +60,37 @@ _check_outputdir_forced(){
     fi
 }
 
+## SCRIPT ACTIONS
+
 while [ "${*}" != "" ] ; do
 
-    #set $INPUT as the first arugment sent to script
+    #set $INPUT as the first argument sent to script
     INPUT="${1}"
-    #shift
-    if [[ -z "${OUTPUTDIR_FORCED}" ]]; then
+    
+    # set output directory
+    if [[ -z "${OUTPUTDIR_FORCED}" ]]; then # if the operator did not specify an output directory, do the following
         if [[ -f "${INPUT}" ]]; then
-            OUTPUT_DIR="${INPUT%%.*}/${RELATIVEPATH}"
+            OUTPUT_DIR="${INPUT%%.*}/${RELATIVEPATH}" # output subdirectory will be created in same directory as the input file, and named after that file
         fi
         if [[ -d "${INPUT}" ]]; then
-            OUTPUT_DIR="${INPUT}/${RELATIVEPATH}"
+            OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # output will be sent to a subdirectory of the input directory
         fi
     else
         OUTPUT_DIR="${OUTPUTDIR_FORCED}"
     fi
-    printf "output directory is: ${biwhite}${OUTPUT_DIR}${color_off}\n"
+    printf "Output directory is: ${biwhite}${OUTPUT_DIR}${color_off}\n"
+    
+    # set parent directory (the directory containing $OUTPUT_DIR) - currently not used
     PARENTDIR="$(dirname "${OUTPUT_DIR}")"
-    printf "parent directory is: ${biwhite}${PARENTDIR}${color_off}\n"
+    printf "Parent directory is: ${biwhite}${PARENTDIR}${color_off}\n"
 
     #set $MEDIAID to basename of $INPUT with extension stripped
     MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
-    printf "MEDIAID is: ${biwhite}$(basename "${INPUT}" | cut -d. -f1)${color_off}\n"
+    printf "Media ID is: ${biwhite}$(basename "${INPUT}" | cut -d. -f1)${color_off}\n"
 
     #set $OUTPUT
     OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
-    printf "OUTPUT is: ${biwhite}${OUTPUT}${color_off}\n"
+    printf "Output is: ${biwhite}${OUTPUT}${color_off}\n"
 
     #check to see if $OUTPUT exists
     if [[ -s "${OUTPUT}" ]] ; then
@@ -95,9 +100,13 @@ while [ "${*}" != "" ] ; do
         echo
 cat <<-EOF
     A CRF value needs specified.
-    The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
-    A lower value is a higher quality and a subjectively sane range is 18-28.
-    Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input but it is not technically lossless.
+    The range of the quantizer scale is 0-51, where 0 is lossless, 23 is default, and 51 is worst possible.
+    A lower value is a higher quality and a subjectively useful range is 18-28.
+    Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input,
+    but it is not technically lossless.
+    The range is exponential, so increasing the CRF value +6 is roughly half the bitrate, while -6 is roughly twice the bitrate.
+    General usage is to choose the highest CRF value that still provides an acceptable quality.
+    If the output looks good, then try a higher value. If it looks bad then choose a lower value.
 EOF
         echo
         printf "${biwhite}Please enter a CRF value: ${color_off}"
@@ -114,40 +123,34 @@ cat <<-EOF
     Current presets in descending order of speed are:
 EOF
     printf "${bired}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${color_off}"
-cat <<-EOF
-    The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
-    General usage is to choose the highest CRF value that still provides an acceptable quality.
-    If the output looks good, then try a higher value and if it looks bad then choose a lower value.
-EOF
         echo
         printf "${biwhite}Please enter a preset speed: ${color_off}"
         read PRESETSPEED
 
-        #have script say what is about to do
-        printf "\n${biwhite}making .mp4 derivative of $(basename ${MEDIAID})${color_off}\n"
+        # have script say what is about to do
+        printf "\n${biwhite}Making .mp4 derivative of $(basename ${MEDIAID})${color_off}\n"
         mkdir -p "${OUTPUT_DIR}"
         #mv -v "${INPUT}" "${PARENTDIR}"
 
-        #run ffmpeg command on $INPUT and set output to $OUTPUT
-        if [[ -f "${INPUT}" ]]; then
-            #statements
+        # run ffmpeg command on $INPUT and send output to a file at location $OUTPUT
+        if [[ -f "${INPUT}" ]]; then # if the input is a file, run the ffmpeg command on that file
             ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
             #mv -v -n "${INPUT}" "${PARENTDIR}"
-        elif [[ -d "${INPUT}" ]]; then
-            #statements
-            # this command currently only works for the first file the "find" command locates within a directory
+        elif [[ -d "${INPUT}" ]]; then # if the input is a directory, find an .mov file within the input directory and run the ffmpeg command on that file
+            ##### This command currently only works for the first file the "find" command locates within a directory
             ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
         fi
 
-        #rename file to indcate derivative
-        cd "${OUTPUT_DIR}"
-        if [[ -n $(find . -type f -name "*PM*.mp4" ) ]]; then # find all mp4s with "PM" in the name within the output directory; the "if" executes if the find statement executes to non-empty ("-n")
+        # rename file to indicate derivative
+        # works by finding all mp4s in the output directory that have "PM" or "DER_01" in their filename; the "if" executes if any files matching those patterns are found (i.e. if the find statement executes to non-empty "-n")
+        cd "${OUTPUT_DIR}" # enter the directory containing the derivatives
+        if [[ -n $(find . -type f -name "*PM*.mp4" ) ]]; then
             rename 's/PM/DER_02/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name : PM to DER_02${color_off}\n"
         fi
-        if [[ -n $(find . -type f -name "*DER_01*.mp4" ) ]]; then # find all mp4s with "DER_01" in the name within the output directory; the "if" executes if the find statement executes to non-empty ("-n")
+        if [[ -n $(find . -type f -name "*DER_01*.mp4" ) ]]; then
             rename 's/DER_01/DER_03/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name conventions: DER_01 to DER_03${color_off}\n"
         fi
-        cd ~
+        cd ~ # exit derivative directory, return to home directory
 
         printf "\nSuccess! Derivative ${biwhite}$(basename ${OUTPUT})${color_off} created.\n\n"
     fi

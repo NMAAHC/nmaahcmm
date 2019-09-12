@@ -5,8 +5,10 @@ scriptdir="${0%/*}" # get dirname of $0 ($0 is the name of the current script)
 { echo "Missing '${scriptdir}/nmaahcmmfunctions'. Exiting." ;
 exit 1 ;} # The right side of && will only be evaluated if the exit status of the left side is zero.
           # || is the opposite: it will evaluate the right side only if the left side exit status is nonzero.
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
 
-### USAGE
+## USAGE
 
 usage(){
   echo
@@ -17,7 +19,7 @@ usage(){
   exit
 }
 [ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+# getopts loop - if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -26,9 +28,13 @@ while getopts ":h" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
-### SCRIPT
+## SCRIPT ACTIONS
 
-input1="${1}"
-input2="${2}"
+input1="${1}" # $1 is the first argument (file that the operator supplied)
+input2="${2}" # $2 is the second argument (file that the operator supplied)
 
+# compare the 6th field of each text file (which is where the checksums for each frame are expected to appear)
+# diff --suppress-common-lines outputs only the lines that are NOT identical in both files
 diff --side-by-side --width=200 --suppress-common-lines <(cat "${input1}" | cut -d, -f 6) <(cat "${input2}" | cut -d, -f 6)
+
+printf "${biwhite}diffFrameMD5 process complete.${color_off}\n"

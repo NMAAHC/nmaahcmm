@@ -14,7 +14,7 @@ relativepath="derivative"
 suffix="" #suffix is blank here but can be filled in with desired characters for inlcusion in filename
 extension="mp4"
 
-### USAGE
+## USAGE
 
 usage(){
     echo
@@ -27,7 +27,7 @@ usage(){
     exit
 }
 [ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+# getopts loop: if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -36,7 +36,7 @@ while getopts ":h" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
-### FUNCTIONS
+## FUNCTIONS
 
 #user_input="${*}" # i'm unclear what the purpose of this line is...so I commented it out
 OPTIND=1 # command-line options to set mediaid and original variables
@@ -49,9 +49,11 @@ while getopts ":h" OPT ; do
 done
 shift $(( ${OPTIND} - 1 ))
 
+## SCRIPT ACTIONS
+
 while [ "${*}" != "" ] ; do
 
-    input="${1}" #set $input as the first arugment sent to script
+    input="${1}" #set $input as the first argument sent to script
     if [[ -f "${input}" ]] ; then #if input is a file, set output_dir to input name with extension stripped plus relativepath
         output_dir="${input%.*}/${relativepath}"
     elif [[ -d "${input}" ]]; then #if input is a directory, set output_dir to input name plus relativepath
@@ -72,13 +74,13 @@ while [ "${*}" != "" ] ; do
         echo
 cat <<-EOF
     A CRF value needs specified.
-    The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
-    A lower value is a higher quality and a subjectively sane range is 18-28.
+    The range of the quantizer scale is 0-51, where 0 is lossless, 23 is default, and 51 is worst possible.
+    A lower value is a higher quality and a subjectively useful range is 18-28.
     Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input,
     but it is not technically lossless.
-    The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
+    The range is exponential, so increasing the CRF value +6 is roughly half the bitrate, while -6 is roughly twice the bitrate.
     General usage is to choose the highest CRF value that still provides an acceptable quality.
-    If the output looks good, then try a higher value and if it looks bad then choose a lower value.
+    If the output looks good, then try a higher value. If it looks bad then choose a lower value.
 EOF
         echo
         printf "%sPlease enter a CRF value:%s\n" "${color_off}" "${biwhite}"
@@ -101,20 +103,22 @@ EOF
         read -r presetspeed
         echo
 cat <<-EOF
-    The maxrate speed is the max bitrate at which your video will be encoded. It is written in kbps.
-    A good maxrate for Youtube type delivery is 8000.
+    The maxrate speed is the maximum bitrate at which your video will be encoded. It is written in kbps.
+    A good maxrate for YouTube-type delivery is 8000.
 EOF
         echo
         printf "%sPlease enter a maxrate speed:%s\n" "${color_off}" "${biwhite}"
         read -r maxrate
+        
         printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" #have script say what is about to do
         mkdir -p "${output_dir}"
 
-        if [[ -f "${input}" ]]; then #run ffmpeg command on $input and set output to $output
+        # run ffmpeg command on $INPUT and send output to a file at location $OUTPUT
+        if [[ -f "${input}" ]]; then # if the input is a file, run the ffmpeg command on that file
             # -vf scale=-2:1484
             ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${input}" -movflags faststart -c:v libx264 -vf "yadif,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-        elif [[ -d "${input}" ]]; then
-            # this command currently only works for the first file the "find" command locates within a directory
+        elif [[ -d "${input}" ]]; then  # if the input is a directory, find an .mov file within the directory and run the ffmpeg command on that file
+            ##### This command currently only works for the first file the "find" command locates within a directory
             ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${input}"/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
         fi
         printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"

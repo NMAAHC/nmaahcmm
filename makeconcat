@@ -9,7 +9,7 @@ script_path=${0%/*}
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
-### USAGE
+## USAGE
 
 usage(){
     echo
@@ -20,7 +20,7 @@ usage(){
     exit
 }
 [ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+# getopts loop - if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
@@ -29,7 +29,7 @@ while getopts ":h" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
-### FUNCTIONS
+## FUNCTIONS
 
 makeconcat(){
     echo
@@ -37,26 +37,26 @@ makeconcat(){
     read -r concatfile
     ## $concatfile will be the name of both the $txtfile and the outputed concatenated file. Name well.
     echo
-    while [ "${*}" != "" ] ; do ## while the number of arguments is not zero do X
-        for file in ${1} ; do ## for the first argument do X
-            suffix="${file##*.}" ## set $suffix to whatever the extension of your $file is
-            path="${file%/*}" ## the $path is set as the dirname of the first argument
-            txtfile="${path}/${concatfile}.txt" ## the $txtfile will be created in the same dir as the first agument and named after $concatfile
-            touch "${txtfile}" ## the $txtfile is created, aka "touched"
-            printf "file '${file}'\n" >> "${txtfile}" ## the first arugment is written to $txtfile in the appropraite syntax for ffmpeg
-            shift ## the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
+    while [ "${*}" != "" ] ; do # while the number of arguments is not zero do X
+        for file in ${1} ; do # for the first argument do X
+            suffix="${file##*.}" # set $suffix to whatever the extension of your $file is
+            path="${file%/*}" # the $path is set as the dirname of the first argument
+            txtfile="${path}/${concatfile}.txt" # the $txtfile will be created in the same dir as the first argument and named after $concatfile
+            touch "${txtfile}" # the $txtfile is created, aka "touched"
+            printf "file '${file}'\n" >> "${txtfile}" # the first argument is written to $txtfile in the appropriate syntax for ffmpeg
+            shift # the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
         done
     done
     concatfile="${path}/${concatfile}.$suffix"
-    ffmpeg -f concat -safe 0 -i "${txtfile}" -c copy "${concatfile}" ## ffmpeg creates the concated file in the same directory as $files
+    ffmpeg -f concat -safe 0 -i "${txtfile}" -c copy "${concatfile}" # ffmpeg creates the concatenated file in the same directory as $files
     echo
-    cowsay "Done. Your concatenated video file is ready fo action." ## cowsay tells it like it is.
+    cowsay "Done. Your concatenated video file is ready fo action." # cowsay tells it like it is.
     echo
     printf "Your concatenated file is: %s" "${concatfile}\n"
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
 makeconcat "${@}"
-
+printf "${biwhite}makeconcat process complete.${color_off}\n"
 exit "$?"
