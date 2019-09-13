@@ -26,25 +26,13 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# getopts loop: if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+# getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;;
-    esac
-done
-shift $(( ${OPTIND} - 1 ))
-
-## FUNCTIONS
-
-#user_input="${*}" # i'm unclear what the purpose of this line is...so I commented it out
-OPTIND=1 # command-line options to set mediaid and original variables
-while getopts ":h" OPT ; do
-    case "${OPT}" in
-        h) _usage ;;
-        *) echo "bad option -${OPTARG}" ; _usage ;;
-        :) echo "Option -${OPTARG} requires an argument" ; _writeerrorlog "makeyoutube" "The option selected required an argument and none was provided. The script had to exit." ; exit 1 ;;
+        h) usage ;;  # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))

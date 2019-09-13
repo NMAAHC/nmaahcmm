@@ -11,6 +11,19 @@ RELATIVEPATH="access"
 SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
 EXTENSION="mp4"
 
+### FUNCTIONS
+
+# this function needs to be defined before the getopts loop as it is used within that loop
+_check_outputdir_forced(){
+    if [[ ! -d "${OUTPUTDIR_FORCED}" ]] ; then
+        printf "\n${bired}The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${color_off}\n"
+        exit 1
+    else
+        echo "outputdirectory is ${OUTPUTDIR_FORCED}"
+       #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
+    fi
+}
+
 ### USAGE
 
 usage(){
@@ -19,46 +32,22 @@ usage(){
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes a video file or package as input."
     echo "The script expects that any packages will hold only one .mov file and will only create a derivative for the first .mov file it finds within the package."
     echo "The derivative will be named according to the input (i.e. it will have the same name as the master file or package)."
-    echo "Usage: $(basename ${0}) [ -d /path/to/deliver/to/ ] fileorpackage1 [ fileorpackage2 ...]"
+    echo "You can set the directory where the output should be sent with the -o flag."
+    echo "Usage: $(basename ${0}) [ -o /output/directory/path/ ] fileorpackage1 [ fileorpackage2 ...]"
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-
-#command-line options to set mediaid and original variables
+[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+# getopts loop
 OPTIND=1
-while getopts ":o:d:" OPT ; do
+while getopts ":o:h" OPT ; do
     case "${OPT}" in
-        o)
-            OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced
-            echo outputdirectory is "${OUTPUTDIR_FORCED}"
-            ;;
-        d)
-            DELIVERDIR="${OPTARG}" && _check_deliverdir
-            ;;
-        h)
-            usage # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
+        o)  OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced ;;
+        h)  usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option: -$OPTARG" ; usage ; exit 1 ;;
     esac
 done
 shift $(( ${OPTIND} - 1 ))
-
-### FUNCTIONS
-
-_check_outputdir_forced(){
-    if [ ! -d "${OUTPUTDIR_FORCED}" ] ; then
-        printf "\n${bired}" "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${color_off}\n"
-       #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
-    fi
-}
 
 ## SCRIPT ACTIONS
 

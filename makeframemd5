@@ -10,12 +10,13 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the the command is run with no arguments then usage is called
-# getopts loop: if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+# getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;;
+        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
