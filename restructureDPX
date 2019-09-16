@@ -56,18 +56,44 @@ restructureDPX(){
             mkdir "${destination}"
 
             echo
-            printf "%sMoving files from %s ${input}\n" "${biwhite}" "${color_off}"
-            # find and move any .wav files fom $input to $destination
+            printf "%sMoving files from %s ${input}\n${biwhite}${color_off}"
             if [[ -d "${destination}" ]] ; then
-                for wav in "${input}"/*WAV ; do
-                    if [[ ! -d "${wav}" ]] ; then
+                # find and move any .wav files fom $input to $destination
+                for wavpath in "${input}"/*WAV ; do
+                    if [[ ! -d "${wavpath}" ]]; then
                         printf "\n\t%sNo .wav directory found.%s\n" "${biwhite}" "${color_off}"
                         echo
                     else
-                        while [[ -d "${wav}" ]] ; do
+                        while [[ -d "${wavpath}" ]] ; do
                             aud=("${destination}/${dpxid}__${title}__Audio") &&
-                            printf "\n\t%sFound .wav directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${aud}" "${color_off}" &&
-                            find "${input}" -type d -name "*WAV" -exec mv -i "{}" "${destination}/${dpxid}__${title}__Audio" \;
+                            printf "\n\t%sFound .wav directory ${wavpath}.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${aud}" "${color_off}" &&
+                            mv -i "${wavpath}" "${aud}"
+                        done
+                    fi
+                done
+                # find and move and .mov files from $input to $destination
+                for movpath in "${input}"/*MOV ; do
+                    if [[ ! -d "${movpath}" ]] ; then
+                        printf "\n\t%sNo .mov directory found.%s\n" "${biwhite}" "${color_off}"
+                        echo
+                    else
+                        while [[ -d "${movpath}" ]] ; do
+                            der=("${destination}/${dpxid}__${title}__Derivatives") &&
+                            printf "\n\t%sFound .mov directory ${movpath}.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${der}" "${color_off}" &&
+                            mv -i "${movpath}" "${der}"
+                        done
+                    fi
+                done
+                # move DPX directory from $input to $destination and rename
+                for dpxpath in "${input}"/*DPX ; do
+                    if [[ ! -d "${dpxpath}" ]] ; then
+                        printf "\n\t%sNo DPX directory found.%s\n" "${biwhite}" "${color_off}"
+                        echo
+                    else
+                        while [[ -d "${dpxpath}" ]] ; do
+                            dpx=("${destination}/${dpxid}__${title}__DPX") &&
+                            printf "\n\t%sFound DPX directory ${dpxpath}.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${dpx}" "${color_off}" &&
+                            mv -i "${dpxpath}" "${dpx}"
                             echo
                         done
                     fi
@@ -77,37 +103,8 @@ restructureDPX(){
                 echo
                 exit 1
             fi
-            # find and move and .mov files from $input to $destination
-                for mov in "${input}"/*MOV ; do
-                    if [[ ! -d "$mov" ]] ; then
-                        printf "\n\t%sNo .mov directory found.%s\n" "${biwhite}" "${color_off}"
-                        echo
-                    else
-                        while [[ -d "$mov" ]] ; do
-                            der=("${destination}/${dpxid}__${title}__Derivatives") &&
-                            printf "\n\t%sFound .mov directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${der}" "${color_off}" &&
-                            find "${input}" -type d -name "*MOV" -exec mv -i "{}" "${destination}/${dpxid}__${title}__Derivatives" \;
-                            echo
-                        done
-                    fi
-                done
-            # move DPX directory from $input to $destination and rename
-                for dpx in "${input}"/*DPX ; do
-                    if [[ ! -d "${dpx}" ]] ; then
-                        printf "\n\t%sNo DPX directory found.%s\n" "${biwhite}" "${color_off}"
-                        echo
-                    else
-                        while [[ -d "${dpx}" ]] ; do
-                            dpxdir=("${destination}/${dpxid}__${title}__DPX") &&
-                            printf "\n\t%sFound DPX directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${dpxdir}" "${color_off}" &&
-                            find "${input}" -type d -name "*DPX" -exec mv -i {} "${destination}/${dpxid}__${title}__DPX" \;
-                            echo
-                        done
-                    fi
-                done
-            echo
             # find the .wav and .mov files and rename them according to NMAAHC naming structures. Finds files based on filenaming + extension; assumes each file will have descriptive filename + lowercase extension.
-            printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
+            printf "\n%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
             echo
             if [[ -d "${aud}" ]] ; then
                 find "${aud}" -name "*.wav" -exec mv -i "{}" "${aud}/${dpxid}_AUD.wav" \;
