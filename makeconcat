@@ -2,55 +2,62 @@
 
 # a script to concat video files into a single file
 
-### CONSTANTS
-
-biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
-today=$(date +"%Y%m%d")
-
+# load nmaahcmmfunctions into this script
 script_path=${0%/*}
-# script_path will be the directory path of {0} which is the script being called
-. "$script_path/nmaahcmmfunctions"
-# You can't directly call a function in another shell script.
-# You can move your function definitions into a separate file and then load them into your script using the . command, like this:
-# . /path/to/functions.sh
-# This will interpret functions.sh as if it's content were actually present in your file at this point.
-# This is a common mechanism for implementing shared libraries of shell functions.
-[[ -f "$script_path/nmaahcmmfunctions" ]] || { echo "Missing '$script_path/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-# will check to see that that nmaahcmmfunctions exists and if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
 
-### FUNCTIONS
+## USAGE
 
-makeconcat ()
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will concatenate multiple video files into a single video file. It takes two or more video files as arguments, all of which must be stored in the same directory. Be sure to list the video files in order. You will be asked to supply the name of the new concatenated file."
+    echo "Usage: $(basename ${0}) file1 file2 [ file3... ]"
+    echo
+    exit
+}
+[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
 
-{
-	echo
-	printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s" "$biwhite" "$color_off"
-	read -r concatfile
-	## $concatfile will be the name of both the $txtfile and the outputed concatenated file. Name well.
-	echo
-	while [ "${*}" != "" ] ; do ## while the number of arguments is not zero do X
-		for file in "$1" ; do ## for the first argument do X
-			suffix="${file##*.}" ## set $suffix to whatever the extension of your $file is
-			path="${file%/*}" ## the $path is set as the dirname of the first argument
-			txtfile="$path/$concatfile.txt" ## the $txtfile will be created in the same dir as the first agument and named after $concatfile
-			touch "$txtfile" ## the $txtfile is created, aka "touched"
-			printf "file '$file'\n" >> "$txtfile" ## the first arugment is written to $txtfile in the appropraite syntax for ffmpeg
-			shift ## the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
-		done
-	done
-	concatfile="$path/$concatfile.$suffix"
-	ffmpeg -f concat -safe 0 -i "$txtfile" -c copy "$concatfile" ## ffmpeg creates the concated file in the same directory as $files
-	echo
-	cowsay "Done. Your concatenated video file is ready fo action." ## cowsay tells it like it is.
-	echo
-	printf "Your concatenated file is: %s" "$concatfile"
+## FUNCTIONS
 
+makeconcat(){
+    echo
+    printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s " "${biwhite}" "${color_off}"
+    read -r concatfile
+    ## $concatfile will be the name of both the $txtfile and the outputed concatenated file. Name well.
+    echo
+    while [ "${*}" != "" ] ; do # while the number of arguments is not zero do X
+        for file in ${1} ; do # for the first argument do X
+            suffix="${file##*.}" # set $suffix to whatever the extension of your $file is
+            path="${file%/*}" # the $path is set as the dirname of the first argument
+            txtfile="${path}/${concatfile}.txt" # the $txtfile will be created in the same dir as the first argument and named after $concatfile
+            touch "${txtfile}" # the $txtfile is created, aka "touched"
+            printf "file '${file}'\n" >> "${txtfile}" # the first argument is written to $txtfile in the appropriate syntax for ffmpeg
+            shift # the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
+        done
+    done
+    concatfile="${path}/${concatfile}.$suffix"
+    ffmpeg -f concat -safe 0 -i "${txtfile}" -c copy "${concatfile}" # ffmpeg creates the concatenated file in the same directory as $files
+    echo
+    cowsay "Done. Your concatenated video file is ready fo action." # cowsay tells it like it is.
+    echo
+    printf "Your concatenated file is: %s" "${concatfile}\n"
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
-makeconcat "$@"
-
+makeconcat "${@}"
+printf "${biwhite}makeconcat process complete.${color_off}\n"
 exit "$?"

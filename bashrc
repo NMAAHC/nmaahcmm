@@ -80,21 +80,21 @@ On_IWhite='\e[0;107m'   # White
 MYNAME='NMAAHC Media Conservation'
 export MYNAME
 
-printf "${BRed}Hello $MYNAME!\n"
+printf "${BRed}Hello ${MYNAME}!\n"
 printf "${BWhite}Be All That You Can Be Today!\n"
 printf "${BBlue}Let's Go!${Color_Off}\n"
 
 print_before_the_prompt () {
-    printf "\n$BIYellow%s\n$Color_Off" "$PWD"
+    printf "\n$BIYellow%s\n${Color_Off}" "$PWD"
 }
 
 PROMPT_COMMAND=print_before_the_prompt
 
-export PS1="\[$BICyan\]≈:≈\[$Color_Off\] "
+export PS1="\[$BICyan\]≈:≈\[${Color_Off}\] "
 
 export LESS='-MN'
 
-# must use double quotes here so Unix expands $PATH and doesn't read it as a directory
+# must use double quotes here so Unix expands ${PATH} and doesn't read it as a directory
 # default OS X PATH: /usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/X11/bin
 
 export PATH="~/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/X11/bin"
@@ -148,25 +148,25 @@ export -f nmaahcmm
 
 	# rsync transfer for DAMS uploads
 function rsyncDAMS () {
-	rsync -avvPhi --no-p --stats "$@"
+	rsync -avvPhi --no-p --stats "${@}"
 }
 export -f rsyncDAMS
 
 	# general rsync transfer
 function rsyncT () {
-	rsync -avvPhi --stats "$@"
+	rsync -avvPhi --stats "${@}"
 }
 export -f rsyncT
 
 	# general rsync transfer with deletion of source files
 function rsyncD () {
-	rsync -avvPhi --remove-source-files --stats "$@"
+	rsync -avvPhi --remove-source-files --stats "${@}"
 }
 export -f rsyncD
 
 	# remove hidden files from a location
 function removehidden () {
-	if [ -z "$1" ] ; then
+	if [ -z "${1}" ] ; then
 		cowsay "no argument provided. tootles."
 	else
 		find "${1}" -name ".*" -exec rm -vfr {} \;
@@ -177,7 +177,7 @@ export -f removehidden
 
 	# sort text in a file by column 2 and overwrite file ; column separator is a space.
 function sortk2 () {
-	if [ -z "$1" ]; then
+	if [ -z "${1}" ]; then
 		cowsay "no argument provided. tootles."
 	else
 		sort -k 2 -o "${1}" "${1}"
@@ -188,8 +188,8 @@ export -f sortk2
 
 
 function shortinfo() {
-   mediainfo --Inform="General;FileName=%FileNameExtension%\nFileSize=%FileSize%\nDuration=%Duration%" "$@";
-   mediainfo --Inform="Video;Resolution=Codec=%CodecID%" "$@";
+   mediainfo --Inform="General;FileName=%FileNameExtension%\nFileSize=%FileSize%\nDuration=%Duration%" "${@}";
+   mediainfo --Inform="Video;Resolution=Codec=%CodecID%" "${@}";
 }
 
 export -f shortinfo

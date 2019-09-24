@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-mkdir -p "$HOME"/foo/xbar
-dpx="$HOME"/dpx/dpx
-mkdir -p "$dpx"
-input=$1
-find "$input" -type d -name "*bar" -exec rename "{}" "dpx" \;
+mkdir -p "${HOME}"/foo/xbar
+dpx="${HOME}"/dpx/dpx
+mkdir -p "${dpx}"
+input="${1}"
+find "${input}" -type d -name "*bar" -exec rename "{}" "dpx" \;

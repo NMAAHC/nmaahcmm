@@ -1,174 +1,149 @@
 #!/usr/bin/env bash
 
-BIWhite='\e[1;97m'
-BIRed='\e[1;91m'
-Color_Off='\e[0m'
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+
 RELATIVEPATH="access"
-SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
+SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
 EXTENSION="mp4"
 
-_initialize_make(){
-    _check_dependencies "${DEPENDENCIES[@]}"
-    unset DEPENDENCIES
-    DELIVERDIR=""
-    DRYRUN=false
-    EMAILADDRESS=""
-    OUTPUTDIR_FORCED=""
-    _cleanup(){
-        _log -a "Process aborted"
-        echo
-        _report -wts "THE PROCESS WAS ABORTED"
-        exit 1
-    }
-    trap _cleanup SIGHUP SIGINT SIGTERM
-}
+### FUNCTIONS
 
-_get_iso8601(){
-    date +%FT%T
-}
-
-_report(){
-        local RED="$(tput setaf 1)"   # Red      - For Warnings
-        local GREEN="$(tput setaf 2)" # Green    - For Declarations
-        local BLUE="$(tput setaf 4)"  # Blue     - For Questions
-        local NC="$(tput sgr0)"       # No Color
-        local COLOR=""
-        local STARTMESSAGE=""
-        local ENDMESSAGE=""
-        local ECHOOPT=""
-        local LOG_MESSAGE=""
-        OPTIND=1
-        while getopts ":qdwstn" OPT; do
-            case "${OPT}" in
-                q) COLOR="${BLUE}" ;;                     	  # question mode, use color blue
-                d) COLOR="${GREEN}" ;;                        # declaration mode, use color green
-                w) COLOR="${RED}" ; LOG_MESSAGE="Y";;         # warning mode, use color red
-                s) STARTMESSAGE+=([$(basename "${0}")] ) ;;   # prepend scriptname to the message
-                t) STARTMESSAGE+=($(_get_iso8601) '- ' ) ;;   # prepend timestamp to the message
-                n) ECHOOPT="-n" ;;                            # to avoid line breaks after echo
-            esac
-        done
-        shift $(( ${OPTIND} - 1 ))
-        MESSAGE="${1}"
-        echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]}${MESSAGE}${NC}"
-        [ "${LOG_MESSAGE}" = "Y" ] #&& _log -w "${MESSAGE}"
-}
-
+# this function needs to be defined before the getopts loop as it is used within that loop
 _check_outputdir_forced(){
-    if [ ! -d "${OUTPUTDIR_FORCED}" ] ; then
-        _report -wt "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}")."
+    if [[ ! -d "${OUTPUTDIR_FORCED}" ]] ; then
+        printf "\n${bired}The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${color_off}\n"
+        exit 1
+    else
+        echo "outputdirectory is ${OUTPUTDIR_FORCED}"
        #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
     fi
 }
 
-#command-line options to set mediaid and original variables
+### USAGE
+
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes a video file or package as input."
+    echo "The script expects that any packages will hold only one .mov file and will only create a derivative for the first .mov file it finds within the package."
+    echo "The derivative will be named according to the input (i.e. it will have the same name as the master file or package)."
+    echo "You can set the directory where the output should be sent with the -o flag."
+    echo "Usage: $(basename ${0}) [ -o /output/directory/path/ ] fileorpackage1 [ fileorpackage2 ...]"
+    echo
+    exit
+}
+[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+# getopts loop
 OPTIND=1
-while getopts ":o:" OPT ; do
-    case $OPT in
-        o)
-			OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced
-			echo outputdirectory is "${OUTPUTDIR_FORCED}"
-			;;
-        d)
-			DELIVERDIR="${OPTARG}" && _check_deliverdir
-			;;
-		\?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
+while getopts ":o:h" OPT ; do
+    case "${OPT}" in
+        o)  OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced ;;
+        h)  usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option: -$OPTARG" ; usage ; exit 1 ;;
     esac
 done
 shift $(( ${OPTIND} - 1 ))
 
+## SCRIPT ACTIONS
+
 while [ "${*}" != "" ] ; do
 
-	#set $INPUT as the first arugment sent to script
-	INPUT="${1}"
-	#shift
-	if [[ -z "${OUTPUTDIR_FORCED}" ]]; then
-		if [[ -f "${INPUT}" ]]; then
-			OUTPUT_DIR="${INPUT%%.*}/${RELATIVEPATH}"
-		fi
-		if [[ -d "${INPUT}" ]]; then
-			OUTPUT_DIR="${INPUT}/${RELATIVEPATH}"
-		fi
+    #set $INPUT as the first argument sent to script
+    INPUT="${1}"
+    
+    # set output directory
+    if [[ -z "${OUTPUTDIR_FORCED}" ]]; then # if the operator did not specify an output directory, do the following
+        if [[ -f "${INPUT}" ]]; then
+            OUTPUT_DIR="${INPUT%%.*}/${RELATIVEPATH}" # output subdirectory will be created in same directory as the input file, and named after that file
+        fi
+        if [[ -d "${INPUT}" ]]; then
+            OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # output will be sent to a subdirectory of the input directory
+        fi
     else
-    	OUTPUT_DIR="${OUTPUTDIR_FORCED}"
+        OUTPUT_DIR="${OUTPUTDIR_FORCED}"
     fi
-    printf output directory is: "${BIWhite}${OUTPUT_DIR}${Color_Off}"
-    mkdir -p "${OUTPUT_DIR}"
+    printf "Output directory is: ${biwhite}${OUTPUT_DIR}${color_off}\n"
+    
+    # set parent directory (the directory containing $OUTPUT_DIR) - currently not used
     PARENTDIR="$(dirname "${OUTPUT_DIR}")"
-    printf  parent directory is: "${BIWhite}${PARENTDIR}${Color_Off}"
-    #mv -v "${INPUT}" "${PARENTDIR}"
+    printf "Parent directory is: ${biwhite}${PARENTDIR}${color_off}\n"
 
-	#set $MEDIAID to basename of $INPUT with extension stripped
-	MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
- 	printf  MEDIAID is: "${BIWhite}$(basename "${INPUT}" | cut -d. -f1)${Color_Off}"
+    #set $MEDIAID to basename of $INPUT with extension stripped
+    MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
+    printf "Media ID is: ${biwhite}$(basename "${INPUT}" | cut -d. -f1)${color_off}\n"
 
-	#set $OUTPUT
-	OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
-	printf  OUTPUT is: "${BIWhite}${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}${Color_Off}"
+    #set $OUTPUT
+    OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
+    printf "Output is: ${biwhite}${OUTPUT}${color_off}\n"
 
-	#check to see if $OUTPUT exists
-	if [ -s "${OUTPUT}" ] ; then
-			printf "${BIRed}WARNING ${OUTPUT} already exists, skipping transcode${Color_Off}"
-		fi
-	echo
+    #check to see if $OUTPUT exists
+    if [[ -s "${OUTPUT}" ]] ; then
+        printf "${bired}WARNING ${OUTPUT} already exists, skipping transcode\n"
+        printf "Moving to next file if present...\n${color_off}"
+    else
+        echo
 cat <<-EOF
-	A CRF value needs specified.
-	The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
-	A lower value is a higher quality and a subjectively sane range is 18-28.
-	Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input but it is not technically lossless.
+    A CRF value needs specified.
+    The range of the quantizer scale is 0-51, where 0 is lossless, 23 is default, and 51 is worst possible.
+    A lower value is a higher quality and a subjectively useful range is 18-28.
+    Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input,
+    but it is not technically lossless.
+    The range is exponential, so increasing the CRF value +6 is roughly half the bitrate, while -6 is roughly twice the bitrate.
+    General usage is to choose the highest CRF value that still provides an acceptable quality.
+    If the output looks good, then try a higher value. If it looks bad then choose a lower value.
 EOF
-	echo
-	printf "${BIWhite}Please enter a CRF value:${Color_Off}"
-	read CRFVALUE
-	echo
+        echo
+        printf "${biwhite}Please enter a CRF value: ${color_off}"
+        read CRFVALUE
+        echo
 cat <<-EOF
-	A preset encoding speed needs specified.
-	A preset is a collection of options that will provide a certain encoding speed to compression ratio.
-	A slower preset will provide better compression (compression is quality per filesize).
-	This means that, for example, if you target a certain file size or constant bit rate,
-	you will achieve better quality with a slower preset.
-	Similarly, for constant quality encoding, you will simply save bitrate by choosing a slower preset.
-	The general guideline is to use the slowest preset that you have patience for.
-	Current presets in descending order of speed are:
+    A preset encoding speed needs specified.
+    A preset is a collection of options that will provide a certain encoding speed to compression ratio.
+    A slower preset will provide better compression (compression is quality per filesize).
+    This means that, for example, if you target a certain file size or constant bit rate,
+    you will achieve better quality with a slower preset.
+    Similarly, for constant quality encoding, you will simply save bitrate by choosing a slower preset.
+    The general guideline is to use the slowest preset that you have patience for.
+    Current presets in descending order of speed are:
 EOF
-printf "${BIRed}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${Color_Off}"
-cat <<-EOF
-	The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
-	General usage is to choose the highest CRF value that still provides an acceptable quality.
-	If the output looks good, then try a higher value and if it looks bad then choose a lower value.
-EOF
-	echo
-	printf "${BIWhite}Please enter a preset speed:${Color_Off}"
-	read PRESETSPEED
+    printf "${bired}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${color_off}"
+        echo
+        printf "${biwhite}Please enter a preset speed: ${color_off}"
+        read PRESETSPEED
 
-	#have script say what is about to do
-	printf "${BIWhite}making .mp4 derivative of ${MEDIAID}${Color_Off}"
+        # have script say what is about to do
+        printf "\n${biwhite}Making .mp4 derivative of $(basename ${MEDIAID})${color_off}\n"
+        mkdir -p "${OUTPUT_DIR}"
+        #mv -v "${INPUT}" "${PARENTDIR}"
 
-	#run ffmpeg command on $INPUT and set output to $OUTPUT
-	if [[ -f "${INPUT}" ]]; then
-		#statements
-		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
-		#mv -v -n "${INPUT}" "${PARENTDIR}"
-	elif [[ -d "${INPUT}" ]]; then
-		#statements
-		ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
-	fi
+        # run ffmpeg command on $INPUT and send output to a file at location $OUTPUT
+        if [[ -f "${INPUT}" ]]; then # if the input is a file, run the ffmpeg command on that file
+            ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+            #mv -v -n "${INPUT}" "${PARENTDIR}"
+        elif [[ -d "${INPUT}" ]]; then # if the input is a directory, find an .mov file within the input directory and run the ffmpeg command on that file
+            ##### This command currently only works for the first file the "find" command locates within a directory
+            ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+        fi
 
-	printf "${BIWhite}"'renaming' $(basename "${OUTPUT}${Color_Off}") '(if needed)'
-	#rename file to indcate derivative
-	cd "${OUTPUT_DIR}"
-	rename 's/PM/DER_02/' *.mp4
-	rename 's/DER_01/DER_03/' *.mp4
-	cd ~
+        # rename file to indicate derivative
+        # works by finding all mp4s in the output directory that have "PM" or "DER_01" in their filename; the "if" executes if any files matching those patterns are found (i.e. if the find statement executes to non-empty "-n")
+        cd "${OUTPUT_DIR}" # enter the directory containing the derivatives
+        if [[ -n $(find . -type f -name "*PM*.mp4" ) ]]; then
+            rename 's/PM/DER_02/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name : PM to DER_02${color_off}\n"
+        fi
+        if [[ -n $(find . -type f -name "*DER_01*.mp4" ) ]]; then
+            rename 's/DER_01/DER_03/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name conventions: DER_01 to DER_03${color_off}\n"
+        fi
+        cd ~ # exit derivative directory, return to home directory
 
-	echo 'done. moving to next file.'
-
-	shift
+        printf "\nSuccess! Derivative ${biwhite}$(basename ${OUTPUT})${color_off} created.\n\n"
+    fi
+    shift
 done
+
+printf "${biwhite}makeDer process complete.${color_off}\n"

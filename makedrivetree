@@ -2,50 +2,66 @@
 
 # a script to write the contents of a directory in tree form and save it to a .txt file
 
-### CONSTANTS
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
 
-date="$(date +%Y%m%d)"
-biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
+### USAGE
+
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will write the contents of a drive directory in tree form and save it to a .txt file. It takes one or more drives as input."
+    echo "Usage: $(basename ${0}) /path/to/drive1 [ /path/to/drive2 ... ] "
+    echo
+    exit
+}
+[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 
-makedrivetree()
-{
-local drive ; #set local variable $drive
-local folder=/Volumes/UtilitySAN/05_driveContents
-  for drive ; do
-    	drive="${drive%/}" #strip trailing / if any
-    if [ -d "$drive" ] ; then
-      output=${drive##*/}_contents_"$date".txt
-      output="$folder/$output"
-			if [ -d $folder ] ; then
-      	tree --filelimit 50 --si --du -U -Q -o "$output" "$drive"
-        if grep "0 directories, 0 files" "$output" ; then
-          printf "%s%s is empty. Adding EMPTY to file name.\n%s" "$biwhite" "$drive" "$color_off" &&
-          outputE="$folder/${drive##*/}_contents_"$date"_EMPTY.txt" &&
-          mv -v "$output" "$outputE"
-          printf "%sMoving %s to %s\n%s" "$biwhite" "${outputE##*/}" "$drive" "$color_off"
-          cp -v "$outputE" "$drive"
+makedrivetree(){
+local drive ; # set up local variable $drive
+local folder="/Volumes/UtilitySAN/05_driveContents"
+for drive ; do # loop over all the drives provided by the operator
+    drive="${drive%/}" # strip trailing / if any
+    if [[ -d "${drive}" ]] ; then # if the drive structure is recognized as a directory:
+        output="${folder}/${drive##*/}_contents_${date}.txt"
+        if [[ -d "${folder}" ]] ; then # if the output's parent folder structure is recognized as a directory:
+            tree --filelimit 50 --si --du -U -Q -o "${output}" "${drive}" # create a tree of the drive's contents
+            if grep "0 directories, 0 files" "${output}" ; then # if the results of "tree," sent to the output text file, show that the drive was empty:
+                printf "%s%s is empty. Adding EMPTY to file name.\n%s" "${biwhite}" "${drive}" "${color_off}" && outputE="${folder}/${drive##*/}_contents_${date}_EMPTY.txt" && mv -v "${output}" "${output}E"
+                printf "%sMoving %s to %s\n%s" "${biwhite}" "${outputE##*/}" "${drive}" "${color_off}" # tell operator the tree file is being moved to the drive
+                cp -v "${outputE}" "${drive}" # copy the output text file to the drive: -v=verbose
+            else
+                printf "%sMoving %s to %s\n%s" "${biwhite}" "${drive}" "${color_off}" # tell operator the tree file is being moved to the drive
+                cp -va "${output}" "${drive}" # copy the output text file to the drive: -v=verbose, -a="archive"
+            fi
         else
-          printf "%s%s is not empty\n%s" "$biwhite" $drive "$color_off"
-          cp -va "$output" "$drive"
+            printf "%sERROR: %s does not exist. Exiting.\n" "${bired}" "${folder}" >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
+            exit
         fi
-			else
-        printf "%sError %s does not exist. Exiting.\n" "$bired" "$folder" >&2
-				exit
-      fi
     else
-      printf "%sError %s does not exist. Exiting.\n" "$bired" $drive >&2
-			exit
+        printf "%sERROR: %s does not exist. Exiting.\n" "${bired}" "${drive}" >&2 # tell operator if the drive cannot be found
+        exit
     fi
-    
-  done
+done
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
-makedrivetree "$@"
-
+makedrivetree "${@}"
+printf "${biwhite}makedrivetree process complete.${color_off}\n"
 exit "$?"

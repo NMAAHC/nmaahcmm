@@ -3,151 +3,96 @@
 # a script to create a H264 derivative of a given input. Make access happen!
 # all comments refer to line(s) above unless placed in-line with code or specified otherwise
 
-### CONSTANTS
-
-biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
+# load nmaahcmmfunctions into this script
 script_path=${0%/*}
-# script_path will be the directory path of {0} which is the script being called
-. "$script_path/nmaahcmmfunctions"
-# You can't directly call a function in another shell script.
-# You can move your function definitions into a separate file and then load them into your script using the . command, like this:
-# . /path/to/functions.sh
-# This will interpret functions.sh as if it's content were actually present in your file at this point.
-# This is a common mechanism for implementing shared libraries of shell functions.
-[[ -f "$script_path/nmaahcmmfunctions" ]] || { echo "Missing '$script_path/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-# will check to see that that nmaahcmmfunctions exists and if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
-dependencies=(ffmpeg ffprobe)
-echo script path is $script_path
-_initialize_make
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+
 relativepath="derivative"
 suffix="" #suffix is blank here but can be filled in with desired characters for inlcusion in filename
 extension="mp4"
+crfvalue=18
+presetspeed=medium
+maxrate=8000
 
-### USAGE
+## USAGE
 
-usage ()
-{
+usage(){
     echo
-    echo "$(basename "${0}") ${VERSION}"
-    echo "This application will create a high quality h264 file (suitable for uploading to YouTube) from a video file or package input with the following options."
-    echo "Dependencies: ${DEPENDENCIES[@]}"
-    echo "Usage: $(basename ${0}) [ -d /path/to/deliver/to/ ] fileorpackage1 [ fileorpackage2 ...]"
-    echo "  -l (only use the left channel of the first audio track)"
-    echo "  -r (only use the right channel of the first audio track)"
-    echo "  -d directory ( directory to deliver the resulting file to )"
-    echo "  -o directory ( directory to write the resulting file to )"
-    echo "  -n (dry-run mode, show the commands that would be run but don't do anything)"
-    echo "  -e emailaddress ( send an email about the delivery, only valid if -d is used )"
-    echo "  -E emailaddress ( send an email about process outcome )"
-    echo "  -Y ( attempt to use uploadyoutube on the resulting file )"
-    echo "  -h ( display this help )"
+    echo "$(basename "${0}")"
+    echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes one or more video files or packages as input. You may pass both video files and packages in the same command."
+    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'derivative' located within the input file's parent directory."
+    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'derivative' located within the input directory."
+    echo "Usage: $(basename ${0}) fileorpackage1 [ fileorpackage2 ...]"
     echo
     exit
 }
+[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;;  # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
 
-[ "${#}" = 0 ] && usage
-# if the the command is run with no arguments then usage is called
+## SCRIPT ACTIONS
 
-### FUNCTIONS
+while [ "${*}" != "" ] ; do
+    input="${1}" #set $input as the first argument sent to script
 
-makeh264 ()
-{
-	#user_input="${*}" # i'm unclear what the purpose of this line is...so I commented it out
-	OPTIND=1 # command-line options to set mediaid and original variables
-	while getopts ":lrv:o:d:e:E:nhY" OPT ; do
-	    case "${OPT}" in
-	        l) AUDIOMAP="L";;
-	        r) AUDIOMAP="R";;
-	        v) VOLADJUST="${OPTARG}";;
-	        o) OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced ;;
-	        d) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
-	        e) EMAILADDRESS_DELIVERY="${OPTARG}" && check_emailaddress "${EMAILADDRESS_DELIVERY}" ;;
-	        E) EMAILADDRESS_OUTCOME="${OPTARG}" && check_emailaddress "${EMAILADDRESS_OUTCOME}" ;;
-	        n) DRYRUN=true;;
-	        Y) YOUTUBEUPLOAD="Y";;
-	        h) _usage ;;
-	        *) echo "bad option -${OPTARG}" ; _usage ;;
-	        :) echo "Option -${OPTARG} requires an argument" ; _writeerrorlog "makeyoutube" "The option selected required an argument and none was provided. The script had to exit." ; exit 1 ;;
-	    esac
-	done
-	#shift $(( ${OPTIND} - 1 ))
-	shift "$((OPTIND-1))"
+    # process if input is a file
+    if [[ -f "${input}" ]] ; then
+        output_dir="$(dirname ${input})/${relativepath}" # set output_dir to input name with extension stripped plus relativepath
+        mediaid="${input##*/}" #set $mediaid to basename of $input
+        mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
+        output="${output_dir}/${mediaid%.*}${suffix}.${extension}" #set $output
+        [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
+        if [[ -s "${output}" ]] ; then #check to see if $output exists
+            printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
+            printf "Moving to next file if present...\n${color_off}"
+        else
+            printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
+            printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
+            printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
+            printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
+            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${input}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
+            printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+            printf "Moving to next file if present...\n${color_off}"
+        fi
+    # process if input is a directory
+    elif [[ -d "${input}" ]] ; then
+        input="${input%/}" # strip trailing / if any
+        output_dir="${input}/${relativepath}" # set output_dir to input name plus relativepath
+        shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
+        for file in "${input}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
+            [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
+            mediaid="${file##*/}" #set $mediaid to basename of $input
+            mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
+            output="${output_dir}/${mediaid%.*}${suffix}.${extension}" #set $output
+            if [[ -s "${output}" ]] ; then #check to see if $output exists
+                printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
+            else
+                printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
+                printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
+                printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
+                printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
+                ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
+                printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+            fi
+            printf "Moving to next file if present...\n${color_off}"
+        done
+    else
+        printf "${bired}Input is not a file or directory. Exiting script..."
+        exit 1
+    fi
+    shift
+done
 
-	input="$1" #set $input as the first arugment sent to script
-	if [[ -f "$input" ]] ; then #if input is a file, set output_dir to input name with extension stripped plus relativepath
-		output_dir="${input%.*}/$relativepath"
-  elif [[ -d "$input" ]]; then #if input is a directory, set output_dir to input name plus relativepath
-		output_dir="$input/$relativepath"
-  fi
-  mediaid="${input##*/}" #set $mediaid to basename of $input
-	mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
- 	output="$output_dir/${mediaid%.*}$suffix.$extension" #set $output
-	if [ -s "$output" ] ; then #check to see if $output exists
-		printf "%sWARNING $output already exists, skipping transcode of %s.%s%s\n" "$bired" "$input" "$color_off" "$biwhite"
-		shift
-	fi
-		printf "%smediaid is: %s%s\n" "$color_off" "$biwhite" "$mediaid"
-		printf "%sThe output directory is: %s%s\n" "$color_off" "$biwhite" "$output_dir"
-		printf "%soutput is: %s%s\n" "$color_off" "$biwhite" "${output_dir/$mediaid%.*$suffix.$extension}"
-
-	echo
-cat <<-EOF
-	A CRF value needs specified.
-	The range of the quantizer scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible.
-	A lower value is a higher quality and a subjectively sane range is 18-28.
-	Consider 18 to be visually lossless or nearly so: it should look the same or nearly the same as the input,
-	but it is not technically lossless.
-	The range is exponential, so increasing the CRF value +6 is roughly half the bitrate while -6 is roughly twice the bitrate.
-	General usage is to choose the highest CRF value that still provides an acceptable quality.
-	If the output looks good, then try a higher value and if it looks bad then choose a lower value.
-EOF
-	echo
-	printf "%sPlease enter a CRF value:%s\n" "$color_off" "$biwhite"
-	read -r crfvalue
-	echo
-cat <<-EOF
-	A preset encoding speed needs specified.
-	A preset is a collection of options that will provide a certain encoding speed to compression ratio.
-	A slower preset will provide better compression (compression is quality per filesize).
-	This means that, for example, if you target a certain file size or constant bit rate,
-	you will achieve better quality with a slower preset.
-	Similarly, for constant quality encoding, you will simply save bitrate by choosing a slower preset.
-	The general guideline is to use the slowest preset that you have patience for.
-	Current presets in descending order of speed are:
-EOF
-	printf "%sultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow\n" "$bired"
-	#printf "%s" "$biwhite"
-	echo
-	printf "%sPlease enter a preset speed:%s\n" "$color_off" "$biwhite"
-	read -r presetspeed
-	echo
-cat <<-EOF
-	The maxrate speed is the max bitrate at which your video will be encoded. It is written in kbps.
-	A good maxrate for Youtube type delivery is 8000.
-EOF
-	echo
-	printf "%sPlease enter a maxrate speed:%s\n" "$color_off" "$biwhite"
-	read -r maxrate
-	printf "\n%smaking .mp4 derivative of %s%s%s\n" "$color_off" "$biwhite" "$mediaid" "$color_off" #have script say what is about to do
-	mkdir -p "$output_dir"
-
-	for file in $@ ; do
-		if [[ -f "$file" ]]; then #run ffmpeg command on $input and set output to $output
-			# -vf scale=-2:1484
-			ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "$file" -movflags faststart -c:v libx264 -vf "yadif,format=yuv420p" -crf "$crfvalue" -preset "$presetspeed" -maxrate "$maxrate"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "$output"
-		elif [[ -d "$file" ]]; then
-			ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "$file"/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "$crfvalue" -preset "$presetspeed" -maxrate "$maxrate"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "$output"
-		fi
-		printf '\n%sdone. moving to next file.%s\n' "$biwhite" "$color_off"
-		shift
-	done
-
-}
-
-#call the function(s)
-
-makeh264 "$@"
+printf "${biwhite}makeH264 process complete.${color_off}\n"
 
 exit "$?"

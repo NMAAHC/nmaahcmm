@@ -2,71 +2,90 @@
 
 #a script to restructure a DPX package directory for VFCU pickup and place .md5 in driectory
 
-### CONSTANTS
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
 
-biyellow=$(tput bold)$(tput setaf 3)
-bired=$(tput bold)$(tput setaf 1)
-gray=$(tput setaf 7)
-color_off=$(tput sgr0)
-date="$(date +%Y%m%d)"
+### USAGE
+
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This application will restructure a DPX package directory for VFCU pickup and place .md5s in a directory. It takes one or more DPX directories as arguments."
+    echo "Usage: $(basename ${0}) dpxdirectory1 [[ dpxdirectory2 ... ]"
+    echo
+    exit
+}
+[[ "${#}" = 0 ]] && usage # if the command is run with no arguments then usage is called
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 
-restrutureForVFCU ()
+restructureForVFCU(){
+    echo
 
-{
-echo
+    for arg in "${@}" ;
+    do
+        input="${1}" # name $input as the first argument sent to script
+        # create subdirectories for each component
+        audio="${input}/${input##*/}"__Audio
+        derivatives="${input}/${input##*/}"__Derivatives
+        dpx="${input}/${input##*/}"__DPX
+        md5="/Volumes/nmaahc-borndigital/06_DPX_checksums/"
 
-for arg in "$@" ;
-do
-	input="$1" #name $input as the first arugment sent to script
-	audio="$input/${input##*/}"__Audio
-	derivatives="$input/${input##*/}"__Derivatives
-	dpx="$input/${input##*/}"__DPX
-	md5="/Volumes/nmaahc-borndigital/06_DPX_checksums/"
-
-	if [ -d "$input" ] ; then
-	  printf "%s%s%s is a directory.\n" "$biyellow" "$input" "$color_off"
-	  printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "$biyellow" "$audio" "$derivatives" "$color_off" "$biyellow" "$dpx" "$color_off"
-		echo
-		printf "%s" "$gray"
-		if [ -d "$audio" ] ; then
-	  	mv -vi "$audio"/* "$dpx" #move all file in the audio directory to the DPX directory
-			rm -vri "$audio"
-		fi
-		if [ -d "$derivatives" ] ; then
-			mv -vi "$derivatives"/* "$dpx" #move all file in the derivatives directory to the DPX directory
-			rm -vri "$derivatives"
-		printf "%s" "$color_off"
-	fi
-  else
-		echo
-		printf "%s%s is not a directory. Exiting" "$bired" "$input"
-		exit
-	fi
-echo
-	if [ -d "$md5" ] ; then
-		printf "Moving .md5 to %s%s%s\n" "$biyellow" "$dpx" "$color_off" #place .md5 in DPX directory to initiate DPX pickup
-		echo
-		printf "%s" "$gray"
-		rsync -avvPhi --stats "$md5/${input##*/}"/*.md5 "$dpx"
-		printf "%s" "$color_off"
-		echo
-		printf "Done moving .md5 to %s%s%s.\nVFCU will begin picking up your files shortly." "$biyellow" "$dpx" "$color_off"
-		echo
-		printf "%sPlease make sure your templates have been set correctly!%s" "$bired" "$color_off"
-		echo
-		cowsay "Tootles!"
-  else
-		printf "%s%s does not exist. Exiting" "$bired" "$md5"
-		exit
-	fi
-	shift
-done
+        if [[ -d "${input}" ]] ; then
+            printf "%s%s%s is a directory.\n" "${biyellow}" "${input}" "${color_off}"
+            printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "${biyellow}" "${audio}" "${derivatives}" "${color_off}" "${biyellow}" "${dpx}" "${color_off}"
+            echo
+            printf "%s" "${gray}"
+            if [[ -d "${audio}" ]] ; then
+                mv -vi "${audio}"/* "${dpx}" # move all files in the audio directory to the DPX directory. -v=verbose, -i=interactive (prompts before overwriting)
+                rm -vri "${audio}" # removes the audio directory and any files left in it. -v=verbose, -r=recursive, -i=interactive (prompts before overwriting)
+            fi
+            if [[ -d "${derivatives}" ]] ; then
+                mv -vi "${derivatives}"/* "${dpx}" # move all files in the derivatives directory to the DPX directory
+                rm -vri "${derivatives}" # removes the derivatives directory and any files left within it
+            printf "%s" "${color_off}"
+            fi
+        else
+            echo
+            printf "%s%s is not a directory. Exiting" "${bired}" "${input}"
+            exit
+        fi
+        echo
+        if [[ -d "${md5}" ]] ; then
+            printf "Moving .md5 directory to %s%s%s\n" "${biyellow}" "${dpx}" "${color_off}"
+            echo
+            printf "%s" "${gray}"
+            rsync -avvPhi --stats "${md5}/${input##*/}"/*.md5 "${dpx}" # move .md5 directory to DPX directory to initiate DPX pickup. -a="archive," -vv=very verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes
+            printf "%s" "${color_off}"
+            echo
+            printf "Done moving .md5 directory to %s%s%s.\nVFCU will begin picking up your files shortly." "${biyellow}" "${dpx}" "${color_off}"
+            echo
+            printf "%sPlease make sure your templates have been set correctly!%s" "${bired}" "${color_off}"
+            echo
+            cowsay "Tootles!"
+        else
+            printf "%s%s does not exist. Exiting" "${bired}" "${md5}"
+            exit
+        fi
+        shift
+    done
 }
 
-#call the function(s)
+## SCRIPT ACTIONS
 
-restrutureForVFCU "$@"
-
+restructureForVFCU "${@}"
+printf "${biwhite}restructureForVFCU process complete.${color_off}\n"
 exit $?
