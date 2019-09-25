@@ -16,6 +16,7 @@ extension="mp4"
 crfvalue=18
 presetspeed=medium
 maxrate=8000
+errors=0
 
 ## USAGE
 
@@ -61,7 +62,12 @@ while [ "${*}" != "" ] ; do
             printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
             printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
             ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${input}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-            printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+            if [[ -s "${output}" ]] ; then
+                printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+            else
+                printf "\n${bired}Hmm...derivative $(basename ${output}) not successfully created.\n\n${color_off}"
+                ((errors++))
+            fi
             printf "Moving to next file if present...\n${color_off}"
         fi
     # process if input is a directory
@@ -82,7 +88,12 @@ while [ "${*}" != "" ] ; do
                 printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
                 printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
                 ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-                printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+                if [[ -s "${output}" ]] ; then
+                    printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+                else
+                    printf "\n${bired}Hmm...derivative $(basename ${output}) not successfully created.\n\n${color_off}"
+                    ((errors++))
+                fi
             fi
             printf "Moving to next file if present...\n${color_off}"
         done
@@ -93,6 +104,9 @@ while [ "${*}" != "" ] ; do
     shift
 done
 
-printf "${biwhite}makeH264 process complete.${color_off}\n"
-
+printf "${biwhite}makeH264 process complete.\n${color_off}"
+if [[ "${errors}" -gt 0 ]] ; then
+    printf "\n${bired}Not all derivatives were successfully created. Please double-check the terminal output!\n"
+    printf "Number of derivative errors found: ${errors}\n${color_off}"
+fi
 exit "$?"
