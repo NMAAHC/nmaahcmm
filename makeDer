@@ -132,15 +132,12 @@ EOF
 
         # rename file to indicate derivative
         # works by finding all mp4s in the output directory that have "PM" or "DER_01" in their filename; the "if" executes if any files matching those patterns are found (i.e. if the find statement executes to non-empty "-n")
-        cd "${OUTPUT_DIR}" # enter the directory containing the derivatives
-        if [[ -n $(find . -type f -name "*PM*.mp4" ) ]]; then
+        if [[ -n $(find "${OUTPUT_DIR}" -type f -name "*PM*.mp4" ) ]]; then
             rename 's/PM/DER_02/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name : PM to DER_02${color_off}\n"
         fi
-        if [[ -n $(find . -type f -name "*DER_01*.mp4" ) ]]; then
+        if [[ -n $(find "${OUTPUT_DIR}" -type f -name "*DER_01*.mp4" ) ]]; then
             rename 's/DER_01/DER_03/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name conventions: DER_01 to DER_03${color_off}\n"
         fi
-        cd ~ # exit derivative directory, return to home directory
-
         printf "\nSuccess! Derivative ${biwhite}$(basename ${OUTPUT})${color_off} created.\n\n"
     fi
     shift
