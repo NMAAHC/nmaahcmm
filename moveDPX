@@ -8,12 +8,16 @@ SCRIPTDIR=$(dirname "${0}")
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
+# (hardcoded) designated parent folder where the files will be moved
+target_folder_parent="/Users/Annie/Dropbox/Annie/2019_fall/NMAAHC-test-files/dpx_dest"
+
 ## USAGE
 
 usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will copy .md5 checksum files and the first .dpx file in a stack to a designated directory. It takes one or more DPX directories as arguments."
+    echo "The files will be sent to a subdirectory of ${target_folder_parent}"
     echo "Usage: $(basename ${0}) dpxdirectory1 [ dpxdirectory2 ...]"
     echo
     exit
@@ -35,22 +39,22 @@ moveDPX(){
     while [[ "${*}" != "" ]] ; do
 
         dpx_folder="${1}"
-        target_folder_parent="/Volumes/nmaahc-borndigital/06_DPX_checksums"
         target_folder="${target_folder_parent}/${dpx_folder##*/}"
-        chmod_folder="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 
         if [[ ! -d "${target_folder_parent}" ]] ; then 
             echo
-            printf "%s%s does not exist. Exiting." "${bired}" "${target_folder_parent}" >&2 # tell operator if the hardcoded parent folder cannot be found - e.g. no longer exists or is moved
+            printf "${bired} %s%s does not exist. Exiting. ${color_off}\n" "${target_folder_parent}" >&2 # tell operator if the hardcoded parent folder cannot be found - e.g. no longer exists or is moved
             exit
         fi
 
         if [[ ! -d "${target_folder}" ]] ; then
             echo
-            printf "Creating:\t%s%s%s\n" "${biwhite}" "${target_folder}" "${color_off}"
+            printf "Creating target folder:\t%s%s%s\n" "${biwhite}" "${target_folder}" "${color_off}"
             mkdir -p "${target_folder}"
         fi
 
+        printf "${biwhite}Moving files to target folder...${color_off}\n"
+        
         for file in "${dpx_folder}"/*DPX*/* ; do # for all files in a DPX subdirectory (expected to be named with the word "DPX" in it), do the following:
             if [[ -f "${target_folder}"/*.dpx ]] ; then # if .dpx file is found as expected, do:
                 echo
@@ -90,7 +94,7 @@ moveDPX(){
                 printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "${biwhite}" "${md5##*/}" "${color_off}" "${biwhite}" "${target_folder}" "${color_off}"
                 echo
             else
-                printf "%sERRORS\n" "${bired}" "${color_off}" >&2
+                printf "${bired}rsync transfer not completed successfully!${color_off}\n" >&2
             fi
         done
         printf "Moving to next DPX directory if supplied...\n"
@@ -98,9 +102,8 @@ moveDPX(){
         shift
 
     done
-    echo
-    printf "%sChanged permissions on the following files in directory %s to 777:%s\n" "${biwhite}" "${chmod_folder##*/}" "${color_off}"
-    chmod -vR 777 "${chmod_folder}" # set permissions on the target parent directory (set above) to read-write-execute for all users. -v=verbose, -R=recursive
+    printf "%sChanged permissions on the following files in directory %s to 777:%s\n" "${biwhite}" "${target_folder_parent##*/}" "${color_off}"
+    chmod -vR 777 "${target_folder_parent}" # set permissions on the target parent directory (set above) to read-write-execute for all users. -v=verbose, -R=recursive
 }
 
 ## SCRIPT ACTIONS
