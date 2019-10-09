@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+
+# a script to turn SIPs into AIPs
+
+# load nmaahcmmfunctions into this script
+script_path=${0%/*}
+. "${script_path}/nmaahcmmfunctions"
+[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+
+## USAGE
+
+usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This script will run an interactive interview and then process an input file accordingly."
+    echo "Dependencies: ${DEPENDENCIES[@]}"
+    echo "Usage: $(basename ${0}) [ -options ]"
+    echo "  Local mode: presents a graphical user interface to specify file, media ID, and other options. Automatically creates an H264 access copy and generates metadata files if not already present."
+#    echo "  Delivery mode: does the above + delivers packages to somewhere."
+    echo "  -h display this help"
+    echo
+    exit
+}
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) usage ;;  # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+
+## PASHUA INTERFACE
+
+CONF="
+# Set transparency: 0 is transparent, 1 is opaque
+*.transparency=1.00
+
+# Set window title
+*.title = Ingest File
+
+# intro text
+intro.x = 20
+intro.y = 720
+intro.width = 500
+intro.type = text
+intro.text = Ingest file options. Leave the option blank to be prompted.
+
+# ask operator
+OP.x = 20
+OP.y = 660
+OP.type = textfield
+OP.label = Please enter your name:
+OP.width = 300
+
+# package name
+PACKAGENAME.x = 20
+PACKAGENAME.y = 600
+PACKAGENAME.type = textfield
+PACKAGENAME.label = Please enter a unique PACKAGE NAME (capital letters, numbers, hyphens and underscores only).
+PACKAGENAME.width = 300
+
+# input directory
+INPUT.x = 20
+INPUT.y = 540
+INPUT.type = openbrowser
+INPUT.label = Select your package:
+INPUT.width=400
+
+# package type
+PACKAGETYPE.x = 20
+PACKAGETYPE.y = 480
+PACKAGETYPE.type = combobox
+PACKAGETYPE.label = Please indicate the type of package being submitted.
+PACKAGETYPE.option =
+PACKAGETYPE.option = Digitized Film (DPX package)
+PACKAGETYPE.option = Digitized Film (MOV and/or MP4 files only)
+PACKAGETYPE.option = Digitized Analog Video (vrecord package)
+PACKAGETYPE.option = Transferred DV (MOV and/or MP4 files)
+PACKAGETYPE.option = Other/Unknown
+PACKAGETYPE.width = 400
+
+# destination
+DESTINATION.x = 20
+DESTINATION.y = 420
+DESTINATION.type = openbrowser
+DESTINATION.label = Select where the package will go. Package will be created within this directory and named after the PACKAGE NAME entered above.
+DESTINATION.width = 400
+
+# cleanup decision
+CLEANUPDECISION.x = 20
+CLEANUPDECISION.y = 360
+CLEANUPDECISION.type = combobox
+CLEANUPDECISION.label = Select a cleanup strategy
+CLEANUPDECISION.default = Leave source files where they are
+CLEANUPDECISION.option =
+CLEANUPDECISION.option = Leave source files where they are
+CLEANUPDECISION.option = Remove source files after successful ingest
+CLEANUPDECISION.width = 300
+
+# Add a cancel button with default label
+cb.type=cancelbutton
+
+";
+
+# run Pashua
+PASHUA_CONFIGFILE=`/usr/bin/mktemp /tmp/pashua_XXXXXXXXX`
+echo "${CONF}" > "${PASHUA_CONFIGFILE}"
+_pashua_run
+rm "${PASHUA_CONFIGFILE}"
+echo "  OPERATOR = ${OP}"
+echo "  INPUT = ${INPUT}"
+echo "  PACKAGENAME = ${PACKAGENAME}"
+echo "  PACKAGETYPE = ${PACKAGETYPE}"
+echo "  DESTINATION = ${DESTINATION}"
+echo "  CLEANUPDECISION = ${CLEANUPDECISION}"
+echo ""
+
+# check that all inputs were entered
+if [[ -z "${OP}" ]] ; then
+    printf "Enter the name of the operator or 'q' to quit: "
+    read -e OP
+    [[ -z "${OP}" ]] && _ask_operator
+    [[ "${OP}" = "q" ]] && exit 0
+fi
+if [[ -z "${INPUT}" ]] ; then
+    printf "Drag in the input directory or type 'q' to quit: "
+    read -e INPUT
+    [[ "${INPUT}" = "q" ]] && exit 0
+    basename=$(basename "${INPUT}")
+fi
+if [[ -z "${PACKAGENAME}" ]] ; then
+    printf "Enter a unique package name or 'q' to quit: "
+    read -e PACKAGENAME
+    [[ "${PACKAGENAME}" = "q" ]] && exit 0
+    # validate id and perhaps fail with exit
+    [[ -z "${PACKAGENAME}" ]] && { printf "${bired}ERROR You must enter a valid MEDIA ID${color_off}\n" ; exit ;};
+    [[ ! -z $(echo "${PACKAGENAME}" | grep -v "^[A-Z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain capital letters, numbers, hyphen and underscore" ; exit 1 ;};
+fi
+if [[ -z "${PACKAGETYPE}" ]] ; then
+    _report -q "Select a package type:"
+    PS3="Selection: "
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
+    do
+        break
+    done
+fi
+if [[ -z "${DESTINATION}" ]] ; then
+    printf "Drag in the destination directory or type 'q' to quit: "
+    read -e DESTINATION
+    [[ "${DESTINATION}" = "q" ]] && exit 0
+fi
+if [[ -z "${CLEANUPDECISION}" ]] ; then
+    _report -q "Select a cleanup strategy:"
+    select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest"
+    do
+        break
+    done
+fi
+
+
+## SCRIPT ACTIONS
+
+# make AIP directory
+mkdir -p "${DESTINATION}/${PACKAGENAME}"
+
+if [[ "${PACKAGE}" == "Digitized Film (DPX package)" ]] ; then
+    # If working with a DPX package, run restructureDPX microservice.
+    # FOR FUTURE DEVELOPMENT: rework restructureDPX so that it is not interactive.
+    "${script_path}/restructureDPX"
+elif [[ "${PACKAGE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+    # verify package structure matches expected (microservice tk)
+    "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    "${script_path}/makeH264" "${INPUT}"
+    # restructure package (microservice tk)
+elif [[ "${PACKAGE}" == "Digitized Analog Video (vrecord package)" ]] ; then
+    # verify package structure matches expected (microservice tk)
+    "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    "${script_path}/makeH264" "${INPUT}"
+    # restructure package (microservice tk)
+elif [[ "${PACKAGE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
+    # verify package structure matches expected (microservice tk)
+    "${script_path}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
+    "${script_path}/makeH264" "${INPUT}"
+    # restructure package (microservice tk)
+elif [[ "${PACKAGE}" == "Other/Unknown" ]] ; then
+    "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    "${script_path}/makeH264" "${INPUT}"
+    # restructure package (microservice tk)
+fi
+
+# copy original files to new directory
+rsync -av "${INPUT}" "${DESTINATION}/${PACKAGENAME}"
+RSYNC_ERR="${?}"
+# clean up original files if requested - hardcoded OFF during testing
+#if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
+#    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
+#        echo "${RSYNC_ERR}"
+#        _report -wt "Cancelling requested deletion of source file, not looking safe."
+#    else
+#        _report -dt "Removing the source file from ${INPUT} as requested."
+#        _run rm -f "${INPUT}"
+#    fi
+#fi
+
+printf "Process done...might have been successful...it's a WIP."
