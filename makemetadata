@@ -15,7 +15,7 @@ usage(){
     echo "$(basename "${0}")"
     echo
     echo "This application will generate metadata sidecar files for all video files in a package. It takes one or more packages as input."
-    echo "The application generates all of the following files: a MediaInfo XML, a MediaTrace XML, an FFprobe XML, and an Exiftool XML."
+    echo "The application generates all of the following files: a tree XML, a MediaInfo XML, a MediaTrace XML, an FFprobe XML, and an Exiftool XML."
     echo "The option -m will generate an MD5 sidecar file. The option -q will generate a QCTools XML as well; this option is recommended for digitized video only. Both of these files may take a while to generate, depending on the size of your video file."
     echo "The application will check for existing sidecar files before creating them again. To overwrite any existing metadata files, use option -o."
     echo "If the video file is an MKV file, the script can embed a copy of the metadata files it generates into the MKV wrapper using option -e."
@@ -52,6 +52,7 @@ while [ "${*}" != "" ] ; do
         printf "Making metadata reports for ${FILE}...\n"
         BASENAMEFILE=$(basename "${FILE}")
         FILEOUTPUT=$(dirname "${FILE}")
+        TREEXML="${FILEOUTPUT}/${BASENAMEFILE}.tree.xml"
         FFPROBEXML="${FILEOUTPUT}/${BASENAMEFILE}.ffprobe.xml"
         MEDIAINFOXML="${FILEOUTPUT}/${BASENAMEFILE}.mediainfo.xml"
         MEDIATRACEXML="${FILEOUTPUT}/${BASENAMEFILE}.mediatrace.xml"
@@ -61,6 +62,7 @@ while [ "${*}" != "" ] ; do
             rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
         fi
         # if the metadata files don't already exist, create them; the command following "&&" will only execute if the test before it is successful
+        [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${PACKAGE_PATH}" > "${TREEXML}"
         [[ ! -f "${FFPROBEXML}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBEXML}"
         [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
         [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mi -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"
