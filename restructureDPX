@@ -142,7 +142,6 @@ restructureDPX(){
                 echo
             fi
             # remove the $input directory
-            printf "%sRemoving:\n\t%s%s\n" "${biwhite}" "${color_off}" "${input}"
             rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
@@ -212,7 +211,6 @@ restructureDPX(){
             find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_02.mov" \;
 
             echo
-            printf "%sRemoving %s\n" "${biwhite}" "${color_off}" "${input}"
             rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
@@ -308,7 +306,6 @@ restructureDPX(){
             find "${derR3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_02.mov" \;
 
             echo
-            printf "%sRemoving \n" "${biwhite}" "${color_off}" "${input}"
             rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=prompt before every removal
             ;;
 
