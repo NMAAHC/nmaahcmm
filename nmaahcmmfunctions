@@ -119,3 +119,9 @@ function _pashua_run(){
         done
     fi
 }
+
+function _check_deliverdir(){
+    if [[ ! -d "${DELIVERDIR}" ]] ; then
+        printf "${bired}" "The delivery directory, ${DELIVERDIR}, does not exist. Can not deliver the OUTPUT of $(basename "${0}")." "${color_off}"
+    fi
+}
