@@ -142,7 +142,7 @@ if [[ -z "${PACKAGENAME}" ]] ; then
     [[ ! -z $(echo "${PACKAGENAME}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore\n" ; exit 1 ;};
 fi
 if [[ -z "${PACKAGETYPE}" ]] ; then
-    _report -q "Select a package type:"
+    printf "Select a package type:"
     PS3="Selection: "
     select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
     do
@@ -155,7 +155,7 @@ if [[ -z "${DESTINATION}" ]] ; then
     [[ "${DESTINATION}" = "q" ]] && exit 0
 fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
-    _report -q "Select a cleanup strategy:"
+    printf "Select a cleanup strategy:"
     select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest"
     do
         break
@@ -200,9 +200,9 @@ RSYNC_ERR="${?}"
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
 #        echo "${RSYNC_ERR}"
-#        _report -wt "Cancelling requested deletion of source file, not looking safe."
+#        printf "${bired}" "Cancelling requested deletion of source file, not looking safe." "${color_off}"
 #    else
-#        _report -dt "Removing the source file from ${INPUT} as requested."
+#        printf "${biwhite}" "Removing the source file from ${INPUT} as requested." "${color_off}"
 #        _run rm -f "${INPUT}"
 #    fi
 #fi
