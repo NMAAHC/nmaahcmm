@@ -61,7 +61,7 @@ OP.width = 300
 PACKAGENAME.x = 20
 PACKAGENAME.y = 600
 PACKAGENAME.type = textfield
-PACKAGENAME.label = Please enter a unique PACKAGE NAME (capital letters, numbers, hyphens and underscores only).
+PACKAGENAME.label = Please enter a unique PACKAGE NAME (letters, numbers, hyphens, underscores only).
 PACKAGENAME.width = 300
 
 # input directory
@@ -139,7 +139,7 @@ if [[ -z "${PACKAGENAME}" ]] ; then
     [[ "${PACKAGENAME}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
     [[ -z "${PACKAGENAME}" ]] && { printf "${bired}ERROR You must enter a valid MEDIA ID${color_off}\n" ; exit ;};
-    [[ ! -z $(echo "${PACKAGENAME}" | grep -v "^[A-Z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain capital letters, numbers, hyphen and underscore" ; exit 1 ;};
+    [[ ! -z $(echo "${PACKAGENAME}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain capital letters, numbers, hyphen and underscore" ; exit 1 ;};
 fi
 if [[ -z "${PACKAGETYPE}" ]] ; then
     _report -q "Select a package type:"
