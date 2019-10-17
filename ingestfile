@@ -61,7 +61,7 @@ OP.width = 300
 PACKAGENAME.x = 20
 PACKAGENAME.y = 600
 PACKAGENAME.type = textfield
-PACKAGENAME.label = Please enter a unique PACKAGE NAME (letters, numbers, hyphens, underscores only).
+PACKAGENAME.label = Please enter a unique PACKAGE NAME (letters, numbers, hyphens, underscores only). Leave blank for DPX packages.
 PACKAGENAME.width = 300
 
 # input directory
@@ -84,16 +84,43 @@ PACKAGETYPE.option = Transferred DV (MOV and/or MP4 files)
 PACKAGETYPE.option = Other/Unknown
 PACKAGETYPE.width = 400
 
+# DPX reel count
+REELS.x = 20
+REELS.y = 420
+REELS.type = combobox
+REELS.label = If your package is a DPX, select the number of reels (if not a DPX, leave blank).
+REELS.option =
+REELS.option = 1
+REELS.option = 2
+REELS.option = 3
+REELS.width=400
+
+# DPX object ID
+DPXID.x = 20
+DPXID.y = 360
+DPXID.type = textfield
+DPXID.label = If your package is a DPX, enter a DPX object ID (ex. 2012_79_1_54).
+DPXID.option =
+DPXID.width=200
+
+# DPX title
+DPXTITLE.x = 20
+DPXTITLE.y = 300
+DPXTITLE.type = textfield
+DPXTITLE.label = If your package is a DPX, enter a DPX title (ex. Something_to_Build_On).
+DPXTITLE.option =
+DPXTITLE.width=200
+
 # destination
 DESTINATION.x = 20
-DESTINATION.y = 420
+DESTINATION.y = 240
 DESTINATION.type = openbrowser
-DESTINATION.label = Select where the package will go. Package will be created within this directory and named after the PACKAGE NAME entered above.
+DESTINATION.label = Select where the package will go.
 DESTINATION.width = 400
 
 # cleanup decision
 CLEANUPDECISION.x = 20
-CLEANUPDECISION.y = 360
+CLEANUPDECISION.y = 180
 CLEANUPDECISION.type = combobox
 CLEANUPDECISION.label = Select a cleanup strategy
 CLEANUPDECISION.default = Leave source files where they are
@@ -116,6 +143,9 @@ echo "  OPERATOR = ${OP}"
 echo "  INPUT = ${INPUT}"
 echo "  PACKAGENAME = ${PACKAGENAME}"
 echo "  PACKAGETYPE = ${PACKAGETYPE}"
+echo "  REELS = ${REELS}"
+echo "  DPXID = ${DPXID}"
+echo "  DPXTITLE = ${DPXTITLE}"
 echo "  DESTINATION = ${DESTINATION}"
 echo "  CLEANUPDECISION = ${CLEANUPDECISION}"
 echo ""
@@ -133,7 +163,7 @@ if [[ -z "${INPUT}" ]] ; then
     [[ "${INPUT}" = "q" ]] && exit 0
     basename=$(basename "${INPUT}")
 fi
-if [[ -z "${PACKAGENAME}" ]] ; then
+if [[ -z "${PACKAGENAME}" ]] && [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     printf "Enter a unique package name or 'q' to quit: "
     read -e PACKAGENAME
     [[ "${PACKAGENAME}" = "q" ]] && exit 0
@@ -148,6 +178,27 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     do
         break
     done
+fi
+if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+    if [[ -z "${REELS}" ]] ; then
+        printf "Select the number of reels in your DPX package:"
+        PS3="Selection: "
+        select PACKAGETYPE in "1" "2" "3"
+        do
+            break
+        done
+    fi
+    if [[ -z "${DPXID}" ]] ; then
+        printf "Enter your DPX_Object_ID_Number with underscores:"
+        read -e DPXID
+        printf "ex. 2015_167_10_1\n%s"
+    fi
+    if [[ -z "${DPXTITLE}" ]] ; then
+        printf "Enter your DPX_Object_Title with underscores:"
+        printf "ex. Juke_Joint\n%s"
+        read -e DPXTITLE
+    fi
+    PACKAGENAME="${DPXID}__${DPXTITLE}"
 fi
 if [[ -z "${DESTINATION}" ]] ; then
     printf "Drag in the destination directory or type 'q' to quit: "
@@ -170,8 +221,7 @@ mkdir -p "${DESTINATION}/${PACKAGENAME}"
 
 if [[ "${PACKAGE}" == "Digitized Film (DPX package)" ]] ; then
     # If working with a DPX package, run restructureDPX microservice.
-    # FOR FUTURE DEVELOPMENT: rework restructureDPX so that it is not interactive.
-    "${script_path}/restructureDPX"
+    "${script_path}/restructureDPX -d ${DESTINATION} -i ${DPXID} -t ${DPXTITLE} -r ${REELS} ${INPUT}"
 elif [[ "${PACKAGE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     # verify package structure matches expected (microservice tk)
     "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
@@ -207,4 +257,4 @@ RSYNC_ERR="${?}"
 #    fi
 #fi
 
-printf "Process done...might have been successful...it's a WIP."
+printf "Process done...might have been successful...it's a WIP.\n"
