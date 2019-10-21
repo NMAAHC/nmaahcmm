@@ -62,12 +62,12 @@ restructureDPX(){
         echo
     fi
     if [[ -z "${deliverdir}" ]] ; then
-        printf "%sPlease enter destination where directory tree should be created:\n%s" "${biwhite}" "${color_off}"
+        printf "%sPlease drag in the full path to the destination (where the new directory should be created):\n%s" "${biwhite}" "${color_off}"
         read -r deliverdir
         echo
     fi
     if [[ -z "${input}" ]] ; then
-        printf "%sPlease enter input directory:\n%s" "${biwhite}" "${color_off}"
+        printf "%sPlease drag in the full path to the input directory:\n%s" "${biwhite}" "${color_off}"
         read -r input
         echo
     fi
@@ -209,8 +209,6 @@ restructureDPX(){
             find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}/${dpxid}_R2_AUD.wav" \;
             find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_01.mov" \;
             find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_02.mov" \;
-
-            echo
             ;;
 
         3 )
@@ -227,9 +225,7 @@ restructureDPX(){
             audR3="${R3}/${packagename}_R3__Audio"
             derR3="${R3}/${packagename}_R3__Derivatives"
             dpxR3="${R3}/${packagename}_R3__DPX"
-        
             mkdir -p "${R1}" "${audR1}" "${derR1}" "${dpxR1}" "${R2}" "${audR2}" "${derR2}" "${dpxR2}" "${R3}" "${audR3}" "${derR3}" "${dpxR3}"
-        
             echo
             printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
 
@@ -290,7 +286,6 @@ restructureDPX(){
                 printf "%sMissing ${dpxR3}%s" "${bired}" "${color_off}"
                 exit 1
             fi
-
             echo
             # rename files according to NMAAHC filenaming guidelines
             printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${outputdir}"
@@ -303,8 +298,6 @@ restructureDPX(){
             find "${audR3}" -name "*R3*.wav" -exec mv -vi {} "${audR3}/${dpxid}_R3_AUD.wav" \;
             find "${derR3}" -name "*R3*ProRes*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_01.mov" \;
             find "${derR3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_02.mov" \;
-
-            echo
             ;;
 
             *   )
@@ -312,7 +305,6 @@ restructureDPX(){
             echo
             cowsay "SORRY!"
             ;;
-
     esac
 }
 

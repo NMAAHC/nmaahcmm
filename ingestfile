@@ -173,6 +173,7 @@ if [[ -z "${PACKAGENAME}" ]] && [[ "${PACKAGETYPE}" == "Digitized Film (DPX pack
 fi
 if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
+    echo
     PS3="Selection: "
     select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
     do
@@ -182,6 +183,7 @@ fi
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     if [[ -z "${REELS}" ]] ; then
         printf "Select the number of reels in your DPX package:"
+        echo
         PS3="Selection: "
         select PACKAGETYPE in "1" "2" "3"
         do
@@ -207,6 +209,7 @@ if [[ -z "${DESTINATION}" ]] ; then
 fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     printf "Select a cleanup strategy:"
+    echo
     select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest"
     do
         break
