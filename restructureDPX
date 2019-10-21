@@ -163,38 +163,38 @@ restructureDPX(){
 
             # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
             if [[ -d "${audR1}" ]] ; then
-                find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
+                find "${input}" -name "*R1*.wav" -exec rsync -av {} "${audR1}" \;
             else
                 printf "%sMissing ${audR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${derR1}" ]] ; then
-                find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
+                find "${input}" -name "*R1*.mov" -exec rsync -av {} "${derR1}" \;
             else
                 printf "%sMissing ${derR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${dpxR1}" ]] ; then
-                find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
+                find "${input}" -name "*R1*.dpx" -exec rsync -av {} "${dpxR1}" \;
             else
                 printf "%sMissing ${dpxR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
 
             if [[ -d "${audR2}" ]] ; then
-                find "${input}" -name "*R2*.wav" -exec mv -vi {} "${audR2}" \;
+                find "${input}" -name "*R2*.wav" -exec rsync -av {} "${audR2}" \;
             else
                 printf "%sMissing ${audR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${derR2}" ]] ; then
-                find "${input}" -name "*R2*.mov" -exec mv -vi {} "${derR2}" \;
+                find "${input}" -name "*R2*.mov" -exec rsync -av {} "${derR2}" \;
             else
                 printf "%sMissing ${derR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${dpxR2}" ]] ; then
-                find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
+                find "${input}" -name "*R2*.dpx" -exec rsync -av {} "${dpxR2}" \;
             else
                 printf "%sMissing ${dpxR2}%s" "${bired}" "${color_off}"
                 exit 1
@@ -236,57 +236,57 @@ restructureDPX(){
 
             # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
             if [[ -d "${audR1}" ]] ; then
-                find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
+                find "${input}" -name "*R1*.wav" -exec rsync -av {} "${audR1}" \;
             else
                 printf "%sMissing ${audR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${derR1}" ]] ; then
-                find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
+                find "${input}" -name "*R1*.mov" -exec rsync -av {} "${derR1}" \;
             else
                 printf "%sMissing ${derR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${dpxR1}" ]] ; then
-                find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
+                find "${input}" -name "*R1*.dpx" -exec rsync -av {} "${dpxR1}" \;
             else
                 printf "%sMissing ${dpxR1}%s" "${bired}" "${color_off}"
                 exit 1
             fi
 
             if [[ -d "${audR2}" ]] ; then
-                find "${input}" -name "*R2*.wav" -exec mv -vi {} "${audR2}" \;
+                find "${input}" -name "*R2*.wav" -exec rsync -av {} "${audR2}" \;
             else
                 printf "%sMissing ${audR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${derR2}" ]] ; then
-                find "${input}" -name "*R2*.mov" -exec mv -vi {} "${derR2}" \;
+                find "${input}" -name "*R2*.mov" -exec rsync -av {} "${derR2}" \;
             else
                 printf "%sMissing ${derR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${dpxR2}" ]] ; then
-                find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
+                find "${input}" -name "*R2*.dpx" -exec rsync -av {} "${dpxR2}" \;
             else
                 printf "%sMissing ${dpxR2}%s" "${bired}" "${color_off}"
                 exit 1
             fi
 
             if [[ -d "${audR3}" ]] ; then
-                find "${input}" -name "*R3*.wav" -exec mv -vi {} "${audR3}" \;
+                find "${input}" -name "*R3*.wav" -exec rsync -av {} "${audR3}" \;
             else
                 printf "%sMissing ${audR3}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${derR3}" ]] ; then
-                find "${input}" -name "*R3*.mov" -exec mv -vi {} "${derR3}" \;
+                find "${input}" -name "*R3*.mov" -exec rsync -av {} "${derR3}" \;
             else
                 printf "%sMissing ${derR3}%s" "${bired}" "${color_off}"
                 exit 1
             fi
             if [[ -d "${dpxR3}" ]] ; then
-                find "${input}" -name "*R3*.dpx" -exec mv -vi {} "${dpxR3}" \;
+                find "${input}" -name "*R3*.dpx" -exec rsync -av {} "${dpxR3}" \;
             else
                 printf "%sMissing ${dpxR3}%s" "${bired}" "${color_off}"
                 exit 1

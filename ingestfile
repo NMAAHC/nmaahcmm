@@ -243,9 +243,11 @@ elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     # restructure package (microservice tk)
 fi
 
-# copy original files to new directory
-rsync -av "${INPUT}" "${DESTINATION}/${PACKAGENAME}"
-RSYNC_ERR="${?}"
+# copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
+if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+    rsync -av "${INPUT}" "${DESTINATION}/${PACKAGENAME}"
+    RSYNC_ERR="${?}"
+fi
 # clean up original files if requested - hardcoded OFF during testing
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
