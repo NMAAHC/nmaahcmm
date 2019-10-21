@@ -15,23 +15,25 @@ usage(){
     echo "$(basename "${0}")"
     echo "This application will create a the desired directory structure and filenames for DPX packages received from VFS."
     echo "The options below are optional; simply run '$(basename ${0})' if you would prefer to be prompted for each input."
-    echo "Usage: $(basename ${0}) [ -d /path/to/deliver/to/ ] [ -i DPX_Object_ID ] [ -t DPX_Object_Title ] [ -r (number of reels) ] dpxpackage"
+    echo "Usage: $(basename ${0}) [ -d /path/to/deliver/to/ ] [ -i DPX_Object_ID ] [ -t DPX_Object_Title ] [ -r (number of reels) ] [ -c ] dpxpackage"
     echo "  -d directory (directory to deliver the resulting package to)"
     echo "  -i DPX_Object_ID (ex. 2012_79_1_54)"
     echo "  -t DPX_Object_Title (ex. Something_to_Build_On)"
     echo "  -r number (number of reels in the package, up to 3)"
+    echo "  -c cleanup source files (remove all source files after script runs)"
     echo "  -h (display this help)"
     echo
     exit
 }
 # getopts loop
 OPTIND=1
-while getopts ":d:i:t:r:h" OPT; do
+while getopts ":d:i:t:r:ch" OPT; do
     case "${OPT}" in
         d) deliverdir="${OPTARG}" && _check_deliverdir ;; # _check_deliverdir defined in nmaahcmmfunctions
         i) dpxid="${OPTARG}" ;;
         t) title="${OPTARG}" ;;
         r) reelnumber="${OPTARG}" ;;
+        c) cleanupdecision="Y" ;;
         h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
     esac
@@ -141,8 +143,6 @@ restructureDPX(){
                 printf "\n\t%sRenamed uncompressed file to %s%s\n" "${biwhite}" "${der2}" "${color_off}"
                 echo
             fi
-            # remove the $input directory
-            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
         2 )
@@ -211,7 +211,6 @@ restructureDPX(){
             find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_02.mov" \;
 
             echo
-            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
         3 )
@@ -306,7 +305,6 @@ restructureDPX(){
             find "${derR3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_02.mov" \;
 
             echo
-            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=prompt before every removal
             ;;
 
             *   )
@@ -321,5 +319,12 @@ restructureDPX(){
 ## SCRIPT ACTIONS
 
 restructureDPX "${@}"
+if [[ -z "${cleanupdecision}" ]] ; then
+    printf "${biwhite}Remove input directory? Type Y or y for yes, any other key for no: ${color_off}\n"
+    read cleanupdecision
+fi
+if [[ "${cleanupdecision}" == "Y" ]] || [[ "${cleanupdecision}" == "y" ]] ; then
+    rm -vr "${input}" # remove input directory. -v=verbose, -r=recursive
+fi
 printf "${biwhite}restructureDPX process complete.${color_off}\n"
 exit $?
