@@ -219,25 +219,25 @@ fi
 # make AIP directory
 mkdir -p "${DESTINATION}/${PACKAGENAME}"
 
-if [[ "${PACKAGE}" == "Digitized Film (DPX package)" ]] ; then
-    # If working with a DPX package, run restructureDPX microservice.
-    "${script_path}/restructureDPX -d ${DESTINATION} -i ${DPXID} -t ${DPXTITLE} -r ${REELS} ${INPUT}"
-elif [[ "${PACKAGE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+    # if working with a DPX package, run restructureDPX microservice
+    "${script_path}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" "${INPUT}"
+elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     # verify package structure matches expected (microservice tk)
     "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${script_path}/makeH264" "${INPUT}"
     # restructure package (microservice tk)
-elif [[ "${PACKAGE}" == "Digitized Analog Video (vrecord package)" ]] ; then
+elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     # verify package structure matches expected (microservice tk)
     "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${script_path}/makeH264" "${INPUT}"
     # restructure package (microservice tk)
-elif [[ "${PACKAGE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
     # verify package structure matches expected (microservice tk)
     "${script_path}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
     "${script_path}/makeH264" "${INPUT}"
     # restructure package (microservice tk)
-elif [[ "${PACKAGE}" == "Other/Unknown" ]] ; then
+elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${script_path}/makeH264" "${INPUT}"
     # restructure package (microservice tk)
