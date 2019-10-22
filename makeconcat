@@ -58,6 +58,10 @@ makeconcat(){
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
 makeconcat "${@}"
+# log script ending
+_log -e
 printf "${biwhite}makeconcat process complete.${color_off}\n"
 exit "$?"

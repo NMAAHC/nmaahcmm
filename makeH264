@@ -43,6 +43,9 @@ shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
+
 while [ "${*}" != "" ] ; do
     input="${1}" #set $input as the first argument sent to script
 
@@ -104,6 +107,8 @@ while [ "${*}" != "" ] ; do
     shift
 done
 
+# log script ending
+_log -e
 printf "${biwhite}makeH264 process complete.\n${color_off}"
 if [[ "${errors}" -gt 0 ]] ; then
     printf "\n${bired}Not all derivatives were successfully created. Please double-check the terminal output!\n"

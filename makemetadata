@@ -45,6 +45,9 @@ shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
+
 while [ "${*}" != "" ] ; do
     PACKAGE_PATH="${1}"
     shopt -s nullglob
@@ -112,4 +115,6 @@ while [ "${*}" != "" ] ; do
     shift
 done
 
+# log script ending
+_log -e
 printf "${biwhite}makemetadata process complete.\n${color_off}"

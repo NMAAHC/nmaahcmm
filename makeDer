@@ -51,6 +51,9 @@ shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
+
 while [ "${*}" != "" ] ; do
 
     #set $INPUT as the first argument sent to script
@@ -143,4 +146,6 @@ EOF
     shift
 done
 
+# log script ending
+_log -e
 printf "${biwhite}makeDer process complete.${color_off}\n"

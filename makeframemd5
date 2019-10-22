@@ -23,6 +23,9 @@ shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
+
 shopt -s globstar
 
 while [ "${*}" != "" ] ; do
@@ -37,4 +40,7 @@ while [ "${*}" != "" ] ; do
     fi
     shift
 done
+
+# log script ending
+_log -e
 printf "${biwhite}makeframemd5 process complete.${color_off}\n"

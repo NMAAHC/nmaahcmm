@@ -310,6 +310,8 @@ restructureDPX(){
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
 restructureDPX "${@}"
 if [[ -z "${cleanupdecision}" ]] ; then
     printf "${biwhite}Remove input directory? Type Y or y for yes, any other key for no: ${color_off}\n"
@@ -318,5 +320,7 @@ fi
 if [[ "${cleanupdecision}" == "Y" ]] || [[ "${cleanupdecision}" == "y" ]] ; then
     rm -vr "${input}" # remove input directory. -v=verbose, -r=recursive
 fi
+# log script ending
+_log -e
 printf "${biwhite}restructureDPX process complete.${color_off}\n"
 exit $?

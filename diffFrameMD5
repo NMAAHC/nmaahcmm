@@ -31,6 +31,9 @@ shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
+
 input1="${1}" # $1 is the first argument (file that the operator supplied)
 input2="${2}" # $2 is the second argument (file that the operator supplied)
 
@@ -38,4 +41,6 @@ input2="${2}" # $2 is the second argument (file that the operator supplied)
 # diff --suppress-common-lines outputs only the lines that are NOT identical in both files
 diff --side-by-side --width=200 --suppress-common-lines <(cat "${input1}" | cut -d, -f 6) <(cat "${input2}" | cut -d, -f 6)
 
+# log script ending
+_log -e
 printf "${biwhite}diffFrameMD5 process complete.${color_off}\n"

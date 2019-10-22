@@ -108,6 +108,10 @@ moveDPX(){
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
 moveDPX "${@}"
+# log script ending
+_log -e
 printf "${biwhite}moveDPX process complete.${color_off}\n"
 exit "$?"

@@ -63,6 +63,9 @@ _runtest(){
     fi
 }
 
+# log script beginning
+_log -b
+
 # input the package
 while [[ "${*}" != "" ]] ; do
     PACKAGE="${1}"
@@ -129,3 +132,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "There are hidden files in this package!" xml sel -t -v "//file[starts-with(@name,'.')]/@name" -n  "${TEMPTREE}"
     fi
 done
+
+# log script ending
+_log -e
+printf "${biwhite}verifySIP process complete.${color_off}\n"

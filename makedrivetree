@@ -62,6 +62,10 @@ done
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
 makedrivetree "${@}"
+# log script ending
+_log -e
 printf "${biwhite}makedrivetree process complete.${color_off}\n"
 exit "$?"

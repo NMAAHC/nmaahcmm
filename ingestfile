@@ -219,6 +219,9 @@ fi
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
+
 # make AIP directory
 mkdir -p "${DESTINATION}/${PACKAGENAME}"
 
@@ -250,6 +253,7 @@ fi
 if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
     rsync -av "${INPUT}" "${DESTINATION}/${PACKAGENAME}"
     RSYNC_ERR="${?}"
+    echo "RSYNC_ERR is $RSYNC_ERR"
 fi
 # clean up original files if requested - hardcoded OFF during testing
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
@@ -261,5 +265,8 @@ fi
 #        _run rm -f "${INPUT}"
 #    fi
 #fi
+
+# log script ending
+_log -e
 
 printf "Process done...might have been successful...it's a WIP.\n"
