@@ -294,7 +294,7 @@ restructureDPX(){
             find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_02.mov" \;
             find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}/${dpxid}_R2_AUD.wav" \;
             find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_01.mov" \;
-            find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R2_DER_02.mov" \;
+            find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_02.mov" \;
             find "${audR3}" -name "*R3*.wav" -exec mv -vi {} "${audR3}/${dpxid}_R3_AUD.wav" \;
             find "${derR3}" -name "*R3*ProRes*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_01.mov" \;
             find "${derR3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_02.mov" \;

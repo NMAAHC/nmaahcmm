@@ -227,7 +227,11 @@ mkdir -p "${DESTINATION}/${PACKAGENAME}"
 
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     # if working with a DPX package, run restructureDPX microservice
-    "${script_path}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" "${INPUT}"
+    if [[ "${CLEANUPDECISION}" == "Leave source files where they are" ]] ; then
+        "${script_path}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" "${INPUT}"
+    elif [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
+        "${script_path}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" -c "${INPUT}"
+    fi
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     # verify package structure matches expected (microservice tk)
     "${script_path}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
