@@ -121,7 +121,6 @@ restructureDPX(){
                 done
             else
                 printf "%sMissing%s %s" "${bired}" "${color_off}" "${outputdir}"
-                echo
                 exit 1
             fi
             # find the .wav and .mov files and rename them according to NMAAHC naming structures. Finds files based on filenaming + extension; assumes each file will have descriptive filename + lowercase extension.
@@ -302,6 +301,7 @@ restructureDPX(){
 
             *   )
             printf "%sERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later." "${bired}"
+            _log -w "Attempt to run restructureDPX with >3 reels in package."
             echo
             cowsay "SORRY!"
             ;;

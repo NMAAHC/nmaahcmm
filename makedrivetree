@@ -51,10 +51,12 @@ for drive ; do # loop over all the drives provided by the operator
             fi
         else
             printf "%sERROR: %s does not exist. Exiting.\n" "${bired}" "${folder}" >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
+            _log -a "Process terminated by script (no directory at requested location)."
             exit
         fi
     else
         printf "%sERROR: %s does not exist. Exiting.\n" "${bired}" "${drive}" >&2 # tell operator if the drive cannot be found
+        _log -a "Process terminated by script (no drive at requested location)."
         exit
     fi
 done

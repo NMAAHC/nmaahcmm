@@ -257,7 +257,12 @@ fi
 if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
     rsync -av "${INPUT}" "${DESTINATION}/${PACKAGENAME}"
     RSYNC_ERR="${?}"
-    echo "RSYNC_ERR is $RSYNC_ERR"
+    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
+        echo "${RSYNC_ERR}"
+        printf "${bired}rsync process failed. Exiting script...${color_off}\n"
+        exit 1
+        _log -a "Process terminated by script (rsync failure)."
+    fi
 fi
 # clean up original files if requested - hardcoded OFF during testing
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then

@@ -113,5 +113,6 @@ printf "${biwhite}makeH264 process complete.\n${color_off}"
 if [[ "${errors}" -gt 0 ]] ; then
     printf "\n${bired}Not all derivatives were successfully created. Please double-check the terminal output!\n"
     printf "Number of derivative errors found: ${errors}\n${color_off}"
+    _log -w "${errors} error/s occurred during derivative creation."
 fi
 exit "$?"
