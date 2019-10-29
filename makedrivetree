@@ -3,9 +3,9 @@
 # a script to write the contents of a directory in tree form and save it to a .txt file
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+SCRIPT_PATH=${0%/*}
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
@@ -33,29 +33,29 @@ shift $(( ${OPTIND} - 1 ))
 ### FUNCTIONS
 
 makedrivetree(){
-local drive ; # set up local variable $drive
-local folder="/Volumes/UtilitySAN/05_driveContents"
-for drive ; do # loop over all the drives provided by the operator
-    drive="${drive%/}" # strip trailing / if any
-    if [[ -d "${drive}" ]] ; then # if the drive structure is recognized as a directory:
-        output="${folder}/${drive##*/}_contents_${date}.txt"
-        if [[ -d "${folder}" ]] ; then # if the output's parent folder structure is recognized as a directory:
-            tree --filelimit 50 --si --du -U -Q -o "${output}" "${drive}" # create a tree of the drive's contents
-            if grep "0 directories, 0 files" "${output}" ; then # if the results of "tree," sent to the output text file, show that the drive was empty:
-                printf "%s%s is empty. Adding EMPTY to file name.\n%s" "${biwhite}" "${drive}" "${color_off}" && outputE="${folder}/${drive##*/}_contents_${date}_EMPTY.txt" && mv -v "${output}" "${output}E"
-                printf "%sMoving %s to %s\n%s" "${biwhite}" "${outputE##*/}" "${drive}" "${color_off}" # tell operator the tree file is being moved to the drive
-                cp -v "${outputE}" "${drive}" # copy the output text file to the drive: -v=verbose
+local DRIVE ; # set up local variable $DRIVE
+local FOLDER="/Volumes/UtilitySAN/05_driveContents"
+for DRIVE ; do # loop over all the drives provided by the operator
+    DRIVE="${DRIVE%/}" # strip trailing / if any
+    if [[ -d "${DRIVE}" ]] ; then # if the drive structure is recognized as a directory:
+        OUTPUT="${FOLDER}/${DRIVE##*/}_contents_${date}.txt"
+        if [[ -d "${FOLDER}" ]] ; then # if the output's parent folder structure is recognized as a directory:
+            tree --filelimit 50 --si --du -U -Q -o "${OUTPUT}" "${DRIVE}" # create a tree of the drive's contents
+            if grep "0 directories, 0 files" "${OUTPUT}" ; then # if the results of "tree," sent to the output text file, show that the drive was empty:
+                printf "%s%s is empty. Adding EMPTY to file name.\n%s" "${BIWHITE}" "${DRIVE}" "${COLOR_OFF}" && OUTPUTE="${FOLDER}/${DRIVE##*/}_contents_${date}_EMPTY.txt" && mv -v "${OUTPUT}" "${OUTPUT}E"
+                printf "%sMoving %s to %s\n%s" "${BIWHITE}" "${OUTPUTE##*/}" "${DRIVE}" "${COLOR_OFF}" # tell operator the tree file is being moved to the drive
+                cp -v "${OUTPUTE}" "${DRIVE}" # copy the output text file to the drive: -v=verbose
             else
-                printf "%sMoving %s to %s\n%s" "${biwhite}" "${drive}" "${color_off}" # tell operator the tree file is being moved to the drive
-                cp -va "${output}" "${drive}" # copy the output text file to the drive: -v=verbose, -a="archive"
+                printf "%sMoving %s to %s\n%s" "${BIWHITE}" "${DRIVE}" "${COLOR_OFF}" # tell operator the tree file is being moved to the drive
+                cp -va "${OUTPUT}" "${DRIVE}" # copy the output text file to the drive: -v=verbose, -a="archive"
             fi
         else
-            printf "%sERROR: %s does not exist. Exiting.\n" "${bired}" "${folder}" >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
+            printf "%sERROR: %s does not exist. Exiting.\n" "${BIRED}" "${FOLDER}" >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
             _log -a "Process terminated by script (no directory at requested location)."
             exit
         fi
     else
-        printf "%sERROR: %s does not exist. Exiting.\n" "${bired}" "${drive}" >&2 # tell operator if the drive cannot be found
+        printf "%sERROR: %s does not exist. Exiting.\n" "${BIRED}" "${DRIVE}" >&2 # tell operator if the drive cannot be found
         _log -a "Process terminated by script (no drive at requested location)."
         exit
     fi
@@ -69,5 +69,5 @@ _log -b
 makedrivetree "${@}"
 # log script ending
 _log -e
-printf "${biwhite}makedrivetree process complete.${color_off}\n"
+printf "${BIWHITE}makedrivetree process complete.${COLOR_OFF}\n"
 exit "$?"

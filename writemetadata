@@ -3,7 +3,7 @@
 #video files and the metadata files (or whatever they are called in OAIS) are placed into a directory called metadata, and 
 #both of these directories are stored in a directory based on the file name of the input file.
  
-### no usage yet as script is in development
+### no _usage yet as script is in development
  
 _writemetadata(){
     # need to set variable $METADATFILES

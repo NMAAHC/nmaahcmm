@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+SCRIPT_PATH=${0%/*}
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
@@ -16,7 +16,7 @@ EXTENSION="mp4"
 # this function needs to be defined before the getopts loop as it is used within that loop
 _check_outputdir_forced(){
     if [[ ! -d "${OUTPUTDIR_FORCED}" ]] ; then
-        printf "\n${bired}The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${color_off}\n"
+        printf "\n${BIRED}The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${COLOR_OFF}\n"
         exit 1
     else
         echo "outputdirectory is ${OUTPUTDIR_FORCED}"
@@ -70,24 +70,24 @@ while [ "${*}" != "" ] ; do
     else
         OUTPUT_DIR="${OUTPUTDIR_FORCED}"
     fi
-    printf "Output directory is: ${biwhite}${OUTPUT_DIR}${color_off}\n"
+    printf "Output directory is: ${BIWHITE}${OUTPUT_DIR}${COLOR_OFF}\n"
     
     # set parent directory (the directory containing $OUTPUT_DIR) - currently not used
     PARENTDIR="$(dirname "${OUTPUT_DIR}")"
-    printf "Parent directory is: ${biwhite}${PARENTDIR}${color_off}\n"
+    printf "Parent directory is: ${BIWHITE}${PARENTDIR}${COLOR_OFF}\n"
 
     #set $MEDIAID to basename of $INPUT with extension stripped
     MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
-    printf "Media ID is: ${biwhite}$(basename "${INPUT}" | cut -d. -f1)${color_off}\n"
+    printf "Media ID is: ${BIWHITE}$(basename "${INPUT}" | cut -d. -f1)${COLOR_OFF}\n"
 
     #set $OUTPUT
     OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
-    printf "Output is: ${biwhite}${OUTPUT}${color_off}\n"
+    printf "Output is: ${BIWHITE}${OUTPUT}${COLOR_OFF}\n"
 
     #check to see if $OUTPUT exists
     if [[ -s "${OUTPUT}" ]] ; then
-        printf "${bired}WARNING ${OUTPUT} already exists, skipping transcode\n"
-        printf "Moving to next file if present...\n${color_off}"
+        printf "${BIRED}WARNING ${OUTPUT} already exists, skipping transcode\n"
+        printf "Moving to next file if present...\n${COLOR_OFF}"
     else
         echo
 cat <<-EOF
@@ -101,7 +101,7 @@ cat <<-EOF
     If the output looks good, then try a higher value. If it looks bad then choose a lower value.
 EOF
         echo
-        printf "${biwhite}Please enter a CRF value: ${color_off}"
+        printf "${BIWHITE}Please enter a CRF value: ${COLOR_OFF}"
         read CRFVALUE
         echo
 cat <<-EOF
@@ -114,13 +114,13 @@ cat <<-EOF
     The general guideline is to use the slowest preset that you have patience for.
     Current presets in descending order of speed are:
 EOF
-    printf "${bired}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${color_off}"
+    printf "${BIRED}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${COLOR_OFF}"
         echo
-        printf "${biwhite}Please enter a preset speed: ${color_off}"
+        printf "${BIWHITE}Please enter a preset speed: ${COLOR_OFF}"
         read PRESETSPEED
 
         # have script say what is about to do
-        printf "\n${biwhite}Making .mp4 derivative of $(basename ${MEDIAID})${color_off}\n"
+        printf "\n${BIWHITE}Making .mp4 derivative of $(basename ${MEDIAID})${COLOR_OFF}\n"
         mkdir -p "${OUTPUT_DIR}"
         #mv -v "${INPUT}" "${PARENTDIR}"
 
@@ -136,10 +136,10 @@ EOF
         # rename file to indicate derivative
         # works by finding all mp4s in the output directory that have "PM" or "DER_01" in their filename; the "if" executes if any files matching those patterns are found (i.e. if the find statement executes to non-empty "-n")
         if [[ -n $(find "${OUTPUT_DIR}" -type f -name "*PM*.mp4" ) ]]; then
-            rename 's/PM/DER_02/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name : PM to DER_02${color_off}\n"
+            rename 's/PM/DER_02/' *.mp4 && printf "\n${BIWHITE}Updated derivative filename to reflect current name : PM to DER_02${COLOR_OFF}\n"
         fi
         if [[ -n $(find "${OUTPUT_DIR}" -type f -name "*DER_01*.mp4" ) ]]; then
-            rename 's/DER_01/DER_03/' *.mp4 && printf "\n${biwhite}Updated derivative filename to reflect current name conventions: DER_01 to DER_03${color_off}\n"
+            rename 's/DER_01/DER_03/' *.mp4 && printf "\n${BIWHITE}Updated derivative filename to reflect current name conventions: DER_01 to DER_03${COLOR_OFF}\n"
         fi
     fi
     shift
@@ -147,4 +147,4 @@ done
 
 # log script ending
 _log -e
-printf "${biwhite}makeDer process complete.${color_off}\n"
+printf "${BIWHITE}makeDer process complete.${COLOR_OFF}\n"

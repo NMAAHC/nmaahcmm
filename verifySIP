@@ -3,15 +3,15 @@
 # verifySIP checks for key files in each SIP: the master file, the derivative file, and the MD5 file (if expected within that package)
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+SCRIPT_PATH=${0%/*}
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
 ## USAGE
 
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
     echo
@@ -21,13 +21,13 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 # getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;;  # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
@@ -51,7 +51,7 @@ _runtest(){
     RUN_ERR="${?}" # any stderr output by the xpath function
     if [[ "${RUN_ERR}" != 0 ]] ; then
         printf "${LABEL}" # the error message associated with each xpath query
-        printf "${bired}Error: Running: \"${*}\" gave an Error Code - ${RUN_ERR}${color_off}"
+        printf "${BIRED}Error: Running: \"${*}\" gave an Error Code - ${RUN_ERR}${COLOR_OFF}"
         echo "${XMLRESULT}"
     fi
     # if the xpath statement finds a file that the test is looking for (default test); || OR if the xpath statement does NOT find a file and the test is NOT looking for one (inverted test);
@@ -71,7 +71,7 @@ while [[ "${*}" != "" ]] ; do
     PACKAGE="${1}"
     shift
     if [[ -f "${PACKAGE}" ]] ; then
-        printf "${bired}The package you supplied is not a directory!${color_off}" 
+        printf "${BIRED}The package you supplied is not a directory!${COLOR_OFF}" 
     elif [[ -d "${PACKAGE}" ]] ; then
         MEDIAID=$(basename "${PACKAGE}")
         echo
@@ -88,7 +88,7 @@ while [[ "${*}" != "" ]] ; do
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="FILM_DPX"
             echo
-            printf "\n${biwhite}Checking for DPX package conformance...${color_off}\n"
+            printf "\n${BIWHITE}Checking for DPX package conformance...${COLOR_OFF}\n"
             # to be filled out with DPX package example
         fi
 
@@ -97,7 +97,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "Based on directory names, this SIP is digitized film in non-DPX format." xml sel -t -v "/tree/directory/directory[@name='MP4_2048x1152' or @name='ProRes_2048x1536']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="FILM_FILES"
-            printf "\n${biwhite}Checking for non-DPX film package conformance...${color_off}\n"
+            printf "\n${BIWHITE}Checking for non-DPX film package conformance...${COLOR_OFF}\n"
             _runtest -i "This package is missing a ProRes master file!" xml sel -t -v "/tree/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xml sel -t -v "/tree/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
         fi
@@ -107,7 +107,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "Based on the presence of vrecord files, this SIP is digitized video." xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-13)='qctools.xml.gz' or substring(@name,string-length(@name)-19)='capture_options.log']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_VRECORD"
-            printf "\n${biwhite}Checking for digitized video package conformance...${color_off}\n"
+            printf "\n${BIWHITE}Checking for digitized video package conformance...${COLOR_OFF}\n"
             _runtest -i "This package is missing an MKV master file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mkv']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing a frameMD5 file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-7)='framemd5']/@name" -n "${TEMPTREE}"
@@ -118,7 +118,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "Based on the presence of files with 'DV' in the filename, this SIP is transferred DV." xml sel -t -v "/tree/directory[@name='*DV*']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_DV"
-            printf "\b${biwhite}Checking for DV package conformance...${color_off}\n"
+            printf "\b${BIWHITE}Checking for DV package conformance...${COLOR_OFF}\n"
             _runtest -i "This package is missing an MOV master file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xml sel -t -v "/tree/directory/directory[@name='derivative']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MD5 file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='md5']/@name" -n "${TEMPTREE}"
@@ -138,4 +138,4 @@ done
 
 # log script ending
 _log -e
-printf "\n${biwhite}verifySIP process complete.${color_off}\n"
+printf "\n${BIWHITE}verifySIP process complete.${COLOR_OFF}\n"

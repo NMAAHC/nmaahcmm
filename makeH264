@@ -4,19 +4,19 @@
 # all comments refer to line(s) above unless placed in-line with code or specified otherwise
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+SCRIPT_PATH=${0%/*}
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
-relativepath="derivative"
-suffix="" #suffix is blank here but can be filled in with desired characters for inlcusion in filename
-extension="mp4"
-crfvalue=18
-presetspeed=medium
-maxrate=8000
-errors=0
+RELATIVEPATH="derivative"
+SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
+EXTENSION="mp4"
+CRFVALUE=18
+PRESETSPEED=medium
+MAXRATE=8000
+ERRORS=0
 
 ## USAGE
 
@@ -47,61 +47,61 @@ shift $(( ${OPTIND} - 1 ))
 _log -b
 
 while [ "${*}" != "" ] ; do
-    input="${1}" #set $input as the first argument sent to script
+    INPUT="${1}" #set $INPUT as the first argument sent to script
 
-    # process if input is a file
-    if [[ -f "${input}" ]] ; then
-        output_dir="$(dirname ${input})/${relativepath}" # set output_dir to input name with extension stripped plus relativepath
-        MEDIAID="${input##*/}" #set $MEDIAID to basename of $input
+    # process if INPUT is a file
+    if [[ -f "${INPUT}" ]] ; then
+        OUTPUT_DIR="$(dirname ${INPUT})/${RELATIVEPATH}" # set OUTPUT_DIR to INPUT name with extension stripped plus relativepath
+        MEDIAID="${INPUT##*/}" #set $MEDIAID to basename of $INPUT
         MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
-        output="${output_dir}/${MEDIAID%.*}${suffix}.${extension}" #set $output
-        [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
-        if [[ -s "${output}" ]] ; then #check to see if $output exists
-            printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
-            printf "Moving to next file if present...\n${color_off}"
+        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+        [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
+        if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
+            printf "%sWARNING ${OUTPUT} already exists, skipping transcode of %s.%s%s\n" "${BIRED}" "${INPUT}" "${COLOR_OFF}" "${BIWHITE}"
+            printf "Moving to next file if present...\n${COLOR_OFF}"
         else
-            printf "%sMEDIAID is: %s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}"
-            printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
-            printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
-            printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}" "${color_off}" 
-            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${input}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-            if [[ -s "${output}" ]] ; then
-                printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+            printf "%sMEDIAID is: %s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${MEDIAID}"
+            printf "%sThe OUTPUT directory is: %s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${OUTPUT_DIR}"
+            printf "%sOUTPUT is: %s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${OUTPUT}"
+            printf "\n%smaking .mp4 derivative of %s%s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${MEDIAID}" "${COLOR_OFF}" 
+            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -MAXRATE "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+            if [[ -s "${OUTPUT}" ]] ; then
+                printf "\nSuccess! Derivative ${BIWHITE}$(basename ${OUTPUT})${COLOR_OFF} created.\n\n"
             else
-                printf "\n${bired}Hmm...derivative $(basename ${output}) not successfully created.\n\n${color_off}"
-                ((errors++))
+                printf "\n${BIRED}Hmm...derivative $(basename ${OUTPUT}) not successfully created.\n\n${COLOR_OFF}"
+                ((ERRORS++))
             fi
-            printf "Moving to next file if present...\n${color_off}"
+            printf "Moving to next file if present...\n${COLOR_OFF}"
         fi
-    # process if input is a directory
-    elif [[ -d "${input}" ]] ; then
-        input="${input%/}" # strip trailing / if any
-        output_dir="${input}/${relativepath}" # set output_dir to input name plus relativepath
+    # process if INPUT is a directory
+    elif [[ -d "${INPUT}" ]] ; then
+        INPUT="${INPUT%/}" # strip trailing / if any
+        OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # set OUTPUT_DIR to INPUT name plus relativepath
         shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
-        for file in "${input}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
-            [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
-            MEDIAID="${file##*/}" #set $MEDIAID to basename of $input
+        for FILE in "${INPUT}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
+            [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
+            MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
             MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
-            output="${output_dir}/${MEDIAID%.*}${suffix}.${extension}" #set $output
-            if [[ -s "${output}" ]] ; then #check to see if $output exists
-                printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
+            OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+            if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
+                printf "%sWARNING ${OUTPUT} already exists, skipping transcode of %s.%s%s\n" "${BIRED}" "${INPUT}" "${COLOR_OFF}" "${BIWHITE}"
             else
-                printf "%sMEDIAID is: %s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}"
-                printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
-                printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
-                printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}" "${color_off}" 
-                ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-                if [[ -s "${output}" ]] ; then
-                    printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+                printf "%sMEDIAID is: %s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${MEDIAID}"
+                printf "%sThe OUTPUT directory is: %s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${OUTPUT_DIR}"
+                printf "%sOUTPUT is: %s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${OUTPUT}"
+                printf "\n%smaking .mp4 derivative of %s%s%s\n" "${COLOR_OFF}" "${BIWHITE}" "${MEDIAID}" "${COLOR_OFF}" 
+                ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${FILE}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -MAXRATE "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+                if [[ -s "${OUTPUT}" ]] ; then
+                    printf "\nSuccess! Derivative ${BIWHITE}$(basename ${OUTPUT})${COLOR_OFF} created.\n\n"
                 else
-                    printf "\n${bired}Hmm...derivative $(basename ${output}) not successfully created.\n\n${color_off}"
-                    ((errors++))
+                    printf "\n${BIRED}Hmm...derivative $(basename ${OUTPUT}) not successfully created.\n\n${COLOR_OFF}"
+                    ((ERRORS++))
                 fi
             fi
-            printf "Moving to next file if present...\n${color_off}"
+            printf "Moving to next file if present...\n${COLOR_OFF}"
         done
     else
-        printf "${bired}Input is not a file or directory. Exiting script..."
+        printf "${BIRED}Input is not a file or directory. Exiting script..."
         exit 1
     fi
     shift
@@ -109,10 +109,10 @@ done
 
 # log script ending
 _log -e
-printf "${biwhite}makeH264 process complete.\n${color_off}"
-if [[ "${errors}" -gt 0 ]] ; then
-    printf "\n${bired}Not all derivatives were successfully created. Please double-check the terminal output!\n"
-    printf "Number of derivative errors found: ${errors}\n${color_off}"
-    _log -w "${errors} error/s occurred during derivative creation."
+printf "${BIWHITE}makeH264 process complete.\n${COLOR_OFF}"
+if [[ "${ERRORS}" -gt 0 ]] ; then
+    printf "\n${BIRED}Not all derivatives were successfully created. Please double-check the terminal OUTPUT!\n"
+    printf "Number of derivative errors found: ${ERRORS}\n${COLOR_OFF}"
+    _log -w "${ERRORS} error/s occurred during derivative creation."
 fi
 exit "$?"

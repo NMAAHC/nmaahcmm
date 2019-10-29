@@ -3,9 +3,9 @@
 #a script to create md5 checksums of all files in a directory or a single file and save it to a .md5 file
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+SCRIPT_PATH=${0%/*}
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
@@ -36,39 +36,39 @@ makechecksum(){
     echo
     while [[ $# -gt 0 ]] ; do
         1
-        input="${1}" #name $input as the first argument sent to script
+        INPUT="${1}" #name $INPUT as the first argument sent to script
 
-        if [ -d "${input}" ] ; then #if argument is a directory, run md5deep
-            target="${input%/}" #strip the trailing /, if any
-            target="${target##*/}" #drop the leading directory components i.e. get basename
-            output="${input}/${target}_${date}_checksums.md5" #set .md5 file as $output
-            printf "%s%s%s is a directory.\n" "${biwhite}" "${target}" "${color_off}"
-            printf "Making checksums of all files in %s%s%s\n" "${biwhite}" "${target}" "${color_off}"
-            printf "Writing to %s%s%s\n" "${biwhite}" "${output}" "${color_off}"
-            md5deep -bre "${input}" >> "${output}" #create md5 hash (hashes) of $input and write results to $output. -b=strip leading directory info, -r=recursive, -e=display progress indicator
+        if [ -d "${INPUT}" ] ; then #if argument is a directory, run md5deep
+            TARGET="${INPUT%/}" #strip the trailing /, if any
+            TARGET="${TARGET##*/}" #drop the leading directory components i.e. get basename
+            OUTPUT="${INPUT}/${TARGET}_${date}_checksums.md5" #set .md5 file as $OUTPUT
+            printf "%s%s%s is a directory.\n" "${BIWHITE}" "${TARGET}" "${COLOR_OFF}"
+            printf "Making checksums of all files in %s%s%s\n" "${BIWHITE}" "${TARGET}" "${COLOR_OFF}"
+            printf "Writing to %s%s%s\n" "${BIWHITE}" "${OUTPUT}" "${COLOR_OFF}"
+            md5deep -bre "${INPUT}" >> "${OUTPUT}" #create md5 hash (hashes) of $INPUT and write results to $OUTPUT. -b=strip leading directory info, -r=recursive, -e=display progress indicator
         fi
 
-        if [ -f "${input}" ] ; then #if argument is a file, run md5deep
-            target="${input##*/}" #get basename of $input
-            target="${target%.*}" #strip extension from $target
-            output="${input%/*}" #get full path parent dirname of $input
-            output="${output}/${target}_${date}_checksums.md5" #set .md5 file as $output
-            printf "%s%s%s is a file.\n" "${biwhite}" "${input##*/}" "${color_off}"
-            printf "Making checksum of %s%s%s\n" "${biwhite}" "${input##*/}" "${color_off}"
-            printf "Writing to %s%s%s\n" "${biwhite}" "${output}" "${color_off}"
-            md5deep -bre "${input}" >> "${output}" #create md5 hash (hashes) of $input and write results to $output. -b=strip leading directory info, -r=recursive, -e=display progress indicator
+        if [ -f "${INPUT}" ] ; then #if argument is a file, run md5deep
+            TARGET="${INPUT##*/}" #get basename of $INPUT
+            TARGET="${TARGET%.*}" #strip extension from $TARGET
+            OUTPUT="${INPUT%/*}" #get full path parent dirname of $INPUT
+            OUTPUT="${OUTPUT}/${TARGET}_$(date +%F)_checksums.md5" #set .md5 file as $OUTPUT
+            printf "%s%s%s is a file.\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}"
+            printf "Making checksum of %s%s%s\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}"
+            printf "Writing to %s%s%s\n" "${BIWHITE}" "${OUTPUT}" "${COLOR_OFF}"
+            md5deep -bre "${INPUT}" >> "${OUTPUT}" #create md5 hash (hashes) of $INPUT and write results to $OUTPUT. -b=strip leading directory info, -r=recursive, -e=display progress indicator
         fi
 
         echo
-        printf "Sorting %s%s%s\n" "${biwhite}" "${output##*/}" "${color_off}"
-        sort -k 2 -o "${output}" "${output}" #sort $output. -k 2=sort on the second field, -o=write output to file (instead of standard terminal output)
+        printf "Sorting %s%s%s\n" "${BIWHITE}" "${OUTPUT##*/}" "${COLOR_OFF}"
+        sort -k 2 -o "${OUTPUT}" "${OUTPUT}" #sort $OUTPUT. -k 2=sort on the second field, -o=write OUTPUT to file (instead of standard terminal OUTPUT)
         shift
         echo
             if [[ $# -gt 0 ]] ; then
-                printf "Finished making checksums for %s%s%s.\n\n<>..<> Moving to %s%s%s\n" "${biwhite}" "${input##*/}" "${color_off}" "${biwhite}" "${1##*/}" "${color_off}"
+                printf "Finished making checksums for %s%s%s.\n\n<>..<> Moving to %s%s%s\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}" "${BIWHITE}" "${1##*/}" "${COLOR_OFF}"
                 echo
             else
-                printf "Finished making checksums for %s%s%s.\nNothing left to checksum.\n" "${biwhite}" "${input##*/}" "${color_off}"
+                printf "Finished making checksums for %s%s%s.\nNothing left to checksum.\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}"
                 echo
                 cowsay "Tootles!"
             fi
@@ -83,5 +83,5 @@ _log -b
 makechecksum "${@}"
 # log script ending
 _log -e
-printf "${biwhite}makechecksum process complete.${color_off}\n"
+printf "${BIWHITE}makechecksum process complete.${COLOR_OFF}\n"
 exit $?

@@ -2,9 +2,9 @@
 # a script to generate metadata sidecar files for video files
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+SCRIPT_PATH=${0%/*}
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
@@ -110,11 +110,11 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
         fi
-        printf "Moving to next file if present...\n${color_off}"
+        printf "Moving to next file if present...\n${COLOR_OFF}"
     done
     shift
 done
 
 # log script ending
 _log -e
-printf "${biwhite}makemetadata process complete.\n${color_off}"
+printf "${BIWHITE}makemetadata process complete.\n${COLOR_OFF}"

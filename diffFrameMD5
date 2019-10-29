@@ -34,13 +34,13 @@ shift $(( ${OPTIND} - 1 ))
 # log script beginning
 _log -b
 
-input1="${1}" # $1 is the first argument (file that the operator supplied)
-input2="${2}" # $2 is the second argument (file that the operator supplied)
+INPUT1="${1}" # $1 is the first argument (file that the operator supplied)
+INPUT2="${2}" # $2 is the second argument (file that the operator supplied)
 
 # compare the 6th field of each text file (which is where the checksums for each frame are expected to appear)
 # diff --suppress-common-lines outputs only the lines that are NOT identical in both files
-diff --side-by-side --width=200 --suppress-common-lines <(cat "${input1}" | cut -d, -f 6) <(cat "${input2}" | cut -d, -f 6)
+diff --side-by-side --width=200 --suppress-common-lines <(cat "${INPUT1}" | cut -d, -f 6) <(cat "${INPUT2}" | cut -d, -f 6)
 
 # log script ending
 _log -e
-printf "${biwhite}diffFrameMD5 process complete.${color_off}\n"
+printf "${BIWHITE}diffFrameMD5 process complete.${COLOR_OFF}\n"
