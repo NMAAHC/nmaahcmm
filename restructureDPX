@@ -74,6 +74,14 @@ restructureDPX(){
     MEDIAID="${dpxid}__${title}"
     outputdir="${deliverdir}/${MEDIAID}"
     mkdir "${outputdir}"
+    
+    # record variables in ingest log
+    _writeingestlog "DPX ID" "${dpxid}"
+    _writeingestlog "TITLE" "${title}"
+    _writeingestlog "MEDIAID" "${MEDIAID}"
+    _writeingestlog "REELS" "${reelnumber}"
+    _writeingestlog "INPUT" "${input}"
+    _writeingestlog "START TIME" "$(date +%FT%T)"
 
     case "${reelnumber}" in
         1 )
@@ -324,5 +332,6 @@ if [[ "${cleanupdecision}" == "Y" ]] || [[ "${cleanupdecision}" == "y" ]] ; then
 fi
 # log script ending
 _log -e
+_writeingestlog "END TIME" "$(date +%FT%T)"
 printf "${biwhite}restructureDPX process complete.${color_off}\n"
 exit $?

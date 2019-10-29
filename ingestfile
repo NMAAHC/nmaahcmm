@@ -34,6 +34,7 @@ done
 shift $(( ${OPTIND} - 1 ))
 
 
+
 ## PASHUA INTERFACE
 
 CONF="
@@ -216,11 +217,22 @@ if [[ -z "${CLEANUPDECISION}" ]] ; then
     done
 fi
 
-
 ## SCRIPT ACTIONS
 
 # log script beginning
 _log -b
+
+# record variables in ingest log
+_writeingestlog "OPERATOR" "${OP}"
+_writeingestlog "INPUT" "${INPUT}"
+_writeingestlog "MEDIAID" "${MEDIAID}"
+_writeingestlog "PACKAGETYPE" "${PACKAGETYPE}"
+_writeingestlog "REELS" "${REELS}"
+_writeingestlog "DPXID" "${DPXID}"
+_writeingestlog "DPXTITLE" "${DPXTITLE}"
+_writeingestlog "DESTINATION" "${DESTINATION}"
+_writeingestlog "CLEANUPDECISION" "${CLEANUPDECISION}"
+_writeingestlog "START TIME" "$(date +%FT%T)"
 
 # make AIP directory
 mkdir -p "${DESTINATION}/${MEDIAID}"
@@ -277,5 +289,6 @@ fi
 
 # log script ending
 _log -e
+_writeingestlog "END TIME" "$(date +%FT%T)"
 
 printf "Process done...might have been successful...it's a WIP.\n"
