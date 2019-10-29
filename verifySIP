@@ -77,7 +77,7 @@ while [[ "${*}" != "" ]] ; do
         echo
         echo "running verifySIP on ${PACKAGE}..." #the name of the package being verified
         echo
-        # "${SCRIPTDIR}/removeDSStore" "${PACKAGE}"
+        "${SCRIPTDIR}/removeDSStore" "${PACKAGE}"
         # make a new temp tree file
         TEMPTREE=$(_maketemp)
         tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" -I "tree.xml" "${PACKAGE}" > "${TEMPTREE}"

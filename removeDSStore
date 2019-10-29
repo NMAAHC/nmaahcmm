@@ -1,0 +1,22 @@
+#!/bin/bash
+# @author Dave Rice
+
+SCRIPTDIR=$(dirname "${0}")
+. "${SCRIPTDIR}/mmfunctions" || { echo "Missing '${SCRIPTDIR}/mmfunctions'. Exiting." ; exit 1 ;};
+
+_cleanup(){
+    _log -a "Process aborted"
+    exit 1
+}
+
+trap _cleanup SIGHUP SIGINT SIGTERM
+_log -b
+
+while [ "${*}" != "" ] ; do
+    TARGET=${1}
+    if [ -d "${TARGET}" ]; then
+        find "${TARGET}" -name '.DS_Store' -type f -delete
+    fi
+    shift
+done
+_log -e

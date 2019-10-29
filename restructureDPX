@@ -79,6 +79,8 @@ restructureDPX(){
         1 )
             printf "%sMoving files from %s ${input}\n${biwhite}${color_off}"
             if [[ -d "${outputdir}" ]] ; then
+                # remove any .DS_Store files to begin
+                "${SCRIPTDIR}/removeDSStore" "${outputdir}"
                 # find and move any .wav files fom $input to $outputdir
                 for wavpath in "${input}"/*WAV ; do
                     if [[ ! -d "${wavpath}" ]]; then
