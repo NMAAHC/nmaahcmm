@@ -71,8 +71,8 @@ restructureDPX(){
         read -r input
         echo
     fi
-    packagename="${dpxid}__${title}"
-    outputdir="${deliverdir}/${packagename}"
+    MEDIAID="${dpxid}__${title}"
+    outputdir="${deliverdir}/${MEDIAID}"
     mkdir "${outputdir}"
 
     case "${reelnumber}" in
@@ -146,14 +146,14 @@ restructureDPX(){
 
         2 )
             # make separate subdirectories for R1 and R2, with further subdirectories for the different components
-            R1=("${outputdir}/${packagename}_R1")
-            audR1="${R1}/${packagename}_R1__Audio"
-            derR1="${R1}/${packagename}_R1__Derivatives"
-            dpxR1="${R1}/${packagename}_R1__DPX"
-            R2=("${outputdir}/${packagename}_R2")
-            audR2="${R2}/${packagename}_R2__Audio"
-            derR2="${R2}/${packagename}_R2__Derivatives"
-            dpxR2="${R2}/${packagename}_R2__DPX"
+            R1=("${outputdir}/${MEDIAID}_R1")
+            audR1="${R1}/${MEDIAID}_R1__Audio"
+            derR1="${R1}/${MEDIAID}_R1__Derivatives"
+            dpxR1="${R1}/${MEDIAID}_R1__DPX"
+            R2=("${outputdir}/${MEDIAID}_R2")
+            audR2="${R2}/${MEDIAID}_R2__Audio"
+            derR2="${R2}/${MEDIAID}_R2__Derivatives"
+            dpxR2="${R2}/${MEDIAID}_R2__DPX"
         
             mkdir -p "${R1}" "${audR1}" "${derR1}" "${dpxR1}" "${R2}" "${audR2}" "${derR2}" "${dpxR2}"
         
@@ -212,18 +212,18 @@ restructureDPX(){
 
         3 )
             # make separate subdirectories for R1, R2, and R3, with further subdirectories for the different components
-            R1=("${outputdir}/${packagename}_R1")
-            audR1="${R1}/${packagename}_R1__Audio"
-            derR1="${R1}/${packagename}_R1__Derivatives"
-            dpxR1="${R1}/${packagename}_R1__DPX"
-            R2=("${outputdir}/${packagename}_R2")
-            audR2="${R2}/${packagename}_R2__Audio"
-            derR2="${R2}/${packagename}_R2__Derivatives"
-            dpxR2="${R2}/${packagename}_R2__DPX"
-            R3=("${outputdir}/${packagename}_R3")
-            audR3="${R3}/${packagename}_R3__Audio"
-            derR3="${R3}/${packagename}_R3__Derivatives"
-            dpxR3="${R3}/${packagename}_R3__DPX"
+            R1=("${outputdir}/${MEDIAID}_R1")
+            audR1="${R1}/${MEDIAID}_R1__Audio"
+            derR1="${R1}/${MEDIAID}_R1__Derivatives"
+            dpxR1="${R1}/${MEDIAID}_R1__DPX"
+            R2=("${outputdir}/${MEDIAID}_R2")
+            audR2="${R2}/${MEDIAID}_R2__Audio"
+            derR2="${R2}/${MEDIAID}_R2__Derivatives"
+            dpxR2="${R2}/${MEDIAID}_R2__DPX"
+            R3=("${outputdir}/${MEDIAID}_R3")
+            audR3="${R3}/${MEDIAID}_R3__Audio"
+            derR3="${R3}/${MEDIAID}_R3__Derivatives"
+            dpxR3="${R3}/${MEDIAID}_R3__DPX"
             mkdir -p "${R1}" "${audR1}" "${derR1}" "${dpxR1}" "${R2}" "${audR2}" "${derR2}" "${dpxR2}" "${R3}" "${audR3}" "${derR3}" "${dpxR3}"
             echo
             printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"

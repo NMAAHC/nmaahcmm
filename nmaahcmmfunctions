@@ -148,7 +148,7 @@ function _log(){
     done
     shift $(( ${OPTIND} - 1 ))
     NOTE="${1}"
-    echo "$(date +%FT%T), $(basename "${0}"), ${STATUS}, ${OP}, ${MEDIAID}, ${NOTE}" >> "${LOGDIR}/${LOGNAME}"
+    echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${LOGNAME}"
 }
 
 function _maketemp(){

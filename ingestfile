@@ -57,12 +57,12 @@ OP.type = textfield
 OP.label = Please enter your name:
 OP.width = 300
 
-# package name
-PACKAGENAME.x = 20
-PACKAGENAME.y = 600
-PACKAGENAME.type = textfield
-PACKAGENAME.label = Please enter a unique PACKAGE NAME (letters, numbers, hyphens, underscores only). Leave blank for DPX packages.
-PACKAGENAME.width = 300
+# mediaid
+MEDIAID.x = 20
+MEDIAID.y = 600
+MEDIAID.type = textfield
+MEDIAID.label = Please enter a unique media ID/package name (letters, numbers, hyphens, underscores only). Leave blank for DPX packages.
+MEDIAID.width = 300
 
 # input directory
 INPUT.x = 20
@@ -141,7 +141,7 @@ _pashua_run
 rm "${PASHUA_CONFIGFILE}"
 echo "  OPERATOR = ${OP}"
 echo "  INPUT = ${INPUT}"
-echo "  PACKAGENAME = ${PACKAGENAME}"
+echo "  MEDIAID = ${MEDIAID}"
 echo "  PACKAGETYPE = ${PACKAGETYPE}"
 echo "  REELS = ${REELS}"
 echo "  DPXID = ${DPXID}"
@@ -163,13 +163,13 @@ if [[ -z "${INPUT}" ]] ; then
     [[ "${INPUT}" = "q" ]] && exit 0
     basename=$(basename "${INPUT}")
 fi
-if [[ -z "${PACKAGENAME}" ]] && [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     printf "Enter a unique package name or 'q' to quit: "
-    read -e PACKAGENAME
-    [[ "${PACKAGENAME}" = "q" ]] && exit 0
+    read -e MEDIAID
+    [[ "${MEDIAID}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
-    [[ -z "${PACKAGENAME}" ]] && { printf "${bired}ERROR You must enter a valid MEDIA ID${color_off}\n" ; exit ;};
-    [[ ! -z $(echo "${PACKAGENAME}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore\n" ; exit 1 ;};
+    [[ -z "${MEDIAID}" ]] && { printf "${bired}ERROR You must enter a valid MEDIA ID${color_off}\n" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore\n" ; exit 1 ;};
 fi
 if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
@@ -200,7 +200,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
         printf "ex. Juke_Joint\n%s"
         read -e DPXTITLE
     fi
-    PACKAGENAME="${DPXID}__${DPXTITLE}"
+    MEDIAID="${DPXID}__${DPXTITLE}"
 fi
 if [[ -z "${DESTINATION}" ]] ; then
     printf "Drag in the destination directory or type 'q' to quit: "
@@ -223,7 +223,7 @@ fi
 _log -b
 
 # make AIP directory
-mkdir -p "${DESTINATION}/${PACKAGENAME}"
+mkdir -p "${DESTINATION}/${MEDIAID}"
 
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     # if working with a DPX package, run restructureDPX microservice
@@ -255,7 +255,7 @@ fi
 
 # copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
 if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
-    rsync -av "${INPUT}" "${DESTINATION}/${PACKAGENAME}"
+    rsync -av "${INPUT}" "${DESTINATION}/${MEDIAID}"
     RSYNC_ERR="${?}"
     if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
         echo "${RSYNC_ERR}"

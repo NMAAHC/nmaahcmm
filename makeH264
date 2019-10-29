@@ -52,18 +52,18 @@ while [ "${*}" != "" ] ; do
     # process if input is a file
     if [[ -f "${input}" ]] ; then
         output_dir="$(dirname ${input})/${relativepath}" # set output_dir to input name with extension stripped plus relativepath
-        mediaid="${input##*/}" #set $mediaid to basename of $input
-        mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
-        output="${output_dir}/${mediaid%.*}${suffix}.${extension}" #set $output
+        MEDIAID="${input##*/}" #set $MEDIAID to basename of $input
+        MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
+        output="${output_dir}/${MEDIAID%.*}${suffix}.${extension}" #set $output
         [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
         if [[ -s "${output}" ]] ; then #check to see if $output exists
             printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
             printf "Moving to next file if present...\n${color_off}"
         else
-            printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
+            printf "%sMEDIAID is: %s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}"
             printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
             printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
-            printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
+            printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}" "${color_off}" 
             ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${input}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
             if [[ -s "${output}" ]] ; then
                 printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
@@ -80,16 +80,16 @@ while [ "${*}" != "" ] ; do
         shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
         for file in "${input}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
             [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
-            mediaid="${file##*/}" #set $mediaid to basename of $input
-            mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
-            output="${output_dir}/${mediaid%.*}${suffix}.${extension}" #set $output
+            MEDIAID="${file##*/}" #set $MEDIAID to basename of $input
+            MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
+            output="${output_dir}/${MEDIAID%.*}${suffix}.${extension}" #set $output
             if [[ -s "${output}" ]] ; then #check to see if $output exists
                 printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
             else
-                printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
+                printf "%sMEDIAID is: %s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}"
                 printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
                 printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
-                printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
+                printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${MEDIAID}" "${color_off}" 
                 ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
                 if [[ -s "${output}" ]] ; then
                     printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
