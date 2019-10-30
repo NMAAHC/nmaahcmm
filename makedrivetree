@@ -11,7 +11,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
 ### USAGE
 
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will write the contents of a drive directory in tree form and save it to a .txt file. It takes one or more drives as input."
@@ -19,20 +19,20 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 # getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+        h) _usage ;; # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 
-makedrivetree(){
+_makedrivetree(){
 local DRIVE ; # set up local variable $DRIVE
 local FOLDER="/Volumes/UtilitySAN/05_driveContents"
 for DRIVE ; do # loop over all the drives provided by the operator
@@ -66,7 +66,7 @@ done
 
 # log script beginning
 _log -b
-makedrivetree "${@}"
+_makedrivetree "${@}"
 # log script ending
 _log -e
 printf "${BIWHITE}makedrivetree process complete.${COLOR_OFF}\n"

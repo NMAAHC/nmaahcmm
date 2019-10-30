@@ -13,7 +13,7 @@ TARGET_FOLDER_PARENT="/Users/Annie/Dropbox/Annie/2019_fall/NMAAHC-test-files/dpx
 
 ## USAGE
 
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will copy .md5 checksum files and the first .dpx file in a stack to a designated directory. It takes one or more DPX directories as arguments."
@@ -22,20 +22,20 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 # getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+        h) _usage ;; # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
 
 ## FUNCTIONS
 
-moveDPX(){
+_moveDPX(){
     while [[ "${*}" != "" ]] ; do
 
         DPX_FOLDER="${1}"
@@ -110,7 +110,7 @@ moveDPX(){
 
 # log script beginning
 _log -b
-moveDPX "${@}"
+_moveDPX "${@}"
 # log script ending
 _log -e
 printf "${BIWHITE}moveDPX process complete.${COLOR_OFF}\n"

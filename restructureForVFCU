@@ -32,7 +32,7 @@ shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 
-restructureForVFCU(){
+_restructureForVFCU(){
     echo
 
     for ARG in "${@}" ;
@@ -88,7 +88,7 @@ restructureForVFCU(){
 
 # log script beginning
 _log -b
-restructureForVFCU "${@}"
+_restructureForVFCU "${@}"
 # log script ending
 _log -e
 printf "${BIWHITE}restructureForVFCU process complete.${COLOR_OFF}\n"

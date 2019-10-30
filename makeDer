@@ -26,7 +26,7 @@ _check_outputdir_forced(){
 
 ### USAGE
 
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes a video file or package as input."
@@ -37,14 +37,14 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 # getopts loop
 OPTIND=1
 while getopts ":o:h" OPT ; do
     case "${OPT}" in
         o)  OUTPUTDIR_FORCED="${OPTARG}" && _check_outputdir_forced ;;
-        h)  usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option: -$OPTARG" ; usage ; exit 1 ;;
+        h)  _usage ;; # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option: -$OPTARG" ; _usage ; exit 1 ;;
     esac
 done
 shift $(( ${OPTIND} - 1 ))

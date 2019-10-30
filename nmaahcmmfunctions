@@ -23,7 +23,7 @@ elif [ ! "${CONFIG}" = "Y" -a "${REQUIRECONFIG}" = "Y" ] ; then
 fi
 
 # set text colors; can be used to differentiate statements that display in the terminal window
-function _setcolors(){
+_setcolors(){
     date="$(date +%Y%m%d)"
     BIWHITE=$(tput bold)$(tput setaf 7)
     BIRED=$(tput bold)$(tput setaf 1)
@@ -33,7 +33,7 @@ function _setcolors(){
 }
 
 # this function helps the system gracefully exit the script; it will only run when the operator presses ctrl+C
-function _initialize_make(){
+_initialize_make(){
     _cleanup(){
             printf "\n${BIRED}Process cancelled\n${COLOR_OFF}" # tell operator that script is ending, then turn all colors off
         exit 1
@@ -42,7 +42,7 @@ function _initialize_make(){
 }
 
 # a substitute for the plain mkdir tool; adds a more explicit warning to the operator if there is already a directory at that location
-function _mkdir(){
+_mkdir(){
     local DIR2MAKE=""
     while [ "${*}" != "" ] ; do
         DIR2MAKE="${1}"
@@ -58,7 +58,7 @@ function _mkdir(){
 }
 
 # removes hidden files (always identified with a period at the beginning of the filename - ".*")
-function _removehidden(){
+_removehidden(){
     if [ -z "${1}" ] ; then
         cowsay "no argument provided to remove hidden files. tootles."
     else
@@ -67,7 +67,7 @@ function _removehidden(){
     fi
 }
 
-function _sortk2(){
+_sortk2(){
     if [ -z "${1}" ]; then
         cowsay "no argument provided to sort. tootles."
     else
@@ -76,7 +76,7 @@ function _sortk2(){
     fi
 }
 
-function _pashua_run(){
+_pashua_run(){
     # Wrapper function for interfacing to Pashua. Written by Carsten
     # Bluem <carsten@bluem.net> in 10/2003, modified in 12/2003 (including
     # a code snippet contributed by Tor Sigurdsson), 08/2004 and 12/2004.
@@ -120,14 +120,14 @@ function _pashua_run(){
     fi
 }
 
-function _check_deliverdir(){
+_check_deliverdir(){
     if [[ ! -d "${DELIVERDIR}" ]] ; then
         printf "${BIRED}" "The delivery directory, ${DELIVERDIR}, does not exist. Can not deliver the OUTPUT of $(basename "${0}")." "${COLOR_OFF}"
     fi
 }
 
-function _log(){
     LOGDIR="~/Desktop/logs"
+_log(){
     if [[ ! -d "${LOGDIR}" ]] ; then
         mkdir "${LOGDIR}"
         if [[ "${?}" -ne 0 ]] ; then
@@ -151,7 +151,7 @@ function _log(){
     echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${LOGNAME}"
 }
 
-function _writeingestlog(){
+_writeingestlog(){
     LOGDIR="/Users/Annie/Desktop/logs"
     INGESTLOG="${LOGDIR}/$(basename "${0}")"
     if [[ -z "${INGESTLOG}" ]] ; then
@@ -168,7 +168,7 @@ function _writeingestlog(){
     echo "${KEY}: ${VALUE}" >> "${INGESTLOG}"
 }
 
-function _maketemp(){
+_maketemp(){
     mktemp -q "/tmp/$(basename "${0}").XXXXXX"
     if [ "${?}" -ne 0 ]; then
         echo "${0}: Can't create temp file, exiting..."

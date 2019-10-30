@@ -11,7 +11,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 
 ## USAGE
 
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
     echo "This script will run an interactive interview and then process an input file accordingly."
@@ -27,8 +27,8 @@ usage(){
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;;  # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))

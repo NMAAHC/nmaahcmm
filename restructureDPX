@@ -41,7 +41,7 @@ done
 shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
-restructureDPX(){
+_restructureDPX(){
     INPUT="${1}"
     
     if [[ -z "${REELNUMBER}" ]] ; then
@@ -322,7 +322,7 @@ restructureDPX(){
 
 # log script beginning
 _log -b
-restructureDPX "${@}"
+_restructureDPX "${@}"
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     printf "${BIWHITE}Remove input directory? Type Y or y for yes, any other key for no: ${COLOR_OFF}\n"
     read CLEANUPDECISION
