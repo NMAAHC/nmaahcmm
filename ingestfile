@@ -164,7 +164,7 @@ if [[ -z "${INPUT}" ]] ; then
     [[ "${INPUT}" = "q" ]] && exit 0
     basename=$(basename "${INPUT}")
 fi
-if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
     printf "Enter a unique package name or 'q' to quit: "
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
