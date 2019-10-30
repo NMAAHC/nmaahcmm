@@ -236,6 +236,8 @@ _writeingestlog "START TIME" "$(date +%FT%T)"
 
 # make AIP directory
 mkdir -p "${DESTINATION}/${MEDIAID}"
+# remove .DS_Store files and log action if successful
+"${SCRIPTDIR}/removeDSStore" "${INPUT}" && _writeingestlog ".DS_Store files removed:" "$(date +%FT%T)"
 
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     # if working with a DPX package, run restructureDPX microservice
@@ -245,17 +247,14 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
         "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" -c "${INPUT}"
     fi
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
-    # verify package structure matches expected (microservice tk)
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     # restructure package (microservice tk)
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    # verify package structure matches expected (microservice tk)
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     # restructure package (microservice tk)
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
-    # verify package structure matches expected (microservice tk)
     "${SCRIPT_PATH}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     # restructure package (microservice tk)
