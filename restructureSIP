@@ -1,0 +1,164 @@
+#!/bin/bash
+# restructureSIP restructures a SIP into an AIP by:
+#   creating an output AIP directory named after an operator-selected media id and located in an operator-selected destination directory
+#   creating "objects" and "metadata" subcategories within that output AIP directory
+#   rsyncing files from the SIP into the AIP
+#   removing or leaving in place the SIP files upon successful completion
+
+SCRIPTDIR=$(dirname $(which "${0}"))
+. "${SCRIPTDIR}/mmfunctions" || { echo "Missing '${SCRIPTDIR}/mmfunctions'. Exiting." ; exit 1 ;};
+
+## USAGE
+
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This script will restructure a SIP into an AIP based on the type of package being submitted. The script will"
+    echo "  -creating an output AIP directory named after an operator-selected media id and located in an operator-selected destination directory"
+    echo "  -create 'objects' and 'metadata' subcategories within that output AIP directory"
+    echo "  -rsync files from the SIP into the AIP"
+    echo "  -remove SIP files or leave them in place upon successful completion, depending upon operator selection"
+    echo "  "
+    echo "If no options are selected, the script will prompt the operator for a selection."
+    echo "Usage: $(basename ${0}) [ -options ] [ -m MEDIAID ] [ -o /path/to/output/directory ] /path/to/SIP"
+    echo "  "
+    echo "  -x Package type: Digitized Film (DPX package)"
+    echo "  -f Package type: Digitized Film (MOV and/or MP4 files only)"
+    echo "  -v Package type: Digitized Analog Video (vrecord package)"
+    echo "  -d Package type: Transferred DV (MOV and/or MP4 files)"
+    echo "  -u Package type: Other/Unknown"
+    echo "  -m MEDIAID (type media id for final package)"
+    echo "  -o /path/to/output/directory (directory to deliver the resulting package to)"
+    echo "  -r Remove source files after successful ingest"
+    echo "  -h display this help"
+    echo
+    exit
+}
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        x) PACKAGETYPE="Digitized Film (DPX package)" ;;
+        f) PACKAGETYPE="Digitized Film (MOV and/or MP4 files only)" ;;
+        v) PACKAGETYPE="Digitized Analog Video (vrecord package)" ;;
+        d) PACKAGETYPE="Transferred DV (MOV and/or MP4 files)" ;;
+        u) PACKAGETYPE="Other/Unknown" ;;
+        m) MEDIAID="${OPTARG}"
+        o) DESTINATION="${OPTARG}" && _check_deliverdir ;;
+        r) CLEANUPDECISION="Remove source files after successful ingest" ;;
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+# check that all inputs were entered
+if [[ -z "${PACKAGETYPE}" ]] ; then
+    printf "Select a package type:"
+    echo
+    PS3="Selection: "
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
+    do
+        break
+    done
+fi
+if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+    printf "Enter a unique package name or 'q' to quit: "
+    read -e MEDIAID
+    [[ "${MEDIAID}" = "q" ]] && exit 0
+    # validate id and perhaps fail with exit
+    [[ -z "${MEDIAID}" ]] && { printf "${BIRED}ERROR You must enter a valid MEDIA ID${COLOR_OFF}\n" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore\n" ; exit 1 ;};
+fi
+if [[ -z "${DESTINATION}" ]] ; then
+    printf "Drag in the destination directory or type 'q' to quit: "
+    read -e DESTINATION
+    [[ "${DESTINATION}" = "q" ]] && exit 0
+fi
+if [[ -z "${CLEANUPDECISION}" ]] ; then
+    CLEANUPDECISION="Leave source files where they are"
+fi
+
+# log script beginning
+_log -b
+
+# record variables in log
+_writelog  "PACKAGE TYPE" "${PACKAGETYPE}"
+_writelog  "MEDIA ID" "${MEDIAID}"
+_writelog "DESTINATION" "${DESTINATION}"
+_writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
+
+## SCRIPT ACTIONS
+
+INPUT="${1}"
+OUTPUT_PACKAGE="${DESTINATION}/${MEDIAID}"
+
+# if package type is unknown, check whether it looks like a DPX package
+if [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
+    if [[ -n $(find "${INPUT}" -name *.dpx) ]] ; then
+        printf "${bired}This SIP looks like a DPX package!${color_off}"
+        PACKAGETYPE="Digitized Film (DPX package)"
+    fi
+fi
+
+# if SIP is a DPX, direct the operator to use restructureDPX instead
+if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+    printf "${bired}If you are trying to restructure a DPX package, please run the 'restructureDPX' microservice instead."
+    printf "You can also run the 'ingestfile' microservice, which invokes 'restructureDPX' as well.${color_off}"
+else
+    mkdir "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
+fi
+
+# perform restructuring actions on other SIPs
+if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+    for VIDEOFILE in $(find "${INPUT}" -name *.mov -name *.mp4) ; do
+        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        RSYNC_ERR="${?}"
+    done
+    for METADATAFILE in $(find "${INPUT}" -not -name *.mov -not -name ! *.mp4) ; do
+        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
+        RSYNC_ERR="${?}"
+    done
+elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
+    for VIDEOFILE in $(find "${INPUT}" -name *.mkv -name *.mp4) ; do
+        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        RSYNC_ERR="${?}"
+    done
+    for METADATAFILE in $(find "${INPUT}" -not -name *.mkv -not -name *.mp4) ; do
+        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
+        RSYNC_ERR="${?}"
+    done
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
+    for VIDEOFILE in $(find "${INPUT}" -name *.mov -name *.mp4) ; do
+        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        RSYNC_ERR="${?}"
+    done
+    for METADATAFILE in $(find "${INPUT}" -not -name *.mov -not -name *.mp4) ; do
+        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
+        RSYNC_ERR="${?}"
+    done
+elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
+    for VIDEOFILE in $(find "${INPUT}" -name *.mov -name *.mkv -name *.mp4) ; do
+        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        RSYNC_ERR="${?}"
+    done
+    for METADATAFILE in $(find "${INPUT}" -not -name *.mov -not -name *.mkv -not -name *.mp4) ; do
+        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
+        RSYNC_ERR="${?}"
+    done
+fi
+
+# clean up original files if requested - hardcoded OFF during testing
+#if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
+#    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
+#        echo "${RSYNC_ERR}"
+#        printf "${BIRED}Cancelling requested deletion of source file, not looking safe.${COLOR_OFF}"
+#    else
+#        printf "${BIWHITE}Removing the source file from ${INPUT} as requested.${COLOR_OFF}"
+#        _run rm -f "${INPUT}"
+#    fi
+#fi
+
+# log script ending
+_log -e
+_writelog "END TIME" "$(date +%FT%T)"
