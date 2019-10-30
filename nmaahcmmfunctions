@@ -6,6 +6,9 @@ SCRIPTDIR=$(dirname "${0}")
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
+# global variables
+LOGDIR="./Desktop/logs"
+
 # You can't directly call a function in another shell script. You can move your function definitions into a separate file and then load them into your script using the . command, like this:
 # . /path/to/functions.sh
 # The script will interpret functions.sh as if its content were actually present in your file at this point. It is a common mechanism for implementing shared libraries of shell functions, and is how each script in nmaahcmm can reference the shared functions in this file.
@@ -126,7 +129,6 @@ _check_deliverdir(){
     fi
 }
 
-    LOGDIR="~/Desktop/logs"
 _log(){
     if [[ ! -d "${LOGDIR}" ]] ; then
         mkdir "${LOGDIR}"
@@ -135,7 +137,7 @@ _log(){
             exit 1
         fi
     fi
-    LOGNAME="nmaahcmm.log"
+    MMLOGNAME="nmaahcmm.log"
     OPTIND=1
     while getopts ":beacw" OPT; do
         case "${OPT}" in
@@ -148,24 +150,23 @@ _log(){
     done
     shift $(( ${OPTIND} - 1 ))
     NOTE="${1}"
-    echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${LOGNAME}"
+    echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${MMLOGNAME}"
 }
 
-_writeingestlog(){
-    LOGDIR="/Users/Annie/Desktop/logs"
-    INGESTLOG="${LOGDIR}/$(basename "${0}")"
-    if [[ -z "${INGESTLOG}" ]] ; then
+_writelog(){
+    LOGNAME="$(basename "${0}")_$(date +%F).log"
+    if [[ -z "${LOGNAME}" ]] ; then
         echo "Error, can not write to log, ingest log not yet created"
         exit
     fi
-    if [[ ! -f "${INGESTLOG}" ]] ; then
-        _mkdir2 $(dirname "${INGESTLOG}")
-        touch "${INGESTLOG}"
+    if [[ ! -f "${LOGNAME}" ]] ; then
+        _mkdir2 $(dirname "${LOGNAME}")
+        touch "${LOGNAME}"
     fi
     KEY="${1}"
     VALUE="${2}"
     # need to add yaml style escaping
-    echo "${KEY}: ${VALUE}" >> "${INGESTLOG}"
+    echo "${KEY}: ${VALUE}" >> "${LOGDIR}/${LOGNAME}"
 }
 
 _maketemp(){

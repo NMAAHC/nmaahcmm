@@ -223,21 +223,22 @@ fi
 _log -b
 
 # record variables in ingest log
-_writeingestlog "OPERATOR" "${OP}"
-_writeingestlog "INPUT" "${INPUT}"
-_writeingestlog "MEDIAID" "${MEDIAID}"
-_writeingestlog "PACKAGETYPE" "${PACKAGETYPE}"
-_writeingestlog "REELS" "${REELS}"
-_writeingestlog "DPXID" "${DPXID}"
-_writeingestlog "DPXTITLE" "${DPXTITLE}"
-_writeingestlog "DESTINATION" "${DESTINATION}"
-_writeingestlog "CLEANUPDECISION" "${CLEANUPDECISION}"
-_writeingestlog "START TIME" "$(date +%FT%T)"
+_writelog "OPERATOR" "${OP}"
+_writelog "INPUT" "${INPUT}"
+_writelog "MEDIAID" "${MEDIAID}"
+_writelog "PACKAGETYPE" "${PACKAGETYPE}"
+_writelog "REELS" "${REELS}"
+_writelog "DPXID" "${DPXID}"
+_writelog "DPXTITLE" "${DPXTITLE}"
+_writelog "DESTINATION" "${DESTINATION}"
+_writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
+_writelog "START TIME" "$(date +%FT%T)"
+_writelog " " " "
 
 # make AIP directory
 mkdir -p "${DESTINATION}/${MEDIAID}"
 # remove .DS_Store files and log action if successful
-"${SCRIPTDIR}/removeDSStore" "${INPUT}" && _writeingestlog ".DS_Store files removed:" "$(date +%FT%T)"
+"${SCRIPTDIR}/removeDSStore" "${INPUT}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
 
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     # if working with a DPX package, run restructureDPX microservice
@@ -246,6 +247,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     elif [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
         "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" -c "${INPUT}"
     fi
+    _writelog "Invoked restructureDPX:" "$(date +%FT%T)"
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
@@ -288,6 +290,6 @@ fi
 
 # log script ending
 _log -e
-_writeingestlog "END TIME" "$(date +%FT%T)"
+_writelog "END TIME" "$(date +%FT%T)"
 
 printf "Process done...might have been successful...it's a WIP.\n"

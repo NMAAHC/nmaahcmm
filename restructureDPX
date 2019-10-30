@@ -76,12 +76,12 @@ _restructureDPX(){
     mkdir "${OUTPUTDIR}"
     
     # record variables in ingest log
-    _writeingestlog "DPX ID" "${DPXID}"
-    _writeingestlog "TITLE" "${TITLE}"
-    _writeingestlog "MEDIAID" "${MEDIAID}"
-    _writeingestlog "REELS" "${REELNUMBER}"
-    _writeingestlog "INPUT" "${INPUT}"
-    _writeingestlog "START TIME" "$(date +%FT%T)"
+    _writelog "DPX ID" "${DPXID}"
+    _writelog "TITLE" "${TITLE}"
+    _writelog "MEDIAID" "${MEDIAID}"
+    _writelog "REELS" "${REELNUMBER}"
+    _writelog "INPUT" "${INPUT}"
+    _writelog "START TIME" "$(date +%FT%T)"
 
     case "${REELNUMBER}" in
         1 )
@@ -332,6 +332,6 @@ if [[ "${CLEANUPDECISION}" == "Y" ]] || [[ "${CLEANUPDECISION}" == "y" ]] ; then
 fi
 # log script ending
 _log -e
-_writeingestlog "END TIME" "$(date +%FT%T)"
+_writelog "END TIME" "$(date +%FT%T)"
 printf "${BIWHITE}restructureDPX process complete.${COLOR_OFF}\n"
 exit $?
