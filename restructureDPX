@@ -137,17 +137,17 @@ _restructureDPX(){
             printf "\n%sRenaming files in %s%s\n" "${BIWHITE}" "${COLOR_OFF}" "${OUTPUTDIR}"
             echo
             if [[ -d "${AUDPATH}" ]] ; then
-                find "${AUDPATH}" -name "*.wav" -exec mv -i "{}" "${AUDPATH}/${DPXID}_AUD.wav" \;
+                find "${AUDPATH}" -iname "*.wav" -exec mv -i "{}" "${AUDPATH}/${DPXID}_AUD.wav" \;
                 wav="${AUDPATH}/${DPXID}_AUD.wav"
                 printf "\n\t%sRenamed audio file to %s%s\n" "${BIWHITE}" "${wav}" "${COLOR_OFF}"
             fi
             if [[ -d "${DER}" ]] ; then
-                find "${DER}" -name "*ProRes*.mov" -exec mv -i "{}" "${DER}/${DPXID}_DER_01.mov" \;
+                find "${DER}" -iname "*ProRes*.mov" -exec mv -i "{}" "${DER}/${DPXID}_DER_01.mov" \;
                 der1="${DER}/${DPXID}_DER_01.mov"
                 printf "\n\t%sRenamed ProRes file to %s%s\n" "${BIWHITE}" "${der1}" "${COLOR_OFF}"
                 fi
             if [[ -d "${DER}" ]] ; then
-                find "${DER}" -name "*Uncompressed.mov" -exec mv -i "{}" "${DER}/${DPXID}_DER_02.mov" \;
+                find "${DER}" -iname "*Uncompressed.mov" -exec mv -i "{}" "${DER}/${DPXID}_DER_02.mov" \;
                 der2="${DER}/${DPXID}_DER_02.mov"
                 printf "\n\t%sRenamed uncompressed file to %s%s\n" "${BIWHITE}" "${der2}" "${COLOR_OFF}"
                 echo
@@ -172,38 +172,38 @@ _restructureDPX(){
 
             # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
             if [[ -d "${AUD_R1}" ]] ; then
-                find "${INPUT}" -name "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \;
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \;
             else
                 printf "%sMissing ${AUD_R1}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${DER_R1}" ]] ; then
-                find "${INPUT}" -name "*R1*.mov" -exec rsync -av {} "${DER_R1}" \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \;
             else
                 printf "%sMissing ${DER_R1}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${dpxR1}" ]] ; then
-                find "${INPUT}" -name "*R1*.dpx" -exec rsync -av {} "${dpxR1}" \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${dpxR1}" \;
             else
                 printf "%sMissing ${dpxR1}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
 
             if [[ -d "${AUD_R2}" ]] ; then
-                find "${INPUT}" -name "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \;
             else
                 printf "%sMissing ${AUD_R2}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${DER_R2}" ]] ; then
-                find "${INPUT}" -name "*R2*.mov" -exec rsync -av {} "${DER_R2}" \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \;
             else
                 printf "%sMissing ${DER_R2}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${dpxR2}" ]] ; then
-                find "${INPUT}" -name "*R2*.dpx" -exec rsync -av {} "${dpxR2}" \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${dpxR2}" \;
             else
                 printf "%sMissing ${dpxR2}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
@@ -212,12 +212,12 @@ _restructureDPX(){
             echo
             # rename files according to NMAAHC filenaming guidelines
             printf "%sRenaming files in %s%s\n" "${BIWHITE}" "${COLOR_OFF}" "${OUTPUTDIR}"
-            find "${AUD_R1}" -name "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
-            find "${DER_R1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
-            find "${DER_R1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
-            find "${AUD_R2}" -name "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
-            find "${DER_R2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
-            find "${DER_R2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
+            find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
+            find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
+            find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
+            find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
+            find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
+            find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
             ;;
 
         3 )
@@ -240,57 +240,57 @@ _restructureDPX(){
 
             # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
             if [[ -d "${AUD_R1}" ]] ; then
-                find "${INPUT}" -name "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \;
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \;
             else
                 printf "%sMissing ${AUD_R1}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${DER_R1}" ]] ; then
-                find "${INPUT}" -name "*R1*.mov" -exec rsync -av {} "${DER_R1}" \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \;
             else
                 printf "%sMissing ${DER_R1}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${dpxR1}" ]] ; then
-                find "${INPUT}" -name "*R1*.dpx" -exec rsync -av {} "${dpxR1}" \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${dpxR1}" \;
             else
                 printf "%sMissing ${dpxR1}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
 
             if [[ -d "${AUD_R2}" ]] ; then
-                find "${INPUT}" -name "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \;
             else
                 printf "%sMissing ${AUD_R2}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${DER_R2}" ]] ; then
-                find "${INPUT}" -name "*R2*.mov" -exec rsync -av {} "${DER_R2}" \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \;
             else
                 printf "%sMissing ${DER_R2}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${dpxR2}" ]] ; then
-                find "${INPUT}" -name "*R2*.dpx" -exec rsync -av {} "${dpxR2}" \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${dpxR2}" \;
             else
                 printf "%sMissing ${dpxR2}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
 
             if [[ -d "${AUD_R3}" ]] ; then
-                find "${INPUT}" -name "*R3*.wav" -exec rsync -av {} "${AUD_R3}" \;
+                find "${INPUT}" -iname "*R3*.wav" -exec rsync -av {} "${AUD_R3}" \;
             else
                 printf "%sMissing ${AUD_R3}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${DER_R3}" ]] ; then
-                find "${INPUT}" -name "*R3*.mov" -exec rsync -av {} "${DER_R3}" \;
+                find "${INPUT}" -iname "*R3*.mov" -exec rsync -av {} "${DER_R3}" \;
             else
                 printf "%sMissing ${DER_R3}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
             fi
             if [[ -d "${dpxR3}" ]] ; then
-                find "${INPUT}" -name "*R3*.dpx" -exec rsync -av {} "${dpxR3}" \;
+                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -av {} "${dpxR3}" \;
             else
                 printf "%sMissing ${dpxR3}%s" "${BIRED}" "${COLOR_OFF}"
                 exit 1
@@ -298,15 +298,15 @@ _restructureDPX(){
             echo
             # rename files according to NMAAHC filenaming guidelines
             printf "%sRenaming files in %s%s\n" "${BIWHITE}" "${COLOR_OFF}" "${OUTPUTDIR}"
-            find "${AUD_R1}" -name "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
-            find "${DER_R1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
-            find "${DER_R1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
-            find "${AUD_R2}" -name "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
-            find "${DER_R2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
-            find "${DER_R2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
-            find "${AUD_R3}" -name "*R3*.wav" -exec mv -vi {} "${AUD_R3}/${DPXID}_R3_AUD.wav" \;
-            find "${DER_R3}" -name "*R3*ProRes*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_01.mov" \;
-            find "${DER_R3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_02.mov" \;
+            find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
+            find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
+            find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
+            find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
+            find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
+            find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
+            find "${AUD_R3}" -iname "*R3*.wav" -exec mv -vi {} "${AUD_R3}/${DPXID}_R3_AUD.wav" \;
+            find "${DER_R3}" -iname "*R3*ProRes*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_01.mov" \;
+            find "${DER_R3}" -iname "*R3*Uncompressed*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_02.mov" \;
             ;;
 
             *   )

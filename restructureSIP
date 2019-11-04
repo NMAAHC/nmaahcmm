@@ -99,7 +99,7 @@ OUTPUT_PACKAGE="${DESTINATION}/${MEDIAID}"
 
 # if package type is unknown, check whether it looks like a DPX package
 if [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
-    if [[ -n $(find "${INPUT}" -name *.dpx) ]] ; then
+    if [[ -n $(find "${INPUT}" -iname *.dpx) ]] ; then
         printf "${bired}This SIP looks like a DPX package!${color_off}"
         PACKAGETYPE="Digitized Film (DPX package)"
     fi
@@ -115,38 +115,38 @@ fi
 
 # perform restructuring actions on other SIPs
 if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -name *.mov -name *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -iname *.mov -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -name *.mov -not -name ! *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -not -iname *.mov -not -iname ! *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -name *.mkv -name *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -iname *.mkv -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -name *.mkv -not -name *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -not -iname *.mkv -not -iname *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -name *.mov -name *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -iname *.mov -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -name *.mov -not -name *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -not -iname *.mov -not -iname *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -name *.mov -name *.mkv -name *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -iname *.mov -iname *.mkv -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -name *.mov -not -name *.mkv -not -name *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -not -iname *.mov -not -iname *.mkv -not -iname *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done

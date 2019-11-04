@@ -29,7 +29,7 @@ while [ "${*}" != "" ] ; do
     shift
     if [ -d "${TARGET}" ]; then
         mkdir "${TARGET}"
-        #mv $(find "${TARGET}" -mindepth 1 -maxdepth 1 ! -name "objects") "${TARGET}objects/"
+        #mv $(find "${TARGET}" -mindepth 1 -maxdepth 1 ! -iname "objects") "${TARGET}objects/"
         #mkdir -p "${TARGET}/metadata/fileMeta"
         #mkdir -p "${TARGET}/metadata/logs"
     elif [ -f "${TARGET}" -a ! -d "$(dirname "${TARGET}")/$(basename "${TARGET%.*}")" ] ; then
