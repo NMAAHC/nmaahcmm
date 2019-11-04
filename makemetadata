@@ -51,7 +51,13 @@ shift $(( ${OPTIND} - 1 ))
 _log -b
 
 while [ "${*}" != "" ] ; do
-    PACKAGE_PATH="${1}"
+    if [[ -d "${1}" ]] ; then
+        PACKAGE_PATH="${1}"
+    else
+        printf "${BIRED}Input is not a directory. Please provide the path to a package.${COLOR_OFF}"
+        _log -a "Process terminated by script (no directory provided by operator)."
+        exit 0
+    fi
     shopt -s nullglob
     for FILE in $(find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" ) ; do
         printf "Making metadata reports for ${FILE}...\n"
