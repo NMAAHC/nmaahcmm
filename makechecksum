@@ -3,7 +3,7 @@
 #a script to create md5 checksums of all files in a directory or a single file and save it to a .md5 file
 
 # load nmaahcmmfunctions into this script
-SCRIPT_PATH=${0%/*}
+SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions

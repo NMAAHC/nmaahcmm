@@ -4,7 +4,7 @@
 # all comments refer to line(s) above unless placed in-line with code or specified otherwise
 
 # load nmaahcmmfunctions into this script
-SCRIPT_PATH=${0%/*}
+SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions

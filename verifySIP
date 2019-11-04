@@ -3,7 +3,7 @@
 # verifySIP checks for key files in each SIP: the master file, the derivative file, and the MD5 file (if expected within that package)
 
 # load nmaahcmmfunctions into this script
-SCRIPT_PATH=${0%/*}
+SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions

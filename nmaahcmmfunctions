@@ -13,7 +13,7 @@ LOGDIR="./Desktop/logs"
 # . /path/to/functions.sh
 # The script will interpret functions.sh as if its content were actually present in your file at this point. It is a common mechanism for implementing shared libraries of shell functions, and is how each script in nmaahcmm can reference the shared functions in this file.
 # Here is an example specific to NMAAHC:
-## SCRIPT_PATH=${0%/*}      # SCRIPT_PATH will be the directory path of {0} which is the script being called
+## SCRIPT_PATH="${0%/*}"      # SCRIPT_PATH will be the directory path of {0} which is the script being called
 ## . "${SCRIPT_PATH}/nmaahcmmfunctions"         # loads the functions in nmaahcmmfunctions into this script
 ## [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};        # checks to see that that nmaahcmmfunctions exists; if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
 
