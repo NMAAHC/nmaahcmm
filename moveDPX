@@ -7,6 +7,8 @@ SCRIPTDIR=$(dirname "${0}")
 . "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
+DEPENDENCIES=(rsync) # list dependencies required by script
+_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 
 # (hardcoded) designated parent folder where the files will be moved
 TARGET_FOLDER_PARENT="/Users/Annie/Dropbox/Annie/2019_fall/NMAAHC-test-files/dpx_dest"

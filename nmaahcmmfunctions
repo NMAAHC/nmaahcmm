@@ -177,3 +177,25 @@ _maketemp(){
         exit 1
     fi
 }
+
+_check_dependencies(){
+    DEPS_OK=YES
+    while [ "${*}" != "" ] ; do
+        DEPENDENCY="${1}"
+        if [[ ! $(which "${DEPENDENCY}") ]] ; then
+            printf "${BIRED}This script requires ${DEPENDENCY} to run but it is not installed.${COLOR_OFF}"
+            printf "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
+            printf "sudo apt-get install ${DEPENDENCY}"
+            printf "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
+            printf "brew install ${DEPENDENCY}"
+            DEPS_OK=NO
+        fi
+        shift
+    done
+    if [[ "${DEPS_OK}" = "NO" ]]; then
+        printf "${BIRED}Unmet dependencies. Exiting!${COLOR_OFF}"
+        exit 1
+    else
+        return 0
+    fi
+}
