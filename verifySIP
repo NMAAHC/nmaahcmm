@@ -84,7 +84,7 @@ while [[ "${*}" != "" ]] ; do
 
         # PACKAGE TYPE: film / analog / digitized in-house
         # looks for DPX files
-        _runtest "Based on the presence of .dpx files, this SIP is a DPX package." xml sel -t -v "/tree/directory/directory/file[substring(@name,string-length(@name)-2)='dpx']/@name" -n "${TEMPTREE}"
+        _runtest "Based on the presence of .dpx files, this SIP is a DPX package." xmlstarlet sel -t -v "/tree/directory/directory/file[substring(@name,string-length(@name)-2)='dpx']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="FILM_DPX"
             echo
@@ -94,45 +94,45 @@ while [[ "${*}" != "" ]] ; do
 
         # PACKAGE TYPE: film / analog / digitized on-location
         # looks for directories named after derivatives
-        _runtest "Based on directory names, this SIP is digitized film in non-DPX format." xml sel -t -v "/tree/directory/directory[@name='MP4_2048x1152' or @name='ProRes_2048x1536']/@name" -n "${TEMPTREE}"
+        _runtest "Based on directory names, this SIP is digitized film in non-DPX format." xmlstarlet sel -t -v "/tree/directory/directory[@name='MP4_2048x1152' or @name='ProRes_2048x1536']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="FILM_FILES"
             printf "\n${BIWHITE}Checking for non-DPX film package conformance...${COLOR_OFF}\n"
-            _runtest -i "This package is missing a ProRes master file!" xml sel -t -v "/tree/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
-            _runtest -i "This package is missing an MP4 derivative file!" xml sel -t -v "/tree/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing a ProRes master file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
         fi
 
         # PACKAGE TYPE: video / analog / digitized on-location
         # looks for key files generated in the vrecord process
-        _runtest "Based on the presence of vrecord files, this SIP is digitized video." xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-13)='qctools.xml.gz' or substring(@name,string-length(@name)-19)='capture_options.log']/@name" -n "${TEMPTREE}"
+        _runtest "Based on the presence of vrecord files, this SIP is digitized video." xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-13)='qctools.xml.gz' or substring(@name,string-length(@name)-19)='capture_options.log']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_VRECORD"
             printf "\n${BIWHITE}Checking for digitized video package conformance...${COLOR_OFF}\n"
-            _runtest -i "This package is missing an MKV master file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mkv']/@name" -n "${TEMPTREE}"
-            _runtest -i "This package is missing an MP4 derivative file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
-            _runtest -i "This package is missing a frameMD5 file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-7)='framemd5']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MKV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mkv']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing a frameMD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-7)='framemd5']/@name" -n "${TEMPTREE}"
         fi
 
         # PACKAGE TYPE: video / DV / transferred on-location
         # looks for filenames incorporating the DV format name
-        _runtest "Based on the presence of files with 'DV' in the filename, this SIP is transferred DV." xml sel -t -v "/tree/directory[@name='*DV*']/@name" -n "${TEMPTREE}"
+        _runtest "Based on the presence of files with 'DV' in the filename, this SIP is transferred DV." xmlstarlet sel -t -v "/tree/directory[@name='*DV*']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_DV"
             printf "\b${BIWHITE}Checking for DV package conformance...${COLOR_OFF}\n"
-            _runtest -i "This package is missing an MOV master file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
-            _runtest -i "This package is missing an MP4 derivative file!" xml sel -t -v "/tree/directory/directory[@name='derivative']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
-            _runtest -i "This package is missing an MD5 file!" xml sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='md5']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MOV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='derivative']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='md5']/@name" -n "${TEMPTREE}"
         fi
 
         # FOR ALL PACKAGES:
         #looks for unexpected directories within the package
-        _runtest "There are unexpected subdirectories in your package!" xml sel -t -v "/tree/directory/directory[@name!='derivative' and @name!='MP4_2048x1152' and @name!='ProRes_2048x1536' and @name!='DPX' and @name!='MOV' and @name!='WAV']/@name" -n "${TEMPTREE}"
+        _runtest "There are unexpected subdirectories in your package!" xmlstarlet sel -t -v "/tree/directory/directory[@name!='derivative' and @name!='MP4_2048x1152' and @name!='ProRes_2048x1536' and @name!='DPX' and @name!='MOV' and @name!='WAV']/@name" -n "${TEMPTREE}"
         #finds any empty files
-        _runtest "There are empty files in your package!" xml sel -t -v "//file[@size='0']/@name" -n  "${TEMPTREE}"
+        _runtest "There are empty files in your package!" xmlstarlet sel -t -v "//file[@size='0']/@name" -n  "${TEMPTREE}"
         #makes sure no file names contain colons
-        _runtest "There are improperly named files in this package!" xml sel -t -v "//file[contains(@name,':')]/@name" -n  "${TEMPTREE}"
+        _runtest "There are improperly named files in this package!" xmlstarlet sel -t -v "//file[contains(@name,':')]/@name" -n  "${TEMPTREE}"
         #finds any hidden files
-        _runtest "There are hidden files in this package!" xml sel -t -v "//file[starts-with(@name,'.')]/@name" -n  "${TEMPTREE}"
+        _runtest "There are hidden files in this package!" xmlstarlet sel -t -v "//file[starts-with(@name,'.')]/@name" -n  "${TEMPTREE}"
     fi
 done
 
