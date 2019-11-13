@@ -18,7 +18,6 @@ _usage(){
     echo "Dependencies: ${DEPENDENCIES[@]}"
     echo "Usage: $(basename ${0}) [ -options ]"
     echo "  Local mode: presents a graphical user interface to specify file, media ID, and other options. Automatically creates an H264 access copy and generates metadata files if not already present."
-#    echo "  Delivery mode: does the above + delivers packages to somewhere."
     echo "  -h display this help"
     echo
     exit
@@ -32,8 +31,6 @@ while getopts ":h" OPT; do
     esac
 done
 shift $(( ${OPTIND} - 1 ))
-
-
 
 ## PASHUA INTERFACE
 
