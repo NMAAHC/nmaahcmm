@@ -32,41 +32,42 @@ shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 
-_makedrivetree(){
-local DRIVE ; # set up local variable $DRIVE
-local FOLDER="/Volumes/UtilitySAN/05_driveContents"
-for DRIVE ; do # loop over all the drives provided by the operator
-    DRIVE="${DRIVE%/}" # strip trailing / if any
+FOLDER="/Users/Annie/Dropbox/Annie/2019_fall/NMAAHC-test-files"
+# log script beginning
+_log -b
+
+while [ "${*}" != "" ] ; do # loop over all the drives provided by the operator
+    DRIVE="${1}"
     if [[ -d "${DRIVE}" ]] ; then # if the drive structure is recognized as a directory:
-        OUTPUT="${FOLDER}/${DRIVE##*/}_contents_${date}.txt"
+        DRIVE_BASENAME="$(basename "${DRIVE}")"
+        OUTPUT="${FOLDER}/${DRIVE_BASENAME}_contents_${date}.txt"
         if [[ -d "${FOLDER}" ]] ; then # if the output's parent folder structure is recognized as a directory:
             tree --filelimit 50 --si --du -U -Q -o "${OUTPUT}" "${DRIVE}" # create a tree of the drive's contents
             if grep "0 directories, 0 files" "${OUTPUT}" ; then # if the results of "tree," sent to the output text file, show that the drive was empty:
-                _report -g "${DRIVE} is empty. Adding EMPTY to file name." && OUTPUTE="${FOLDER}/${DRIVE##*/}_contents_${date}_EMPTY.txt" && mv -v "${OUTPUT}" "${OUTPUTE}"
-                _report -g "Moving ${OUTPUTE##*/} to ${DRIVE}" # tell operator the tree file is being moved to the drive
-                cp -v "${OUTPUTE}" "${DRIVE}" # copy the output text file to the drive: -v=verbose
+                _report -g "${DRIVE} is empty. Adding EMPTY to file name."
+                OUTPUT_EMPTY="${FOLDER}/${DRIVE_BASENAME}_contents_${date}_EMPTY.txt" && mv -v "${OUTPUT}" "${OUTPUT_EMPTY}"
+                echo "OUTPUT_EMPTY is $OUTPUT_EMPTY"
+                _report -g "Moving ${OUTPUT_EMPTY} to ${DRIVE}" # tell operator the tree file is being moved to the drive
+                cp -v "${OUTPUT_EMPTY}" "${DRIVE}" # copy the output text file to the drive: -v=verbose
             else
-                _report -g "Moving ${OUTPUT##*/} to ${DRIVE}" # tell operator the tree file is being moved to the drive
+                _report -g "Moving ${OUTPUT} to ${DRIVE}" # tell operator the tree file is being moved to the drive
                 cp -va "${OUTPUT}" "${DRIVE}" # copy the output text file to the drive: -v=verbose, -a="archive"
             fi
         else
             _report -rt "ERROR: ${FOLDER} does not exist. Exiting..." >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
             _log -a "Process terminated by script (no directory at requested location)."
-            exit
+            exit 1
         fi
     else
         _report -rt "ERROR: ${DRIVE} does not exist. Exiting..." >&2 # tell operator if the drive cannot be found
         _log -a "Process terminated by script (no drive at requested location)."
         exit 1
     fi
+    shift
 done
-}
 
 ## SCRIPT ACTIONS
 
-# log script beginning
-_log -b
-_makedrivetree "${@}"
 # log script ending
 _log -e
 _report -g "makedrivetree process complete."
