@@ -216,7 +216,7 @@ _report(){
             g) COLOR="${GREEN}" ;;                        # declaration mode, use color green
             r) COLOR="${RED}" ; LOG_MESSAGE="Y" ;;        # warning mode, use color red
             s) STARTMESSAGE+=([$(basename "${0}")] ) ;;   # prepend scriptname to the message
-            t) STARTMESSAGE+=($(_get_iso8601) '- ' ) ;;   # prepend timestamp to the message
+            t) STARTMESSAGE+=($(date +%FT%T) '- ' ) ;;   # prepend timestamp to the message
             n) ECHOOPT="-n" ;;                            # to avoid line breaks after echo
         esac
     done
