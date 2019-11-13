@@ -42,22 +42,22 @@ for DRIVE ; do # loop over all the drives provided by the operator
         if [[ -d "${FOLDER}" ]] ; then # if the output's parent folder structure is recognized as a directory:
             tree --filelimit 50 --si --du -U -Q -o "${OUTPUT}" "${DRIVE}" # create a tree of the drive's contents
             if grep "0 directories, 0 files" "${OUTPUT}" ; then # if the results of "tree," sent to the output text file, show that the drive was empty:
-                printf "%s%s is empty. Adding EMPTY to file name.\n%s" "${BIWHITE}" "${DRIVE}" "${COLOR_OFF}" && OUTPUTE="${FOLDER}/${DRIVE##*/}_contents_${date}_EMPTY.txt" && mv -v "${OUTPUT}" "${OUTPUT}E"
-                printf "%sMoving %s to %s\n%s" "${BIWHITE}" "${OUTPUTE##*/}" "${DRIVE}" "${COLOR_OFF}" # tell operator the tree file is being moved to the drive
+                _report -g "${DRIVE} is empty. Adding EMPTY to file name." && OUTPUTE="${FOLDER}/${DRIVE##*/}_contents_${date}_EMPTY.txt" && mv -v "${OUTPUT}" "${OUTPUTE}"
+                _report -g "Moving ${OUTPUTE##*/} to ${DRIVE}" # tell operator the tree file is being moved to the drive
                 cp -v "${OUTPUTE}" "${DRIVE}" # copy the output text file to the drive: -v=verbose
             else
-                printf "%sMoving %s to %s\n%s" "${BIWHITE}" "${DRIVE}" "${COLOR_OFF}" # tell operator the tree file is being moved to the drive
+                _report -g "Moving ${OUTPUT##*/} to ${DRIVE}" # tell operator the tree file is being moved to the drive
                 cp -va "${OUTPUT}" "${DRIVE}" # copy the output text file to the drive: -v=verbose, -a="archive"
             fi
         else
-            printf "%sERROR: %s does not exist. Exiting.\n" "${BIRED}" "${FOLDER}" >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
+            _report -rt "ERROR: ${FOLDER} does not exist. Exiting..." >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
             _log -a "Process terminated by script (no directory at requested location)."
             exit
         fi
     else
-        printf "%sERROR: %s does not exist. Exiting.\n" "${BIRED}" "${DRIVE}" >&2 # tell operator if the drive cannot be found
+        _report -rt "ERROR: ${DRIVE} does not exist. Exiting..." >&2 # tell operator if the drive cannot be found
         _log -a "Process terminated by script (no drive at requested location)."
-        exit
+        exit 1
     fi
 done
 }
@@ -69,5 +69,5 @@ _log -b
 _makedrivetree "${@}"
 # log script ending
 _log -e
-printf "${BIWHITE}makedrivetree process complete.${COLOR_OFF}\n"
+_report -g "makedrivetree process complete."
 exit "$?"

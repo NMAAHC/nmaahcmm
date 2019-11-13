@@ -54,13 +54,11 @@ while [ "${*}" != "" ] ; do
     if [[ -d "${1}" ]] ; then
         PACKAGE_PATH="${1}"
     else
-        printf "${BIRED}Input is not a directory. Please provide the path to a package.${COLOR_OFF}"
-        _log -a "Process terminated by script (no directory provided by operator)."
-        exit 0
+        _report -rt "ERROR: ${1} is not a directory. Moving to next package if present..."
     fi
     shopt -s nullglob
     for FILE in $(find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" ) ; do
-        printf "Making metadata reports for ${FILE}...\n"
+        _report -g "Making metadata reports for ${FILE}..."
         BASENAMEFILE=$(basename "${FILE}")
         FILEOUTPUT=$(dirname "${FILE}")
         TREEXML="${FILEOUTPUT}/${BASENAMEFILE}.tree.xml"
@@ -105,7 +103,7 @@ while [ "${*}" != "" ] ; do
         # right now, the script will just add more and more attachments if it's run on the same file multiple times. MKV attachments are identified by numbers, so it can be complicated to delete/overwrite based on content.
         if [[ "${EMBED}" == "Y" ]] ; then
             if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
-                echo "Embedding metadata reports in MKV file ${FILE}..."
+                _report -g "Embedding metadata reports in MKV file ${FILE}..."
                 mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
                 mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
                 mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
@@ -118,11 +116,11 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
         fi
-        printf "Moving to next file if present...\n${COLOR_OFF}"
+        _report -g "Moving to next file if present..."
     done
     shift
 done
 
 # log script ending
 _log -e
-printf "${BIWHITE}makemetadata process complete.\n${COLOR_OFF}"
+_report -g "makemetadata process complete."

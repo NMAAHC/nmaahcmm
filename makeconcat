@@ -37,7 +37,8 @@ shift $(( ${OPTIND} - 1 ))
 
 _makeconcat(){
     echo
-    printf "%sPlease enter the name of the concatenated file to be created.\n\t For example, SC_0001_20171211_Mangum_R8_01\nEnter file name:%s " "${BIWHITE}" "${COLOR_OFF}"
+    _report -b "Please enter the name of the concatenated file to be created, for example, SC_0001_20171211_Mangum_R8_01"
+    _report -b "Enter file name: "
     read -r CONCATFILE
     ## $CONCATFILE will be the name of both the $TXTFILE and the outputed concatenated file. Name well.
     echo
@@ -56,7 +57,7 @@ _makeconcat(){
     echo
     cowsay "Done. Your concatenated video FILE is ready fo action." # cowsay tells it like it is.
     echo
-    printf "Your concatenated file is: %s" "${CONCATFILE}\n"
+    _report -g "Your concatenated file is: ${CONCATFILE}"
 }
 
 ## SCRIPT ACTIONS
@@ -66,5 +67,5 @@ _log -b
 _makeconcat "${@}"
 # log script ending
 _log -e
-printf "${BIWHITE}makeconcat process complete.${COLOR_OFF}\n"
+_report -g "makeconcat process complete."
 exit "$?"

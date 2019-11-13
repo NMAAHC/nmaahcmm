@@ -166,8 +166,8 @@ if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
-    [[ -z "${MEDIAID}" ]] && { printf "${BIRED}ERROR You must enter a valid MEDIA ID${COLOR_OFF}\n" ; exit ;};
-    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore\n" ; exit 1 ;};
+    [[ -z "${MEDIAID}" ]] && { _report -rt  "ERROR: You must enter a valid MEDIA ID" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt  "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
 fi
 if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
@@ -191,11 +191,11 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     if [[ -z "${DPXID}" ]] ; then
         printf "Enter your DPX_Object_ID_Number with underscores:"
         read -e DPXID
-        printf "ex. 2015_167_10_1\n%s"
+        printf "ex. 2015_167_10_1"
     fi
     if [[ -z "${DPXTITLE}" ]] ; then
         printf "Enter your DPX_Object_Title with underscores:"
-        printf "ex. Juke_Joint\n%s"
+        printf "ex. Juke_Joint"
         read -e DPXTITLE
     fi
     MEDIAID="${DPXID}__${DPXTITLE}"
@@ -269,18 +269,18 @@ if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
     RSYNC_ERR="${?}"
     if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
         echo "${RSYNC_ERR}"
-        printf "${BIRED}rsync process failed. Exiting script...${COLOR_OFF}\n"
-        exit 1
+        _report -rt  "ERROR: rsync process failed. Exiting..."
         _log -a "Process terminated by script (rsync failure)."
+        exit 1
     fi
 fi
 # clean up original files if requested - hardcoded OFF during testing
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
 #        echo "${RSYNC_ERR}"
-#        printf "${BIRED}" "Cancelling requested deletion of source file, not looking safe." "${COLOR_OFF}"
+#        _report -rt  "Cancelling requested deletion of source file, not looking safe."
 #    else
-#        printf "${BIWHITE}" "Removing the source file from ${INPUT} as requested." "${COLOR_OFF}"
+#        _report -g "Removing the source file from ${INPUT} as requested..."
 #        _run rm -f "${INPUT}"
 #    fi
 #fi
@@ -289,4 +289,4 @@ fi
 _log -e
 _writelog "END TIME" "$(date +%FT%T)"
 
-printf "Process done...might have been successful...it's a WIP.\n"
+printf "Process done...might have been successful...it's a WIP."

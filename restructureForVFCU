@@ -35,8 +35,6 @@ shift $(( ${OPTIND} - 1 ))
 ### FUNCTIONS
 
 _restructureForVFCU(){
-    echo
-
     for ARG in "${@}" ;
     do
         INPUT="${1}" # name $INPUT as the first argument sent to script
@@ -47,10 +45,8 @@ _restructureForVFCU(){
         MD5_DIR="/Volumes/nmaahc-borndigital/06_DPX_checksums/"
 
         if [[ -d "${INPUT}" ]] ; then
-            printf "%s%s%s is a directory.\n" "${BIYELLOW}" "${INPUT}" "${COLOR_OFF}"
-            printf "Moving all files in:\n\t%s%s\n\t%s%s\n\tto:\n\t%s%s%s\n" "${BIYELLOW}" "${AUDIO_DIR}" "${DERIV_DIR}" "${COLOR_OFF}" "${BIYELLOW}" "${DPX_DIR}" "${COLOR_OFF}"
-            echo
-            printf "%s" "${GRAY}"
+            _report -g "Moving all files in directories: ${AUDIO_DIR}, ${DERIV_DIR}"
+            _report -g "to directory: ${DPX_DIR}"
             if [[ -d "${AUDIO_DIR}" ]] ; then
                 mv -vi "${AUDIO_DIR}"/* "${DPX_DIR}" # move all files in the AUDIO directory to the DPX directory. -v=verbose, -i=interactive (prompts before overwriting)
                 rm -vri "${AUDIO_DIR}" # removes the AUDIO directory and any files left in it. -v=verbose, -r=recursive, -i=interactive (prompts before overwriting)
@@ -58,29 +54,24 @@ _restructureForVFCU(){
             if [[ -d "${DERIV_DIR}" ]] ; then
                 mv -vi "${DERIV_DIR}"/* "${DPX_DIR}" # move all files in the DERIVATIVES directory to the DPX directory
                 rm -vri "${DERIV_DIR}" # removes the DERIVATIVES directory and any files left within it
-            printf "%s" "${COLOR_OFF}"
             fi
         else
-            echo
-            printf "%s%s is not a directory. Exiting" "${BIRED}" "${INPUT}"
-            exit
+            _report -rt "ERROR: ${INPUT} is not a directory. Exiting..."
+            _log -a "Process terminated by script (no directory at requested location)."
+            exit 1
         fi
         echo
         if [[ -d "${MD5_DIR}" ]] ; then
-            printf "Moving .md5 directory to %s%s%s\n" "${BIYELLOW}" "${DPX_DIR}" "${COLOR_OFF}"
-            echo
-            printf "%s" "${GRAY}"
+            _report -g "Moving .md5 directory to ${DPX_DIR}"
             rsync -avvPhi --stats "${MD5_DIR}/${INPUT##*/}"/*.md5 "${DPX_DIR}" # move .md5 directory to DPX directory to initiate DPX pickup. -a="archive," -vv=very verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes
-            printf "%s" "${COLOR_OFF}"
-            echo
-            printf "Done moving .md5 directory to %s%s%s.\nVFCU will begin picking up your files shortly." "${BIYELLOW}" "${DPX_DIR}" "${COLOR_OFF}"
-            echo
-            printf "%sPlease make sure your templates have been set correctly!%s" "${BIRED}" "${COLOR_OFF}"
+            _report -g "Done moving .md5 directory to ${DPX_DIR}. VFCU will begin picking up your files shortly."
+            _report -b "Please make sure your templates have been set correctly!"
             echo
             cowsay "Tootles!"
         else
-            printf "%s%s does not exist. Exiting" "${BIRED}" "${MD5_DIR}"
-            exit
+            _report -rt "ERROR: ${MD5_DIR} does not exist. Exiting..."
+            _log -a "Process terminated by script (no directory at requested location)."
+            exit 1
         fi
         shift
     done
@@ -93,5 +84,5 @@ _log -b
 _restructureForVFCU "${@}"
 # log script ending
 _log -e
-printf "${BIWHITE}restructureForVFCU process complete.${COLOR_OFF}\n"
+_report -g "restructureForVFCU process complete."
 exit $?

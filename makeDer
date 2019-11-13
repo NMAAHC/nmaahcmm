@@ -18,10 +18,10 @@ EXTENSION="mp4"
 # this function needs to be defined before the getopts loop as it is used within that loop
 _check_outputdir_forced(){
     if [[ ! -d "${OUTPUTDIR_FORCED}" ]] ; then
-        printf "\n${BIRED}The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}").${COLOR_OFF}\n"
+        _report -rt "The directory, ${OUTPUTDIR_FORCED}, does not exist. Can not write the output of $(basename "${0}")."
         exit 1
     else
-        echo "outputdirectory is ${OUTPUTDIR_FORCED}"
+        _report -g "Output directory is: ${OUTPUTDIR_FORCED}"
        #_writeerrorlog "_check_outputdir_forced" "The specified directory does not exist, and the output could not be delivered."
     fi
 }
@@ -72,24 +72,24 @@ while [ "${*}" != "" ] ; do
     else
         OUTPUT_DIR="${OUTPUTDIR_FORCED}"
     fi
-    printf "Output directory is: ${BIWHITE}${OUTPUT_DIR}${COLOR_OFF}\n"
+    _report -g "Output directory is: ${OUTPUT_DIR}"
     
     # set parent directory (the directory containing $OUTPUT_DIR) - currently not used
     PARENTDIR="$(dirname "${OUTPUT_DIR}")"
-    printf "Parent directory is: ${BIWHITE}${PARENTDIR}${COLOR_OFF}\n"
+    _report -g "Parent directory is: ${PARENTDIR}"
 
     #set $MEDIAID to basename of $INPUT with extension stripped
     MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
-    printf "Media ID is: ${BIWHITE}$(basename "${INPUT}" | cut -d. -f1)${COLOR_OFF}\n"
+    _report -g "Media ID is: $(basename "${INPUT}" | cut -d. -f1)"
 
     #set $OUTPUT
     OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
-    printf "Output is: ${BIWHITE}${OUTPUT}${COLOR_OFF}\n"
+    _report -g "Output is: ${OUTPUT}"
 
     #check to see if $OUTPUT exists
     if [[ -s "${OUTPUT}" ]] ; then
-        printf "${BIRED}WARNING ${OUTPUT} already exists, skipping transcode\n"
-        printf "Moving to next file if present...\n${COLOR_OFF}"
+        _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode"
+        _report -rt "Moving to next file if present..."
     else
         echo
 cat <<-EOF
@@ -103,7 +103,7 @@ cat <<-EOF
     If the output looks good, then try a higher value. If it looks bad then choose a lower value.
 EOF
         echo
-        printf "${BIWHITE}Please enter a CRF value: ${COLOR_OFF}"
+        _report -b "Please enter a CRF value: "
         read CRFVALUE
         echo
 cat <<-EOF
@@ -116,13 +116,13 @@ cat <<-EOF
     The general guideline is to use the slowest preset that you have patience for.
     Current presets in descending order of speed are:
 EOF
-    printf "${BIRED}ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow${COLOR_OFF}"
+        _report -b "ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow"
         echo
-        printf "${BIWHITE}Please enter a preset speed: ${COLOR_OFF}"
+        _report -b "Please enter a preset speed: "
         read PRESETSPEED
 
         # have script say what is about to do
-        printf "\n${BIWHITE}Making .mp4 derivative of $(basename ${MEDIAID})${COLOR_OFF}\n"
+        _report -g "Making .mp4 derivative of $(basename ${MEDIAID})"
         mkdir -p "${OUTPUT_DIR}"
         #mv -v "${INPUT}" "${PARENTDIR}"
 
@@ -138,10 +138,10 @@ EOF
         # rename file to indicate derivative
         # works by finding all mp4s in the output directory that have "PM" or "DER_01" in their filename; the "if" executes if any files matching those patterns are found (i.e. if the find statement executes to non-empty "-n")
         if [[ -n $(find "${OUTPUT_DIR}" -type f -iname "*PM*.mp4" ) ]]; then
-            rename 's/PM/DER_02/' *.mp4 && printf "\n${BIWHITE}Updated derivative filename to reflect current name : PM to DER_02${COLOR_OFF}\n"
+            rename 's/PM/DER_02/' *.mp4 && _report -g "Updated derivative filename to reflect current name : PM to DER_02"
         fi
         if [[ -n $(find "${OUTPUT_DIR}" -type f -iname "*DER_01*.mp4" ) ]]; then
-            rename 's/DER_01/DER_03/' *.mp4 && printf "\n${BIWHITE}Updated derivative filename to reflect current name conventions: DER_01 to DER_03${COLOR_OFF}\n"
+            rename 's/DER_01/DER_03/' *.mp4 && _report -g "Updated derivative filename to reflect current name conventions: DER_01 to DER_03"
         fi
     fi
     shift
@@ -149,4 +149,4 @@ done
 
 # log script ending
 _log -e
-printf "${BIWHITE}makeDer process complete.${COLOR_OFF}\n"
+_report -g "makeDer process complete."

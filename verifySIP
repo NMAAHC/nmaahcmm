@@ -53,7 +53,7 @@ _runtest(){
     RUN_ERR="${?}" # any stderr output by the xpath function
     if [[ "${RUN_ERR}" != 0 ]] ; then
         printf "${LABEL}" # the error message associated with each xpath query
-        printf "${BIRED}Error: Running: \"${*}\" gave an Error Code - ${RUN_ERR}${COLOR_OFF}"
+        _report -wt "ERROR: Running: \"${*}\" gave Error Code ${RUN_ERR}"
         echo "${XMLRESULT}"
     fi
     # if the xpath statement finds a file that the test is looking for (default test); || OR if the xpath statement does NOT find a file and the test is NOT looking for one (inverted test);
@@ -72,13 +72,11 @@ _log -b
 while [[ "${*}" != "" ]] ; do
     PACKAGE="${1}"
     shift
-    if [[ -f "${PACKAGE}" ]] ; then
-        printf "${BIRED}The package you supplied is not a directory!${COLOR_OFF}" 
+    if [[ ! -d "${PACKAGE}" ]] ; then
+        _report -wt "The package you supplied is not a directory! Moving to next package if present..."
     elif [[ -d "${PACKAGE}" ]] ; then
         MEDIAID=$(basename "${PACKAGE}")
-        echo
-        echo "running verifySIP on ${PACKAGE}..." #the name of the package being verified
-        echo
+        _report -g "running verifySIP on ${PACKAGE}..." #the name of the package being verified
         "${SCRIPTDIR}/removeDSStore" "${PACKAGE}"
         # make a new temp tree file
         TEMPTREE=$(_maketemp)
@@ -89,8 +87,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "Based on the presence of .dpx files, this SIP is a DPX package." xmlstarlet sel -t -v "/tree/directory/directory/file[substring(@name,string-length(@name)-2)='dpx']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="FILM_DPX"
-            echo
-            printf "\n${BIWHITE}Checking for DPX package conformance...${COLOR_OFF}\n"
+            _report -g "Checking for DPX package conformance..."
             # to be filled out with DPX package example
         fi
 
@@ -99,7 +96,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "Based on directory names, this SIP is digitized film in non-DPX format." xmlstarlet sel -t -v "/tree/directory/directory[@name='MP4_2048x1152' or @name='ProRes_2048x1536']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="FILM_FILES"
-            printf "\n${BIWHITE}Checking for non-DPX film package conformance...${COLOR_OFF}\n"
+            _report -g "Checking for non-DPX film package conformance..."
             _runtest -i "This package is missing a ProRes master file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
         fi
@@ -109,7 +106,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "Based on the presence of vrecord files, this SIP is digitized video." xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-13)='qctools.xml.gz' or substring(@name,string-length(@name)-19)='capture_options.log']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_VRECORD"
-            printf "\n${BIWHITE}Checking for digitized video package conformance...${COLOR_OFF}\n"
+            _report -g "Checking for digitized video package conformance..."
             _runtest -i "This package is missing an MKV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mkv']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing a frameMD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-7)='framemd5']/@name" -n "${TEMPTREE}"
@@ -120,7 +117,7 @@ while [[ "${*}" != "" ]] ; do
         _runtest "Based on the presence of files with 'DV' in the filename, this SIP is transferred DV." xmlstarlet sel -t -v "/tree/directory[@name='*DV*']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_DV"
-            printf "\b${BIWHITE}Checking for DV package conformance...${COLOR_OFF}\n"
+            _report -g "Checking for DV package conformance..."
             _runtest -i "This package is missing an MOV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='derivative']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='md5']/@name" -n "${TEMPTREE}"
@@ -140,4 +137,4 @@ done
 
 # log script ending
 _log -e
-printf "\n${BIWHITE}verifySIP process complete.${COLOR_OFF}\n"
+_report -g "verifySIP process complete."

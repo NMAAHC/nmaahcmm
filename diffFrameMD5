@@ -43,4 +43,4 @@ diff --side-by-side --width=200 --suppress-common-lines <(cat "${INPUT1}" | cut 
 
 # log script ending
 _log -e
-printf "${BIWHITE}diffFrameMD5 process complete.${COLOR_OFF}\n"
+_report -g "diffFrameMD5 process complete."

@@ -39,42 +39,35 @@ shift $(( ${OPTIND} - 1 ))
 
 _moveDPX(){
     while [[ "${*}" != "" ]] ; do
-
         DPX_FOLDER="${1}"
         TARGET_FOLDER="${TARGET_FOLDER_PARENT}/${DPX_FOLDER##*/}"
-
         if [[ ! -d "${TARGET_FOLDER_PARENT}" ]] ; then 
-            echo
-            printf "${BIRED} %s%s does not exist. Exiting. ${COLOR_OFF}\n" "${TARGET_FOLDER_PARENT}" >&2 # tell operator if the hardcoded parent folder cannot be found - e.g. no longer exists or is moved
-            exit
+            _report -rt "${TARGET_FOLDER_PARENT} does not exist. Exiting..." >&2 # tell operator if the hardcoded parent folder cannot be found - e.g. no longer exists or is moved
+            _log -a "Process terminated by script (no directory at requested location)."
+            exit 1
         fi
-
         if [[ ! -d "${TARGET_FOLDER}" ]] ; then
-            echo
-            printf "Creating target folder:\t%s%s%s\n" "${BIWHITE}" "${TARGET_FOLDER}" "${COLOR_OFF}"
+            _report -g "Creating target folder: ${TARGET_FOLDER}"
             mkdir -p "${TARGET_FOLDER}"
         fi
 
-        printf "${BIWHITE}Moving files to target folder...${COLOR_OFF}\n"
-        
+        _report -g "Moving files to target folder..."
         for FILE in "${DPX_FOLDER}"/*DPX*/* ; do # for all files in a DPX subdirectory (expected to be named with the word "DPX" in it), do the following:
             if [[ -f "${TARGET_FOLDER}"/*.dpx ]] ; then # if .dpx file is found as expected, do:
-                echo
-                printf "%s%s%s exists, verifying checksum.\n" "${BIWHITE}" "${FILE##*/}" "${COLOR_OFF}"
+                _report -g "Verifying checksum for ${FILE##*/} ..."
                 rsync -avPhic "${FILE}" "${TARGET_FOLDER}" # move file securely to the target folder. -a="archive," -v=verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes, -c=with a built-in checksum check
                 RSYNC_ERR_1="$?" # assign rsync output code to a variable
             else
                 rsync -avPhi "${FILE}" "${TARGET_FOLDER}" # move file securely to the target folder (no checksum check)
                 RSYNC_ERR_1="$?" # assign rsync output code to a variable
             fi
-            printf "%srsync exit status is: %s%s\n" "${BIWHITE}" "${RSYNC_ERR_1}" "${COLOR_OFF}"
-
             if [[ "${RSYNC_ERR_1}" == 0 ]] ; then # if rsync output code indicated the rsync transfer was successful, tell operator
-                echo
-                printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "${BIWHITE}" "${FILE##*/}" "${COLOR_OFF}" "${BIWHITE}" "${TARGET_FOLDER}" "${COLOR_OFF}"
-                echo
+                _report -g "rsync was successful!"
+                _report -g "Moved: ${FILE##*/}"
+                _report -g "to directory: ${TARGET_FOLDER}"
             else
-                printf "%sERRORS%s\n" "${BIRED}" "${COLOR_OFF}" >&2
+                _report -rt "rsync experienced errors!"
+                _report -rt "rsync output code: ${RSYNC_ERR_1}" >&2
             fi
             break 1
         done
@@ -82,29 +75,28 @@ _moveDPX(){
         for MD5 in "${DPX_FOLDER}"/*.md5 ; do
             if [[ -f "${TARGET_FOLDER}"/*.md5 ]] ; then # if .md5 checksum file is found as expected, do:
                 echo
-                printf "%s%s%s exists, verifying checksum.\n" "${BIWHITE}" "${md5##*/}" "${COLOR_OFF}" # move file securely to the target folder (with built-in checksum check)
+                _report -g "Verifying checksum for ${MD5##*/}..." # move file securely to the target folder (with built-in checksum check)
                 rsync -avPhic "${MD5}" "${TARGET_FOLDER}"
                 RSYNC_ERR_2="$?" # assign rsync output code to a variable
             else
                 rsync -avPhi "${MD5}" "${TARGET_FOLDER}"  # move file securely to the target folder (no checksum check)
                 RSYNC_ERR_2="$?" # assign rsync output code to a variable
             fi
-                printf "%srsync exit status is: %s%s\n" "${BIWHITE}" "${RSYNC_ERR_2}" "${COLOR_OFF}"
 
             if [[ "${RSYNC_ERR_2}" == 0 ]] ; then # if rsync output code indicated the rsync transfer was successful, tell operator
-                echo
-                printf "MOVED:\t%s%s%s\nTO DIRECTORY:\t%s%s%s\n" "${BIWHITE}" "${md5##*/}" "${COLOR_OFF}" "${BIWHITE}" "${TARGET_FOLDER}" "${COLOR_OFF}"
-                echo
+                _report -g "rsync was successful!"
+                _report -g "Moved: ${MD5##*/}"
+                _report -g "to directory: ${TARGET_FOLDER}"
             else
-                printf "${BIRED}rsync transfer not completed successfully!${COLOR_OFF}\n" >&2
+                _report -rt "rsync transfer not completed successfully!" >&2
             fi
         done
-        printf "Moving to next DPX directory if supplied...\n"
+        _report -g "Moving to next DPX directory if supplied..."
         echo
         shift
 
     done
-    printf "%sChanged permissions on the following files in directory %s to 777:%s\n" "${BIWHITE}" "${TARGET_FOLDER_PARENT##*/}" "${COLOR_OFF}"
+    _report -g "Changed permissions to 777 on the following files in directory ${TARGET_FOLDER_PARENT##*/}:"
     chmod -vR 777 "${TARGET_FOLDER_PARENT}" # set permissions on the target parent directory (set above) to read-write-execute for all users. -v=verbose, -R=recursive
 }
 
@@ -115,5 +107,5 @@ _log -b
 _moveDPX "${@}"
 # log script ending
 _log -e
-printf "${BIWHITE}moveDPX process complete.${COLOR_OFF}\n"
+_report -g "moveDPX process complete."
 exit "$?"

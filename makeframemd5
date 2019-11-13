@@ -51,4 +51,4 @@ done
 
 # log script ending
 _log -e
-printf "${BIWHITE}makeframemd5 process complete.${COLOR_OFF}\n"
+_report -g "makeframemd5 process complete."

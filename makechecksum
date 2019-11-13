@@ -45,9 +45,9 @@ _makechecksum(){
             TARGET="${INPUT%/}" #strip the trailing /, if any
             TARGET="${TARGET##*/}" #drop the leading directory components i.e. get basename
             OUTPUT="${INPUT}/${TARGET}_${date}_checksums.md5" #set .md5 file as $OUTPUT
-            printf "%s%s%s is a directory.\n" "${BIWHITE}" "${TARGET}" "${COLOR_OFF}"
-            printf "Making checksums of all files in %s%s%s\n" "${BIWHITE}" "${TARGET}" "${COLOR_OFF}"
-            printf "Writing to %s%s%s\n" "${BIWHITE}" "${OUTPUT}" "${COLOR_OFF}"
+            _report -g "${TARGET} is a directory."
+            _report -g "Making checksums of all files in ${TARGET}"
+            _report -g "Writing to ${OUTPUT}"
             md5deep -bre "${INPUT}" >> "${OUTPUT}" #create md5 hash (hashes) of $INPUT and write results to $OUTPUT. -b=strip leading directory info, -r=recursive, -e=display progress indicator
         fi
 
@@ -56,23 +56,21 @@ _makechecksum(){
             TARGET="${TARGET%.*}" #strip extension from $TARGET
             OUTPUT="${INPUT%/*}" #get full path parent dirname of $INPUT
             OUTPUT="${OUTPUT}/${TARGET}_$(date +%F)_checksums.md5" #set .md5 file as $OUTPUT
-            printf "%s%s%s is a file.\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}"
-            printf "Making checksum of %s%s%s\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}"
-            printf "Writing to %s%s%s\n" "${BIWHITE}" "${OUTPUT}" "${COLOR_OFF}"
+            _report -g "${TARGET} is a file."
+            _report -g "Making checksum of ${INPUT##*/}"
+            _report -g "Writing to ${OUTPUT}"
             md5deep -bre "${INPUT}" >> "${OUTPUT}" #create md5 hash (hashes) of $INPUT and write results to $OUTPUT. -b=strip leading directory info, -r=recursive, -e=display progress indicator
         fi
 
         echo
-        printf "Sorting %s%s%s\n" "${BIWHITE}" "${OUTPUT##*/}" "${COLOR_OFF}"
+        _report -g "Sorting checksums in ${OUTPUT##*/}"
         sort -k 2 -o "${OUTPUT}" "${OUTPUT}" #sort $OUTPUT. -k 2=sort on the second field, -o=write OUTPUT to file (instead of standard terminal OUTPUT)
         shift
         echo
             if [[ $# -gt 0 ]] ; then
-                printf "Finished making checksums for %s%s%s.\n\n<>..<> Moving to %s%s%s\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}" "${BIWHITE}" "${1##*/}" "${COLOR_OFF}"
-                echo
+                _report -g "Finished making checksums for ${INPUT##*/}. Moving to ${1##*/}"
             else
-                printf "Finished making checksums for %s%s%s.\nNothing left to checksum.\n" "${BIWHITE}" "${INPUT##*/}" "${COLOR_OFF}"
-                echo
+                _report -g "Finished making checksums for ${INPUT##*/}. Nothing left to checksum."
                 cowsay "Tootles!"
             fi
 
@@ -86,5 +84,5 @@ _log -b
 _makechecksum "${@}"
 # log script ending
 _log -e
-printf "${BIWHITE}makechecksum process complete.${COLOR_OFF}\n"
+_report -g "makechecksum process complete."
 exit $?

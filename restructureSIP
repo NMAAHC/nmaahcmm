@@ -58,7 +58,7 @@ shift $(( ${OPTIND} - 1 ))
 
 # check that all inputs were entered
 if [[ -z "${PACKAGETYPE}" ]] ; then
-    printf "Select a package type:"
+    _report -b "Select a package type:"
     echo
     PS3="Selection: "
     select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
@@ -67,15 +67,15 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     done
 fi
 if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
-    printf "Enter a unique package name or 'q' to quit: "
+    _report -b "Enter a unique package name or 'q' to quit: "
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
-    [[ -z "${MEDIAID}" ]] && { printf "${BIRED}ERROR You must enter a valid MEDIA ID${COLOR_OFF}\n" ; exit ;};
-    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { printf "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore\n" ; exit 1 ;};
+    [[ -z "${MEDIAID}" ]] && { _report -rt "ERROR: You must enter a valid MEDIA ID" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt "ERROR: The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
 fi
 if [[ -z "${DESTINATION}" ]] ; then
-    printf "Drag in the destination directory or type 'q' to quit: "
+    _report -b "Drag in the destination directory or type 'q' to quit: "
     read -e DESTINATION
     [[ "${DESTINATION}" = "q" ]] && exit 0
 fi
@@ -100,15 +100,18 @@ OUTPUT_PACKAGE="${DESTINATION}/${MEDIAID}"
 # if package type is unknown, check whether it looks like a DPX package
 if [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     if [[ -n $(find "${INPUT}" -iname *.dpx) ]] ; then
-        printf "${bired}This SIP looks like a DPX package!${color_off}"
+        _report -g "This SIP looks like a DPX package!"
         PACKAGETYPE="Digitized Film (DPX package)"
     fi
 fi
 
 # if SIP is a DPX, direct the operator to use restructureDPX instead
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
-    printf "${bired}If you are trying to restructure a DPX package, please run the 'restructureDPX' microservice instead."
-    printf "You can also run the 'ingestfile' microservice, which invokes 'restructureDPX' as well.${color_off}"
+    _report -rt "If you are trying to restructure a DPX package, please run the 'restructureDPX' microservice instead!"
+    _report -b "You can also run the 'ingestfile' microservice, which invokes 'restructureDPX' as well."
+    cowsay "Thanks!"
+    _log -a "Process terminated by script (operator redirected to appropriate microservice)."
+    exit 0
 else
     mkdir "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
 fi
@@ -156,9 +159,9 @@ fi
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
 #        echo "${RSYNC_ERR}"
-#        printf "${BIRED}Cancelling requested deletion of source file, not looking safe.${COLOR_OFF}"
+#        _report -rt "Cancelling requested deletion of source file, not looking safe."
 #    else
-#        printf "${BIWHITE}Removing the source file from ${INPUT} as requested.${COLOR_OFF}"
+#        _report -g "Removing the source file from ${INPUT} as requested."
 #        _run rm -f "${INPUT}"
 #    fi
 #fi
