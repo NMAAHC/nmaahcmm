@@ -18,7 +18,7 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This script will restructure a SIP into an AIP based on the type of package being submitted. The script will"
-    echo "  -creating an output AIP directory named after an operator-selected media id and located in an operator-selected destination directory"
+    echo "  -create an output AIP directory named after an operator-selected media id and located in an operator-selected destination directory"
     echo "  -create 'objects' and 'metadata' subcategories within that output AIP directory"
     echo "  -rsync files from the SIP into the AIP"
     echo "  -remove SIP files or leave them in place upon successful completion, depending upon operator selection"
@@ -87,8 +87,8 @@ fi
 _log -b
 
 # record variables in log
-_writelog  "PACKAGE TYPE" "${PACKAGETYPE}"
-_writelog  "MEDIA ID" "${MEDIAID}"
+_writelog "PACKAGE TYPE" "${PACKAGETYPE}"
+_writelog "MEDIA ID" "${MEDIAID}"
 _writelog "DESTINATION" "${DESTINATION}"
 _writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
 

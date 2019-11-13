@@ -1,8 +1,9 @@
 #!/bin/bash
 # @author Dave Rice
+# removeDSStore is a script to remove hidden .DS_Store files from a package input
 
 SCRIPTDIR=$(dirname "${0}")
-. "${SCRIPTDIR}/mmfunctions" || { echo "Missing '${SCRIPTDIR}/mmfunctions'. Exiting." ; exit 1 ;};
+. "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/mmfunctions'. Exiting." ; exit 1 ;};
 
 _cleanup(){
     _log -a "Process aborted"
@@ -14,7 +15,7 @@ _log -b
 
 while [ "${*}" != "" ] ; do
     TARGET=${1}
-    if [ -d "${TARGET}" ]; then
+    if [[ -d "${TARGET}" ]]; then
         find "${TARGET}" -name '.DS_Store' -type f -delete
     fi
     shift

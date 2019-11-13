@@ -44,7 +44,7 @@ _makeconcat(){
     echo
     while [ "${*}" != "" ] ; do # while the number of arguments is not zero do X
         for FILE in ${1} ; do # for the first argument do X
-            suffix="${FILE##*.}" # set $suffix to whatever the extension of your $FILE is
+            SUFFIX="${FILE##*.}" # set $SUFFIX to whatever the extension of your $FILE is
             PATH="${FILE%/*}" # the $PATH is set as the dirname of the first argument
             TXTFILE="${PATH}/${CONCATFILE}.txt" # the $TXTFILE will be created in the same dir as the first argument and named after $CONCATFILE
             touch "${TXTFILE}" # the $TXTFILE is created, aka "touched"
@@ -52,7 +52,7 @@ _makeconcat(){
             shift # the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
         done
     done
-    CONCATFILE="${PATH}/${CONCATFILE}.$suffix"
+    CONCATFILE="${PATH}/${CONCATFILE}.$SUFFIX"
     ffmpeg -f concat -safe 0 -i "${TXTFILE}" -c copy "${CONCATFILE}" # ffmpeg creates the concatenated FILE in the same directory as $FILEs
     echo
     cowsay "Done. Your concatenated video FILE is ready fo action." # cowsay tells it like it is.

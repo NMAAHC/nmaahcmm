@@ -17,7 +17,7 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo
-    echo "This application will create a temporary XML of a SIP and compare it against an expected directory structure, using XML Starlet."
+    echo "This application will create a temporary tree of a SIP and compare it against an expected directory structure, using a series of xpath statements. It outputs mismatches and unexpected items found in AIPs into the terminal window."
     echo
     echo "Usage: $(basename ${0}) package"
     echo

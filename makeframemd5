@@ -39,11 +39,11 @@ shopt -s globstar
 while [ "${*}" != "" ] ; do
     #name input as the first argument sent to script
     INPUT="${1}"
-    if [ -d "${INPUT}" ] ; then
+    if [[ -d "${INPUT}" ]] ; then
         for FILE in "${1}"/**/*.mov ; do # find the first .mov file two subdirectories down from the input
             ffmpeg -i "${FILE}" -an -f framemd5 "${FILE}.framemd5.md5"
         done
-    elif [ -f "${INPUT}" ]; then
+    elif [[ -f "${INPUT}" ]] ; then
         ffmpeg -i "${INPUT}" -an -f framemd5 "${INPUT}.framemd5.md5"
     fi
     shift

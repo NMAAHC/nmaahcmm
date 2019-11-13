@@ -8,7 +8,7 @@
 _writemetadata(){
     # need to set variable $METADATFILES
     DESCRIPTIVE="${METADATAFILES}/description.txt"
-    if [ ! -f "${DESCRIPTIVE}" ] ; then
+    if [[ ! -f "${DESCRIPTIVE}" ]] ; then
         touch "${DESCRIPTIVE}"
     fi
     KEY="${1}"
