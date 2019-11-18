@@ -17,7 +17,7 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will restructure a DPX package directory for VFCU pickup and place .md5s in a directory. It takes one or more DPX directories as arguments."
-    echo "Usage: $(basename ${0}) DPXdirectory1 [[ DPXdirectory2 ... ]"
+    echo "Usage: $(basename ${0}) DPXdirectory1 [ DPXdirectory2 ... ]"
     echo
     exit
 }
@@ -32,56 +32,51 @@ while getopts ":h" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
-### FUNCTIONS
-
-_restructureForVFCU(){
-    for ARG in "${@}" ;
-    do
-        INPUT="${1}" # name $INPUT as the first argument sent to script
-        # create subdirectories for each component
-        AUDIO_DIR="${INPUT}/${INPUT##*/}"__Audio
-        DERIV_DIR="${INPUT}/${INPUT##*/}"__Derivatives
-        DPX_DIR="${INPUT}/${INPUT##*/}"__DPX
-        MD5_DIR="/Volumes/nmaahc-borndigital/06_DPX_checksums/"
-
-        if [[ -d "${INPUT}" ]] ; then
-            _report -g "Moving all files in directories: ${AUDIO_DIR}, ${DERIV_DIR}"
-            _report -g "to directory: ${DPX_DIR}"
-            if [[ -d "${AUDIO_DIR}" ]] ; then
-                mv -vi "${AUDIO_DIR}"/* "${DPX_DIR}" # move all files in the AUDIO directory to the DPX directory. -v=verbose, -i=interactive (prompts before overwriting)
-                rm -vri "${AUDIO_DIR}" # removes the AUDIO directory and any files left in it. -v=verbose, -r=recursive, -i=interactive (prompts before overwriting)
-            fi
-            if [[ -d "${DERIV_DIR}" ]] ; then
-                mv -vi "${DERIV_DIR}"/* "${DPX_DIR}" # move all files in the DERIVATIVES directory to the DPX directory
-                rm -vri "${DERIV_DIR}" # removes the DERIVATIVES directory and any files left within it
-            fi
-        else
-            _report -rt "ERROR: ${INPUT} is not a directory. Exiting..."
-            _log -a "Process terminated by script (no directory at requested location)."
-            exit 1
-        fi
-        echo
-        if [[ -d "${MD5_DIR}" ]] ; then
-            _report -g "Moving .md5 directory to ${DPX_DIR}"
-            rsync -avvPhi --stats "${MD5_DIR}/${INPUT##*/}"/*.md5 "${DPX_DIR}" # move .md5 directory to DPX directory to initiate DPX pickup. -a="archive," -vv=very verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes
-            _report -g "Done moving .md5 directory to ${DPX_DIR}. VFCU will begin picking up your files shortly."
-            _report -b "Please make sure your templates have been set correctly!"
-            echo
-            cowsay "Tootles!"
-        else
-            _report -rt "ERROR: ${MD5_DIR} does not exist. Exiting..."
-            _log -a "Process terminated by script (no directory at requested location)."
-            exit 1
-        fi
-        shift
-    done
-}
-
 ## SCRIPT ACTIONS
 
 # log script beginning
 _log -b
-_restructureForVFCU "${@}"
+
+while [ "${*}" != "" ] ; do
+    INPUT="${1}" # name $INPUT as the first argument sent to script
+    # create subdirectories for each component
+    AUDIO_DIR="${INPUT}/${INPUT##*/}"__Audio
+    DERIV_DIR="${INPUT}/${INPUT##*/}"__Derivatives
+    DPX_DIR="${INPUT}/${INPUT##*/}"__DPX
+    MD5_DIR="/Volumes/nmaahc-borndigital/06_DPX_checksums/"
+
+    if [[ -d "${INPUT}" ]] ; then
+        _report -g "Moving all files in directories: ${AUDIO_DIR}, ${DERIV_DIR}"
+        _report -g "to directory: ${DPX_DIR}"
+        if [[ -d "${AUDIO_DIR}" ]] ; then
+            mv -vi "${AUDIO_DIR}"/* "${DPX_DIR}" # move all files in the AUDIO directory to the DPX directory. -v=verbose, -i=interactive (prompts before overwriting)
+            rm -vri "${AUDIO_DIR}" # removes the AUDIO directory and any files left in it. -v=verbose, -r=recursive, -i=interactive (prompts before overwriting)
+        fi
+        if [[ -d "${DERIV_DIR}" ]] ; then
+            mv -vi "${DERIV_DIR}"/* "${DPX_DIR}" # move all files in the DERIVATIVES directory to the DPX directory
+            rm -vri "${DERIV_DIR}" # removes the DERIVATIVES directory and any files left within it
+        fi
+    else
+        _report -rt "ERROR: ${INPUT} is not a directory. Exiting..."
+        _log -a "Process terminated by script (no directory at requested location)."
+        exit 1
+    fi
+    echo
+    if [[ -d "${MD5_DIR}" ]] ; then
+        _report -g "Moving .md5 directory to ${DPX_DIR}"
+        rsync -avvPhi --stats "${MD5_DIR}/${INPUT##*/}"/*.md5 "${DPX_DIR}" # move .md5 directory to DPX directory to initiate DPX pickup. -a="archive," -vv=very verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes
+        _report -g "Done moving .md5 directory to ${DPX_DIR}. VFCU will begin picking up your files shortly."
+        _report -b "Please make sure your templates have been set correctly!"
+        echo
+        cowsay "Tootles!"
+    else
+        _report -rt "ERROR: ${MD5_DIR} does not exist. Exiting..."
+        _log -a "Process terminated by script (no directory at requested location)."
+        exit 1
+    fi
+    shift
+done
+
 # log script ending
 _log -e
 _report -g "restructureForVFCU process complete."
