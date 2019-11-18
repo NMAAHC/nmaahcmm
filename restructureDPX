@@ -8,6 +8,8 @@ SCRIPT_PATH="${0%/*}"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _setcolors # assigns colors using a function defined in nmaahcmmfunctions
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
+RSYNC_ERROR_COUNT=0
+RSYNC_ERROR_FILES=""
 
 ### USAGE
 _usage(){
@@ -41,6 +43,16 @@ done
 shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
+# if rsync output code indicates a failed transfer, increment the total number of failed transfers; rsync -v will also report this information in the terminal
+_check_rsync_output(){
+    RSYNC_ERR="$?"
+    if [[ "${RSYNC_ERR}" != 0 ]] ; then
+        ((RSYNC_ERROR_COUNT++))
+    else
+        continue
+    fi
+}
+
 _restructureDPX(){
     INPUT="${1}"
     
@@ -89,7 +101,7 @@ _restructureDPX(){
             if [[ -d "${OUTPUTDIR}" ]] ; then
                 # remove any .DS_Store files to begin
                 "${SCRIPTDIR}/removeDSStore" "${OUTPUTDIR}"
-                # find and move any .wav files fom $INPUT to $OUTPUTDIR
+                # move wav directory and rename in standard format
                 for WAVPATH in "${INPUT}"/*WAV ; do
                     if [[ ! -d "${WAVPATH}" ]]; then
                         _report -rt "No .wav directory found."
@@ -101,7 +113,7 @@ _restructureDPX(){
                         done
                     fi
                 done
-                # find and move and .mov files from $INPUT to $OUTPUTDIR
+                # move mov directory and rename in standard format
                 for MOVPATH in "${INPUT}"/*MOV ; do
                     if [[ ! -d "${MOVPATH}" ]] ; then
                         _report -rt "No .mov directory found."
@@ -113,7 +125,7 @@ _restructureDPX(){
                         done
                     fi
                 done
-                # move DPX directory from $input to $OUTPUTDIR and rename
+                # move dpx directory and rename in standard format
                 for DPXPATH in "${INPUT}"/*DPX ; do
                     if [[ ! -d "${DPXPATH}" ]] ; then
                         _report -rt "No DPX directory found."
@@ -130,7 +142,7 @@ _restructureDPX(){
                 _log -a "Process terminated by script (no directory at requested location)."
                 exit 1
             fi
-            # find the .wav and .mov files and rename them according to NMAAHC naming structures. Finds files based on filenaming + extension; assumes each file will have descriptive filename + lowercase extension.
+            # find the .wav and .mov files and rename them according to NMAAHC naming structures. Finds files based on filenaming + extension; assumes each file will have descriptive filename + regular extension.
             _report -g "Renaming files in ${OUTPUTDIR}"
             echo
             if [[ -d "${AUDPATH}" ]] ; then
@@ -161,60 +173,33 @@ _restructureDPX(){
             AUD_R2="${R2}/${MEDIAID}_R2__Audio"
             DER_R2="${R2}/${MEDIAID}_R2__Derivatives"
             DPXR2="${R2}/${MEDIAID}_R2__DPX"
-        
+
             mkdir -p "${R1}" "${AUD_R1}" "${DER_R1}" "${DPXR1}" "${R2}" "${AUD_R2}" "${DER_R2}" "${DPXR2}"
-        
-            echo
-            _report -g "Moving files from ${INPUT}"
-
-            # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
-            if [[ -d "${AUD_R1}" ]] ; then
-                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \;
-            else
-                _report -rt "Missing ${AUD_R1}"
+            MKDIR_ERR="${?}"
+            if [[ "${MKDIR_ERR}" -gt 0 ]] ; then
+                _report -rt "Not all directories were created. Please double check that you have write permission to output directory ${OUTPUTDIR}"
                 exit 1
-            fi
-            if [[ -d "${DER_R1}" ]] ; then
-                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \;
+                _log -a "Process terminated by script (directories not created)."
             else
-                _report -rt "Missing ${DER_R1}"
-                exit 1
+                echo
+                # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
+                _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" ; _check_rsync_output \;
+                echo
+                # rename files according to NMAAHC filenaming guidelines
+                _report -g "Renaming files in ${OUTPUTDIR}"
+                find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
+                find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
+                find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
+                find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
+                find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
+                find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
             fi
-            if [[ -d "${DPXR1}" ]] ; then
-                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \;
-            else
-                _report -rt "Missing ${DPXR1}"
-                exit 1
-            fi
-
-            if [[ -d "${AUD_R2}" ]] ; then
-                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \;
-            else
-                _report -rt "Missing ${AUD_R2}"
-                exit 1
-            fi
-            if [[ -d "${DER_R2}" ]] ; then
-                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \;
-            else
-                _report -rt "Missing ${DER_R2}"
-                exit 1
-            fi
-            if [[ -d "${DPXR2}" ]] ; then
-                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \;
-            else
-                _report -rt "Missing ${DPXR2}"
-                exit 1
-            fi
-
-            echo
-            # rename files according to NMAAHC filenaming guidelines
-            _report -g "Renaming files in ${OUTPUTDIR}"
-            find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
-            find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
-            find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
-            find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
-            find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
-            find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
             ;;
 
         3 )
@@ -231,86 +216,45 @@ _restructureDPX(){
             AUD_R3="${R3}/${MEDIAID}_R3__Audio"
             DER_R3="${R3}/${MEDIAID}_R3__Derivatives"
             DPXR3="${R3}/${MEDIAID}_R3__DPX"
+
             mkdir -p "${R1}" "${AUD_R1}" "${DER_R1}" "${DPXR1}" "${R2}" "${AUD_R2}" "${DER_R2}" "${DPXR2}" "${R3}" "${AUD_R3}" "${DER_R3}" "${DPXR3}"
-            echo
-            _report -g "Moving files from ${INPUT}"
-
-            # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
-            if [[ -d "${AUD_R1}" ]] ; then
-                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \;
-            else
-                _report -rt "Missing ${AUD_R1}"
+            MKDIR_ERR="${?}"
+            if [[ "${MKDIR_ERR}" -gt 0 ]] ; then
+                _report -rt "Not all directories were created. Please double check that you have write permission to output directory ${OUTPUTDIR}"
                 exit 1
-            fi
-            if [[ -d "${DER_R1}" ]] ; then
-                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \;
+                _log -a "Process terminated by script (directories not created)."
             else
-                _report -rt "Missing ${DER_R1}"
-                exit 1
-            fi
-            if [[ -d "${DPXR1}" ]] ; then
-                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \;
-            else
-                _report -rt "Missing ${DPXR1}"
-                exit 1
-            fi
-
-            if [[ -d "${AUD_R2}" ]] ; then
-                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \;
-            else
-                _report -rt "Missing ${AUD_R2}"
-                exit 1
-            fi
-            if [[ -d "${DER_R2}" ]] ; then
-                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \;
-            else
-                _report -rt "Missing ${DER_R2}"
-                exit 1
-            fi
-            if [[ -d "${DPXR2}" ]] ; then
-                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \;
-            else
-                _report -rt "Missing ${DPXR2}"
-                exit 1
-            fi
-
-            if [[ -d "${AUD_R3}" ]] ; then
-                find "${INPUT}" -iname "*R3*.wav" -exec rsync -av {} "${AUD_R3}" \;
-            else
-                _report -rt "Missing ${AUD_R3}"
-                exit 1
-            fi
-            if [[ -d "${DER_R3}" ]] ; then
-                find "${INPUT}" -iname "*R3*.mov" -exec rsync -av {} "${DER_R3}" \;
-            else
-                _report -rt "Missing ${DER_R3}"
-                exit 1
-            fi
-            if [[ -d "${DPXR3}" ]] ; then
-                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -av {} "${DPXR3}" \;
-            else
-                _report -rt "Missing ${DPXR3}"
-                exit 1
-            fi
-            echo
-            # rename files according to NMAAHC filenaming guidelines
-            _report -g "Renaming files in ${OUTPUTDIR}"
-            find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
-            find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
-            find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
-            find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
-            find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
-            find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
-            find "${AUD_R3}" -iname "*R3*.wav" -exec mv -vi {} "${AUD_R3}/${DPXID}_R3_AUD.wav" \;
-            find "${DER_R3}" -iname "*R3*ProRes*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_01.mov" \;
-            find "${DER_R3}" -iname "*R3*Uncompressed*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_02.mov" \;
+                echo
+                # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
+                _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.wav" -exec rsync -av {} "${AUD_R3}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.mov" -exec rsync -av {} "${DER_R3}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -av {} "${DPXR3}" ; _check_rsync_output \;
+                echo
+                # rename files according to NMAAHC filenaming guidelines
+                _report -g "Renaming files in ${OUTPUTDIR}"
+                find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
+                find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
+                find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
+                find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
+                find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
+                find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
+                find "${AUD_R3}" -iname "*R3*.wav" -exec mv -vi {} "${AUD_R3}/${DPXID}_R3_AUD.wav" \;
+                find "${DER_R3}" -iname "*R3*ProRes*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_01.mov" \;
+                find "${DER_R3}" -iname "*R3*Uncompressed*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_02.mov" \;
             ;;
 
             *   )
             _report -rt "ERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later."
-            _log -w "Attempt to run restructureDPX with >3 reels in package."
             echo
             cowsay "SORRY!"
+            _log -w "Attempt to run restructureDPX with >3 reels in package."
             ;;
     esac
 }
@@ -324,8 +268,18 @@ if [[ -z "${CLEANUPDECISION}" ]] ; then
     _report -b "Remove input directory? Type Y or y for yes, any other key for no: "
     read CLEANUPDECISION
 fi
-if [[ "${CLEANUPDECISION}" == "Y" ]] || [[ "${CLEANUPDECISION}" == "y" ]] ; then
-    rm -vr "${INPUT}" # remove input directory. -v=verbose, -r=recursive
+# don't allow removal of input directory if there were any rsync errors
+if [[ "${CLEANUPDECISION}" == [Yy] ]] ; then
+    if [[ "${RSYNC_ERROR_COUNT}" -eq 0 ]]; then
+        _report -g "Deleting input directory..."
+        rm -vr "${INPUT}" # remove input directory. -v=verbose, -r=recursive
+    else
+        _report -rt "ERROR: Not all rsync processes completed successfully. Cancelling requested deletion of input directory."
+    fi
+fi
+# summarize rsync errors for operator
+if [[ "${RSYNC_ERROR_COUNT}" -gt 0 ]] ; then
+    _report -rt "ERROR: ${RSYNC_ERROR_COUNT} file/s experienced issues during the rsync process. Please review the rsync output in the terminal window. (Errors are indicated by string 'failed')"
 fi
 # log script ending
 _log -e
