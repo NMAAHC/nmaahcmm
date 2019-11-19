@@ -18,6 +18,13 @@ _usage(){
     echo "$(basename "${0}")"
     echo
     echo "This application will create a temporary tree of a SIP and compare it against an expected directory structure, using a series of xpath statements. It outputs mismatches and unexpected items found in AIPs into the terminal window."
+    echo "The script applies rules based on what kind of package it thinks it's looking at. The packages are defined as follows:"
+    echo "  film / analog / digitized in-house: script looks for .dpx files"
+    echo "  film / analog / digitized on-location: script looks for directories named after derivatives, e.g. 'MP4_2048x1152'"
+    echo "  video / analog / digitized on-location: script looks for the capture_options.log and/or qctools.xml.gz files generated in the vrecord process"
+    echo "  video / DV / transferred on-location: script looks for the string 'DV' in filenames"
+    echo "If your package does not fall into one of the above categories, the script will apply a simpler baseline set of comparisons."
+    echo "See the nmaachmm README for more information on package definitions."
     echo
     echo "Usage: $(basename ${0}) package"
     echo
@@ -113,7 +120,7 @@ while [[ "${*}" != "" ]] ; do
         fi
 
         # PACKAGE TYPE: video / DV / transferred on-location
-        # looks for filenames incorporating the DV format name
+        # looks for filenames incorporating the string 'DV'
         _runtest "Based on the presence of files with 'DV' in the filename, this SIP is transferred DV." xmlstarlet sel -t -v "/tree/directory[@name='*DV*']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_DV"
