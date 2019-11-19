@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# a script to create a H264 derivative of a given input
+# unlike makeDer, this script asks the operator to select a CRF value and preset encoding speed
 
 # load nmaahcmmfunctions into this script
 SCRIPT_PATH="${0%/*}"
@@ -9,8 +11,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(ffmpeg) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 
-RELATIVEPATH="access"
-SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
+RELATIVEPATH="derivatives"
 EXTENSION="mp4"
 
 ### FUNCTIONS
@@ -32,9 +33,9 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes a video file or package as input."
-    echo "The script expects that any packages will hold only one .mov file and will only create a derivative for the first .mov file it finds within the package."
-    echo "The derivative will be named according to the input (i.e. it will have the same name as the master file or package)."
-    echo "You can set the directory where the output should be sent with the -o flag."
+    echo "If the input is a file, the output will be named after the file's containing directory, which is assumed to be the media ID."
+    echo "If the input is a directory, the script will create derivatives for all .mov files in the directory, and the output files will be named after those files."
+    echo "You can set the directory where the output should be sent with the -o flag. If you don't set the directory, the script will create a directory called 'derivatives' within the input directory or containing directory and send the files there."
     echo "Usage: $(basename ${0}) [ -o /output/directory/path/ ] fileorpackage1 [ fileorpackage2 ...]"
     echo
     exit
@@ -56,42 +57,6 @@ shift $(( ${OPTIND} - 1 ))
 # log script beginning
 _log -b
 
-while [ "${*}" != "" ] ; do
-
-    #set $INPUT as the first argument sent to script
-    INPUT="${1}"
-    
-    # set output directory
-    if [[ -z "${OUTPUTDIR_FORCED}" ]]; then # if the operator did not specify an output directory, do the following
-        if [[ -f "${INPUT}" ]]; then
-            OUTPUT_DIR="${INPUT%%.*}/${RELATIVEPATH}" # output subdirectory will be created in same directory as the input file, and named after that file
-        fi
-        if [[ -d "${INPUT}" ]]; then
-            OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # output will be sent to a subdirectory of the input directory
-        fi
-    else
-        OUTPUT_DIR="${OUTPUTDIR_FORCED}"
-    fi
-    _report -g "Output directory is: ${OUTPUT_DIR}"
-    
-    # set parent directory (the directory containing $OUTPUT_DIR) - currently not used
-    PARENTDIR="$(dirname "${OUTPUT_DIR}")"
-    _report -g "Parent directory is: ${PARENTDIR}"
-
-    #set $MEDIAID to basename of $INPUT with extension stripped
-    MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
-    _report -g "Media ID is: $(basename "${INPUT}" | cut -d. -f1)"
-
-    #set $OUTPUT
-    OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}"
-    _report -g "Output is: ${OUTPUT}"
-
-    #check to see if $OUTPUT exists
-    if [[ -s "${OUTPUT}" ]] ; then
-        _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode"
-        _report -rt "Moving to next file if present..."
-    else
-        echo
 cat <<-EOF
     A CRF value needs specified.
     The range of the quantizer scale is 0-51, where 0 is lossless, 23 is default, and 51 is worst possible.
@@ -102,10 +67,10 @@ cat <<-EOF
     General usage is to choose the highest CRF value that still provides an acceptable quality.
     If the output looks good, then try a higher value. If it looks bad then choose a lower value.
 EOF
-        echo
-        _report -b "Please enter a CRF value: "
-        read CRFVALUE
-        echo
+    echo
+    _report -b "Please enter a CRF value : "
+    read CRFVALUE
+    echo
 cat <<-EOF
     A preset encoding speed needs specified.
     A preset is a collection of options that will provide a certain encoding speed to compression ratio.
@@ -116,33 +81,73 @@ cat <<-EOF
     The general guideline is to use the slowest preset that you have patience for.
     Current presets in descending order of speed are:
 EOF
-        _report -b "ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow"
-        echo
-        _report -b "Please enter a preset speed: "
-        read PRESETSPEED
+    _report -b "ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow"
+    echo
+    _report -b "Please enter a preset speed: "
+    read PRESETSPEED
 
-        # have script say what is about to do
-        _report -g "Making .mp4 derivative of $(basename ${MEDIAID})"
-        mkdir -p "${OUTPUT_DIR}"
-        #mv -v "${INPUT}" "${PARENTDIR}"
+while [ "${*}" != "" ] ; do
+    #set $INPUT as the first argument sent to script
+    INPUT="${1}"    
+    # set output directory, create it, and confirm it created successfully before proceeding
+    if [[ -z "${OUTPUTDIR_FORCED}" ]]; then # if the operator did not specify an output directory, do the following
+        if [[ -f "${INPUT}" ]]; then
+            OUTPUT_DIR="${INPUT%%.*}/${RELATIVEPATH}" # output subdirectory will be created in same directory as the input file, and named after that file
+        fi
+        if [[ -d "${INPUT}" ]]; then
+            OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # output will be sent to a subdirectory of the input directory
+        fi
+    else
+        OUTPUT_DIR="${OUTPUTDIR_FORCED}"
+    fi
+    mkdir -p "${OUTPUT_DIR}"
+    if [[ -d "${OUTPUT_DIR}" ]] ; then
+        _report -g "Output directory is: ${OUTPUT_DIR}"
+    else
+        _report -rt "ERROR: ${FOLDER} does not exist. Exiting..."
+        _log -a "Process terminated by script (no directory at requested location)."
+        exit 1
+    fi
 
-        # run ffmpeg command on $INPUT and send output to a file at location $OUTPUT
-        if [[ -f "${INPUT}" ]]; then # if the input is a file, run the ffmpeg command on that file
-            ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
-            #mv -v -n "${INPUT}" "${PARENTDIR}"
-        elif [[ -d "${INPUT}" ]]; then # if the input is a directory, find an .mov file within the input directory and run the ffmpeg command on that file
-            ##### This command currently only works for the first file the "find" command locates within a directory
-            ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}"/objects/*.mov -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+    # run ffmpeg command on $INPUT and send output to a file at location $OUTPUT
+    # if input is a file -> script sets media ID and output filename based on input filename
+    # (if input is a directory -> script finds .mov files in the input directory, and derivatives are created with the same names as the files in the input directory)
+    if [[ -f "${INPUT}" ]]; then
+        #set $MEDIAID to basename of $INPUT with extension stripped
+        MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
+        _report -g "Media ID is: ${MEDIAID}"
+        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}.${EXTENSION}"
+        _report -g "Output filename is: ${OUTPUT}"
+        if [[ -s "${OUTPUT}" ]] ; then
+            #check to see if $OUTPUT exists
+            _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode"
+            _report -rt "Moving to next file if present..."
+        else
+            _report -g "Making .mp4 derivative of ${INPUT}"
+            ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate 8000k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
         fi
+    elif [[ -d "${INPUT}" ]]; then
+        _report -g "Making .mp4 derivatives for files in ${INPUT}"
+        for FILE in $(find "${INPUT}" -iname "*.mov") ; do
+            OUTPUT="${OUTPUT_DIR}/$(basename ${FILE%.*}).${EXTENSION}"
+            echo "FILE is $FILE, basename is $(basename ${FILE}), output is $OUTPUT"
+            if [[ -s "${OUTPUT}" ]] ; then
+                #check to see if $OUTPUT exists
+                _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode"
+                _report -rt "Moving to next file if present..."
+            else
+                ffmpeg -vsync 0 -nostdin -v info -hide_banner -stats -i "${FILE}" -movflags faststart -pix_fmt yuv420p -c:v libx264 -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate 8000k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+            fi
+        done
+    fi
 
-        # rename file to indicate derivative
-        # works by finding all mp4s in the output directory that have "PM" or "DER_01" in their filename; the "if" executes if any files matching those patterns are found (i.e. if the find statement executes to non-empty "-n")
-        if [[ -n $(find "${OUTPUT_DIR}" -type f -iname "*PM*.mp4" ) ]]; then
-            rename 's/PM/DER_02/' *.mp4 && _report -g "Updated derivative filename to reflect current name : PM to DER_02"
-        fi
-        if [[ -n $(find "${OUTPUT_DIR}" -type f -iname "*DER_01*.mp4" ) ]]; then
-            rename 's/DER_01/DER_03/' *.mp4 && _report -g "Updated derivative filename to reflect current name conventions: DER_01 to DER_03"
-        fi
+    # rename file to indicate derivative
+    # works by finding all mp4s in the output directory that have "PM" or "DER_01" in their filename; the "if" executes if any files matching those patterns are found (i.e. if the find statement executes to non-empty "-n")
+    if [[ -n $(find "${OUTPUT_DIR}" -type f -iname "*PM*.mp4" ) ]]; then
+        rename 's/PM/DER_02/' *.mp4 && _report -g "Updated derivative filename to reflect current name : PM to DER_02"
+    fi
+    if [[ -n $(find "${OUTPUT_DIR}" -type f -iname "*DER_01*.mp4" ) ]]; then
+        rename 's/DER_01/DER_03/' *.mp4 && _report -g "Updated derivative filename to reflect current name conventions: DER_01 to DER_03"
     fi
     shift
 done
