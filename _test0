@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-mkdir -p "${HOME}"/foo/xxfoo/
-
-bar="${HOME}"/foo
-bar1="${HOME}"/foo/*foo
-
-echo "bar is ${bar} bar1 is ${bar}"
