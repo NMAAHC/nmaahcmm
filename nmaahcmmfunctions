@@ -225,3 +225,11 @@ _report(){
     echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]}${MESSAGE}${NC}"
     [ "${LOG_MESSAGE}" = "Y" ] && _log -w "${MESSAGE}"
 }
+
+_seconds_to_hhmmss(){
+    num=$1
+    h=`expr "$num" / 3600`
+    m=`expr "$num"  % 3600 / 60`
+    s=`expr "$num" % 60`
+    printf "%02d:%02d:%02d\n" $h $m $s
+}

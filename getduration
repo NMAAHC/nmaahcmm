@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# getduration
+# microservice to calculate the duration of footage digitized 
+
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+DEPENDENCIES=(mediainfo) # list dependencies required by script
+
+## USAGE
+echo "0 is $0"
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This script will calculate the total duration of your audio and video files. Duration is reported in HH:MM:SS."
+    echo "Running the script without selecting any options will report just the total duration of all media files supplied."
+    echo "You may supply a file or a directory. The script will ignore any files without a duration reported by MediaInfo."
+    echo "Dependencies: ${DEPENDENCIES[@]}"
+    echo "Usage: $(basename ${0}) [ -options ] fileordirectory1 [ fileordirectory2 ... ]"
+    echo "  -c CSV output: generate a CSV file with durations for each file (format: 'filename,duration')"
+    echo "  -v verbose: report durations for each file out to the terminal"
+    echo "  -h display this help"
+    echo
+    exit
+}
+# getopts loop
+OPTIND=1
+while getopts ":cvh" OPT; do
+    case "${OPT}" in
+        c) CSV_CHOICE="Yes" ;;
+        v) VERBOSE_CHOICE="Yes" ;;
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+## SCRIPT ACTIONS
+TOTAL_DURATION=0
+CSV="$(basename "${0}")_$(date +%F).csv"
+
+while [ "${*}" != "" ] ; do
+    INPUT="${1}" #set $INPUT as the first argument sent to script
+    if [[ -f "${INPUT}" ]] ; then
+        # get duration in milliseconds using mediainfo
+        DURATION_MILLISECONDS=$(mediainfo --Inform="General;%Duration%" "${INPUT}")
+    elif [[ -d "${INPUT}" ]] ; then
+        # look for all files; exclude some types of text file that might hold mediainfo output (and which will consequently report a false "duration")
+        for FILE in $(find "${INPUT}" -type f -not -iname *.xml* -not -iname *.txt) ; do
+            INPUT="${FILE}"
+            DURATION_MILLISECONDS=$(mediainfo --Inform="General;%Duration%" "${INPUT}")
+            # if there is a duration associated with the file, add it to the total duration for all files
+        done
+    fi
+    if [[ ! -z "${DURATION_MILLISECONDS}" ]] ; then
+        TOTAL_DURATION_MILLISECONDS=$(("${TOTAL_DURATION_MILLISECONDS}" + "${DURATION_MILLISECONDS}"))
+        # convert milliseconds to seconds for reporting purposes
+        DURATION_SECONDS=$(( "${DURATION_MILLISECONDS}" / 1000 ))
+        # if operator selected verbose mode, report out to terminal
+        if [[ "${VERBOSE_CHOICE}" == "Yes" ]] ; then
+            echo "File ${INPUT} duration: $(_seconds_to_hhmmss ${DURATION_SECONDS})"
+        fi
+        # if operator selected CSV mode, append to CSV
+        if [[ "${CSV_CHOICE}" == "Yes" ]] ; then
+            echo "${INPUT},$(_seconds_to_hhmmss ${DURATION_SECONDS})" >> "${CSV}"
+        fi
+    fi
+    shift
+done
+
+# convert milliseconds to seconds (this is done again at the end so that rounding errors don't compound too much)
+TOTAL_DURATION_SECONDS=$(( "${TOTAL_DURATION_MILLISECONDS}" / 1000 ))
+# convert seconds to timecode - function defined in nmaahcmmfunctions
+_report -g "Total duration HH:MM:SS is:"
+_seconds_to_hhmmss "${TOTAL_DURATION_SECONDS}"
+if [[ "${CSV_CHOICE}" == "Yes" ]] ; then
+    _report -g "CSV report can be found at ${CSV}. Type 'open ${CSV}' to open."
+fi
