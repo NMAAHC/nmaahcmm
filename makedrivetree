@@ -31,7 +31,7 @@ shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 
-FOLDER="/Users/Annie/Dropbox/Annie/2019_fall/NMAAHC-test-files"
+FOLDER="/Volumes/UtilitySAN/05_driveContents"
 # log script beginning
 _log -b
 
