@@ -98,13 +98,13 @@ while [[ "${*}" != "" ]] ; do
         fi
 
         # PACKAGE TYPE: film / analog / digitized on-location
-        # looks for directories named after derivatives
-        _runtest "Based on directory names, this SIP is digitized film in non-DPX format." xmlstarlet sel -t -v "/tree/directory/directory[@name='MP4_2048x1152' or @name='ProRes_2048x1536']/@name" -n "${TEMPTREE}"
+        # looks for directories named after derivatives; note presence of additional subdirectory above content
+        _runtest "Based on directory names, this SIP is digitized film in non-DPX format." xmlstarlet sel -t -v "/tree/directory/directory/directory[@name='MP4_2048x1152' or @name='ProRes_2048x1536']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="FILM_FILES"
             _report -g "Checking for non-DPX film package conformance..."
-            _runtest -i "This package is missing a ProRes master file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
-            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing a ProRes master file!" xmlstarlet sel -t -v "/tree/directory/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
         fi
 
         # PACKAGE TYPE: video / analog / digitized on-location
@@ -120,6 +120,7 @@ while [[ "${*}" != "" ]] ; do
 
         # PACKAGE TYPE: video / DV / transferred on-location
         # looks for filenames incorporating the string 'DV'
+        # this test does not work yet!
         _runtest "Based on the presence of files with 'DV' in the filename, this SIP is transferred DV." xmlstarlet sel -t -v "/tree/directory[@name='*DV*']/@name" -n "${TEMPTREE}"
         if [[ -n "${XMLRESULT}" ]] ; then
             SIP="VIDEO_DV"
@@ -131,7 +132,9 @@ while [[ "${*}" != "" ]] ; do
 
         # FOR ALL PACKAGES:
         #looks for unexpected directories within the package
-        _runtest "There are unexpected subdirectories in your package!" xmlstarlet sel -t -v "/tree/directory/directory[@name!='derivative' and @name!='MP4_2048x1152' and @name!='ProRes_2048x1536' and @name!='DPX' and @name!='MOV' and @name!='WAV']/@name" -n "${TEMPTREE}"
+        if [[ "${SIP}" != "FILM_FILES" ]] ; then # the non-DPX digitized film packages have an extra subdirectory with an unpredictable name
+            _runtest "There are unexpected subdirectories in your package!" xmlstarlet sel -t -v "/tree/directory/directory[@name!='derivative' and @name!='MP4_2048x1152' and @name!='ProRes_2048x1536' and @name!='DPX' and @name!='MOV' and @name!='WAV']/@name" -n "${TEMPTREE}"
+        fi
         #finds any empty files
         _runtest "There are empty files in your package!" xmlstarlet sel -t -v "//file[@size='0']/@name" -n  "${TEMPTREE}"
         #makes sure no file names contain colons
