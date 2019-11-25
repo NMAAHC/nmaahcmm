@@ -123,3 +123,4 @@ done
 # log script ending
 _log -e
 _report -g "makemetadata process complete."
+echo

@@ -30,7 +30,7 @@ _usage(){
 OPTIND=1
 while getopts ":d:i:t:r:ch" OPT; do
     case "${OPT}" in
-        d) DELIVERDIR="${OPTARG}" && _check_DELIVERDIR ;; # _check_DELIVERDIR defined in nmaahcmmfunctions
+        d) DELIVERDIR="${OPTARG}" && _check_deliverdir ;; # _check_DELIVERDIR defined in nmaahcmmfunctions
         i) DPXID="${OPTARG}" ;;
         t) TITLE="${OPTARG}" ;;
         r) REELNUMBER="${OPTARG}" ;;
@@ -183,12 +183,12 @@ _restructureDPX(){
                 echo
                 # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
                 _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
-                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \; #-exec _check_rsync_output \;
                 echo
                 # rename files according to NMAAHC filenaming guidelines
                 _report -g "Renaming files in ${OUTPUTDIR}"
@@ -223,18 +223,19 @@ _restructureDPX(){
                 exit 1
                 _log -a "Process terminated by script (directories not created)."
             else
+                true
                 echo
                 # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
                 _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
-                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R3*.wav" -exec rsync -av {} "${AUD_R3}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R3*.mov" -exec rsync -av {} "${DER_R3}" ; _check_rsync_output \;
-                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -av {} "${DPXR3}" ; _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.wav" -exec rsync -av {} "${AUD_R3}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.mov" -exec rsync -av {} "${DER_R3}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -av {} "${DPXR3}" \; # -exec _check_rsync_output \;
                 echo
                 # rename files according to NMAAHC filenaming guidelines
                 _report -g "Renaming files in ${OUTPUTDIR}"
@@ -247,6 +248,7 @@ _restructureDPX(){
                 find "${AUD_R3}" -iname "*R3*.wav" -exec mv -vi {} "${AUD_R3}/${DPXID}_R3_AUD.wav" \;
                 find "${DER_R3}" -iname "*R3*ProRes*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_01.mov" \;
                 find "${DER_R3}" -iname "*R3*Uncompressed*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_02.mov" \;
+            fi
             ;;
 
             *   )
@@ -263,22 +265,24 @@ _restructureDPX(){
 # log script beginning
 _log -b
 _restructureDPX "${@}"
-if [[ -z "${CLEANUPDECISION}" ]] ; then
-    _report -b "Remove input directory? Type Y or y for yes, any other key for no: "
-    read CLEANUPDECISION
-fi
+# remove input files - HARDCODED OFF DURING TESTING
+# if [[ -z "${CLEANUPDECISION}" ]] ; then
+#     _report -b "Remove input directory? Type Y or y for yes, any other key for no: "
+#     read CLEANUPDECISION
+# fi
 # don't allow removal of input directory if there were any rsync errors
 if [[ "${CLEANUPDECISION}" == [Yy] ]] ; then
-    if [[ "${RSYNC_ERROR_COUNT}" -eq 0 ]]; then
-        _report -g "Deleting input directory..."
-        rm -vr "${INPUT}" # remove input directory. -v=verbose, -r=recursive
+    if [[ "${RSYNC_ERROR_COUNT}" -eq 0 ]] ; then
+        true
+        #_report -g "Deleting input directory..."
+        # rm -vr "${INPUT}" # remove input directory. -v=verbose, -r=recursive - HARDCODED OFF DURING TESTING
     else
         _report -rt "ERROR: Not all rsync processes completed successfully. Cancelling requested deletion of input directory."
     fi
 fi
 # summarize rsync errors for operator
 if [[ "${RSYNC_ERROR_COUNT}" -gt 0 ]] ; then
-    _report -rt "ERROR: ${RSYNC_ERROR_COUNT} file/s experienced issues during the rsync process. Please review the rsync output in the terminal window. (Errors are indicated by string 'failed')"
+    _report -rt "ERROR: ${RSYNC_ERROR_COUNT} file/s experienced issues during the rsync process. Please review the rsync output in the terminal window."
 fi
 # log script ending
 _log -e

@@ -158,7 +158,7 @@ _writelog(){
         exit
     fi
     if [[ ! -f "${LOGNAME}" ]] ; then
-        _mkdir2 $(dirname "${LOGNAME}")
+        mkdir -p $(dirname "${LOGNAME}")
         touch "${LOGNAME}"
     fi
     KEY="${1}"

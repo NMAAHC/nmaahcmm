@@ -160,14 +160,6 @@ if [[ -z "${INPUT}" ]] ; then
     [[ "${INPUT}" = "q" ]] && exit 0
     basename=$(basename "${INPUT}")
 fi
-if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
-    printf "Enter a unique package name or 'q' to quit: "
-    read -e MEDIAID
-    [[ "${MEDIAID}" = "q" ]] && exit 0
-    # validate id and perhaps fail with exit
-    [[ -z "${MEDIAID}" ]] && { _report -rt  "ERROR: You must enter a valid MEDIA ID" ; exit ;};
-    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt  "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
-fi
 if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
     echo
@@ -176,6 +168,14 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     do
         break
     done
+fi
+if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+    printf "Enter a unique package name or 'q' to quit: "
+    read -e MEDIAID
+    [[ "${MEDIAID}" = "q" ]] && exit 0
+    # validate id and perhaps fail with exit
+    [[ -z "${MEDIAID}" ]] && { _report -rt  "ERROR: You must enter a valid MEDIA ID" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt  "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
 fi
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     if [[ -z "${REELS}" ]] ; then
@@ -247,32 +247,33 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    # restructure package (microservice tk)
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -f "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
+    rsync -av "${INPUT}/derivative/"*.mp4 "${INPUT}" # move derivative files up to main package level so that makeH264 can see there are derivatives already created
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    # restructure package (microservice tk)
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -v "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
     "${SCRIPT_PATH}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    # restructure package (microservice tk)
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -d "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    # restructure package (microservice tk)
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -u "${INPUT}"
 fi
 
-# copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
-if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
-    rsync -av "${INPUT}" "${DESTINATION}/${MEDIAID}"
-    RSYNC_ERR="${?}"
-    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
-        echo "${RSYNC_ERR}"
-        _report -rt  "ERROR: rsync process failed. Exiting..."
-        _log -a "Process terminated by script (rsync failure)."
-        exit 1
-    fi
-fi
+# REDUNDANT - copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
+# if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+#     rsync -av "${INPUT}" "${DESTINATION}/${MEDIAID}"
+#     RSYNC_ERR="${?}"
+#     if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
+#         echo "${RSYNC_ERR}"
+#         _report -rt  "ERROR: rsync process failed. Exiting..."
+#         _log -a "Process terminated by script (rsync failure)."
+#         exit 1
+#     fi
+# fi
 # clean up original files if requested - hardcoded OFF during testing
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
@@ -288,4 +289,4 @@ fi
 _log -e
 _writelog "END TIME" "$(date +%FT%T)"
 
-printf "Process done...might have been successful...it's a WIP."
+echo "Process done...might have been successful...it's a WIP."

@@ -1,12 +1,12 @@
 #!/bin/bash
 # restructureSIP restructures a SIP into an AIP by:
-#   creating an output AIP directory named after an operator-selected media id and located in an operator-selected destination directory
+#   creating an output AIP directory named after an operator-selected media id and located in an operator-selected DELIVERDIR directory
 #   creating "objects" and "metadata" subcategories within that output AIP directory
 #   rsyncing files from the SIP into the AIP
 #   removing or leaving in place the SIP files upon successful completion
 
 SCRIPTDIR=$(dirname $(which "${0}"))
-. "${SCRIPTDIR}/mmfunctions" || { echo "Missing '${SCRIPTDIR}/mmfunctions'. Exiting." ; exit 1 ;};
+. "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(rsync) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
@@ -17,7 +17,7 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This script will restructure a SIP into an AIP based on the type of package being submitted. The script will"
-    echo "  -create an output AIP directory named after an operator-selected media id and located in an operator-selected destination directory"
+    echo "  -create an output AIP directory named after an operator-selected media id and located in an operator-selected DELIVERDIR directory"
     echo "  -create 'objects' and 'metadata' subcategories within that output AIP directory"
     echo "  -rsync files from the SIP into the AIP"
     echo "  -remove SIP files or leave them in place upon successful completion, depending upon operator selection"
@@ -40,15 +40,15 @@ _usage(){
 }
 # getopts loop
 OPTIND=1
-while getopts ":h" OPT; do
+while getopts ":m:o:xfvdurh" OPT; do
     case "${OPT}" in
         x) PACKAGETYPE="Digitized Film (DPX package)" ;;
         f) PACKAGETYPE="Digitized Film (MOV and/or MP4 files only)" ;;
         v) PACKAGETYPE="Digitized Analog Video (vrecord package)" ;;
         d) PACKAGETYPE="Transferred DV (MOV and/or MP4 files)" ;;
         u) PACKAGETYPE="Other/Unknown" ;;
-        m) MEDIAID="${OPTARG}"
-        o) DESTINATION="${OPTARG}" && _check_deliverdir ;;
+        m) MEDIAID="${OPTARG}" ;;
+        o) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
         r) CLEANUPDECISION="Remove source files after successful ingest" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
@@ -74,10 +74,10 @@ if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)
     [[ -z "${MEDIAID}" ]] && { _report -rt "ERROR: You must enter a valid MEDIA ID" ; exit ;};
     [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt "ERROR: The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
 fi
-if [[ -z "${DESTINATION}" ]] ; then
-    _report -b "Drag in the destination directory or type 'q' to quit: "
-    read -e DESTINATION
-    [[ "${DESTINATION}" = "q" ]] && exit 0
+if [[ -z "${DELIVERDIR}" ]] ; then
+    _report -b "Drag in the DELIVERDIR directory or type 'q' to quit: "
+    read -e DELIVERDIR
+    [[ "${DELIVERDIR}" = "q" ]] && exit 0
 fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     CLEANUPDECISION="Leave source files where they are"
@@ -89,13 +89,13 @@ _log -b
 # record variables in log
 _writelog "PACKAGE TYPE" "${PACKAGETYPE}"
 _writelog "MEDIA ID" "${MEDIAID}"
-_writelog "DESTINATION" "${DESTINATION}"
+_writelog "DELIVERDIR" "${DELIVERDIR}"
 _writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
 
 ## SCRIPT ACTIONS
 
 INPUT="${1}"
-OUTPUT_PACKAGE="${DESTINATION}/${MEDIAID}"
+OUTPUT_PACKAGE="${DELIVERDIR}/${MEDIAID}"
 
 # if package type is unknown, check whether it looks like a DPX package
 if [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
@@ -113,43 +113,45 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     _log -a "Process terminated by script (operator redirected to appropriate microservice)."
     exit 0
 else
-    mkdir "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
+    echo "making directory"
+    mkdir -p "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
+    _report -g "Moving SIP to output package..."
 fi
 
 # perform restructuring actions on other SIPs
 if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -iname *.mov -iname *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -iname *.mov -not -iname ! *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -iname *.mkv -iname *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mkv -o -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -iname *.mkv -not -iname *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mkv -not -iname *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -iname *.mov -iname *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -iname *.mov -not -iname *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -iname *.mov -iname *.mkv -iname *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mkv -o -iname *.mp4) ; do
         rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
         RSYNC_ERR="${?}"
     done
-    for METADATAFILE in $(find "${INPUT}" -not -iname *.mov -not -iname *.mkv -not -iname *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mkv -not -iname *.mp4) ; do
         rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
         RSYNC_ERR="${?}"
     done

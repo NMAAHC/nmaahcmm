@@ -117,4 +117,5 @@ if [[ "${ERRORS}" -gt 0 ]] ; then
     _report -r "Total number of derivative errors found: ${ERRORS}"
     _log -w "${ERRORS} error/s occurred during derivative creation."
 fi
+echo
 exit "$?"
