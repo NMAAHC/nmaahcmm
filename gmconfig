@@ -63,6 +63,8 @@ done
 #    fi
 #}
 
+## PASHUA INTERFACE
+
 CONF="
 # Set transparency: 0 is transparent, 1 is opaque
 *.transparency=1.00
@@ -267,7 +269,7 @@ gmnaming.text = Great Migration file naming convention:[return][return][studyCol
 makegm.x = 300
 makegm.y = 350
 makegm.type = radiobutton
-makegm.label = Please choose whether to make the specific directories or not:
+makegm.label = Create ACCESS and PRESERVATION directories for each format selected?:
 makegm.option = Yes
 makegm.option = No
 makegm.width = 75
