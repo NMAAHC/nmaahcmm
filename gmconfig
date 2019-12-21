@@ -33,7 +33,7 @@ _usage(){
 }
 
 # local variables
-REQUIRED_VARIABLES=("${gm_dir}" "${gm_profile_last}" "${gm_profile_first}" "${gm_operator}" "${makegm}")
+REQUIRED_VARIABLES=("${GM_DIR}" "${GM_PROFILE_LAST}" "${GM_PROFILE_FIRST}" "${GM_OPERATOR}" "${MAKEGM}")
 
 OPTIND=1
 while getopts ":F:ath" OPT ; do
