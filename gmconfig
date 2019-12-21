@@ -81,182 +81,182 @@ intro.width = 500
 intro.type = text
 intro.text = Set up GMconfig variables
 
-#gm_dir
-gm_dir.x = 20
-gm_dir.y = 570
-gm_dir.type = openbrowser
-gm_dir.label = Please navigate to and select the Great Migration directory to save to:
-gm_dir.width = 600
-gm_dir.default = /Volumes/ScanSAN/00_Great_Migration_SC_0001/2018
+#GM_DIR
+GM_DIR.x = 20
+GM_DIR.y = 570
+GM_DIR.type = openbrowser
+GM_DIR.label = Please navigate to and select the Great Migration directory to save to:
+GM_DIR.width = 600
+GM_DIR.default = /Volumes/ScanSAN/00_Great_Migration_SC_0001/2018
 
-#gm_formats
-gm_formats.text = Please choose the formats for this Great Migration appointment:
-gm_formats.type = text
-gm_formats.x = 20
-gm_formats.y = 520
+#GM_FORMATS
+GM_FORMATS.text = Please choose the formats for this Great Migration appointment:
+GM_FORMATS.type = text
+GM_FORMATS.x = 20
+GM_FORMATS.y = 520
 
-#gm_formats_35mm
-gm_formats_35mm.x = 60
-gm_formats_35mm.y = 500
-gm_formats_35mm.type = checkbox
-gm_formats_35mm.label = 35mm (35mm)
-gm_formats_35mm.tooltip = If activated this creates a 35mm directory with ACCESS and PRESERVATION folders.
-gm_formats_35mm.default = ${gm_formats_35mm}
+#GM_FORMATS_35MM
+GM_FORMATS_35MM.x = 60
+GM_FORMATS_35MM.y = 500
+GM_FORMATS_35MM.type = checkbox
+GM_FORMATS_35MM.label = 35mm (35mm)
+GM_FORMATS_35MM.tooltip = If activated this creates a 35mm directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_35MM.default = ${GM_FORMATS_35MM}
 
-#gm_formats_16mm
-gm_formats_16mm.x = 60
-gm_formats_16mm.y = 480
-gm_formats_16mm.type = checkbox
-gm_formats_16mm.label = 16mm (16mm)
-gm_formats_16mm.tooltip = If activated this creates a 16mm directory with ACCESS and PRESERVATION folders.
-gm_formats_16mm.default = ${gm_formats_16mm}
+#GM_FORMATS_16MM
+GM_FORMATS_16MM.x = 60
+GM_FORMATS_16MM.y = 480
+GM_FORMATS_16MM.type = checkbox
+GM_FORMATS_16MM.label = 16mm (16mm)
+GM_FORMATS_16MM.tooltip = If activated this creates a 16mm directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_16MM.default = ${GM_FORMATS_16MM}
 
-#gm_formats_R8
-gm_formats_r8.x = 60
-gm_formats_r8.y = 460
-gm_formats_r8.type = checkbox
-gm_formats_r8.label = Regular 8mm (R8)
-gm_formats_r8.tooltip = If activated this creates a Regular8mm directory with ACCESS and PRESERVATION folders.
-gm_formats_r8.default = ${gm_formats_r8}
+#GM_FORMATS_R8
+GM_FORMATS_R8.x = 60
+GM_FORMATS_R8.y = 460
+GM_FORMATS_R8.type = checkbox
+GM_FORMATS_R8.label = Regular 8mm (R8)
+GM_FORMATS_R8.tooltip = If activated this creates a Regular8mm directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_R8.default = ${GM_FORMATS_R8}
 
-#gm_formats_S8
-gm_formats_s8.x = 60
-gm_formats_s8.y = 440
-gm_formats_s8.type = checkbox
-gm_formats_s8.label = Super 8mm (S8)
-gm_formats_s8.tooltip = If activated this creates a Super8mm directory with ACCESS and PRESERVATION folders.
-gm_formats_s8.default = ${gm_formats_s8}
+#GM_FORMATS_S8
+GM_FORMATS_S8.x = 60
+GM_FORMATS_S8.y = 440
+GM_FORMATS_S8.type = checkbox
+GM_FORMATS_S8.label = Super 8mm (S8)
+GM_FORMATS_S8.tooltip = If activated this creates a Super8mm directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_S8.default = ${GM_FORMATS_S8}
 
-#gm_formats_VHS
-gm_formats_vhs.x = 60
-gm_formats_vhs.y = 420
-gm_formats_vhs.type = checkbox
-gm_formats_vhs.label = VHS (VHS)
-gm_formats_vhs.tooltip = If activated this creates a VHS directory with ACCESS and PRESERVATION folders.
-gm_formats_vhs.default = ${gm_formats_vhs}
+#GM_FORMATS_VHS
+GM_FORMATS_VHS.x = 60
+GM_FORMATS_VHS.y = 420
+GM_FORMATS_VHS.type = checkbox
+GM_FORMATS_VHS.label = VHS (VHS)
+GM_FORMATS_VHS.tooltip = If activated this creates a VHS directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_VHS.default = ${GM_FORMATS_VHS}
 
-#gm_formats_MiniDV
-gm_formats_minidv.x = 60
-gm_formats_minidv.y = 400
-gm_formats_minidv.type = checkbox
-gm_formats_minidv.label = MiniDV (MiniDV)
-gm_formats_minidv.tooltip = If activated this creates a MiniDV directory with ACCESS and PRESERVATION folders.
-gm_formats_minidv.default = ${gm_formats_minidv}
+#GM_FORMATS_MiniDV
+GM_FORMATS_MINIDV.x = 60
+GM_FORMATS_MINIDV.y = 400
+GM_FORMATS_MINIDV.type = checkbox
+GM_FORMATS_MINIDV.label = MiniDV (MiniDV)
+GM_FORMATS_MINIDV.tooltip = If activated this creates a MiniDV directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_MINIDV.default = ${GM_FORMATS_MINIDV}
 
-#gm_formats_Video8
-gm_formats_v8.x = 60
-gm_formats_v8.y = 380
-gm_formats_v8.type = checkbox
-gm_formats_v8.label = Video8 (V8)
-gm_formats_v8.tooltip = If activated this creates a Video8 directory with ACCESS and PRESERVATION folders.
-gm_formats_v8.default = ${gm_formats_v8}
+#GM_FORMATS_Video8
+GM_FORMATS_V8.x = 60
+GM_FORMATS_V8.y = 380
+GM_FORMATS_V8.type = checkbox
+GM_FORMATS_V8.label = Video8 (V8)
+GM_FORMATS_V8.tooltip = If activated this creates a Video8 directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_V8.default = ${GM_FORMATS_V8}
 
-#gm_formats_Hi8
-gm_formats_hi8.x = 60
-gm_formats_hi8.y = 360
-gm_formats_hi8.type = checkbox
-gm_formats_hi8.label = Hi8 (Hi8)
-gm_formats_hi8.tooltip = If activated this creates a Hi8 directory with ACCESS and PRESERVATION folders.
-gm_formats_hi8.default = ${gm_formats_hi8}
+#GM_FORMATS_Hi8
+GM_FORMATS_HI8.x = 60
+GM_FORMATS_HI8.y = 360
+GM_FORMATS_HI8.type = checkbox
+GM_FORMATS_HI8.label = Hi8 (Hi8)
+GM_FORMATS_HI8.tooltip = If activated this creates a Hi8 directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_HI8.default = ${GM_FORMATS_HI8}
 
-#gm_formats_Digital8
-gm_formats_d8.x = 60
-gm_formats_d8.y = 340
-gm_formats_d8.type = checkbox
-gm_formats_d8.label = Digital8 (D8)
-gm_formats_d8.tooltip = If activated this creates a Digital8 directory with ACCESS and PRESERVATION folders.
-gm_formats_d8.default = ${gm_formats_d8}
+#GM_FORMATS_Digital8
+GM_FORMATS_D8.x = 60
+GM_FORMATS_D8.y = 340
+GM_FORMATS_D8.type = checkbox
+GM_FORMATS_D8.label = Digital8 (D8)
+GM_FORMATS_D8.tooltip = If activated this creates a Digital8 directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_D8.default = ${GM_FORMATS_D8}
 
-#gm_formats_U-matic
-gm_formats_umatic.x = 60
-gm_formats_umatic.y = 320
-gm_formats_umatic.type = checkbox
-gm_formats_umatic.label = U-matic
-gm_formats_umatic.tooltip = If activated this creates a Umatic directory with ACCESS and PRESERVATION folders.
-gm_formats_umatic.default = ${gm_formats_umatic}
+#GM_FORMATS_U-Matic
+GM_FORMATS_UMATIC.x = 60
+GM_FORMATS_UMATIC.y = 320
+GM_FORMATS_UMATIC.type = checkbox
+GM_FORMATS_UMATIC.label = U-matic
+GM_FORMATS_UMATIC.tooltip = If activated this creates a Umatic directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_UMATIC.default = ${GM_FORMATS_UMATIC}
 
-#gm_formats_Betacam
-gm_formats_beta.x = 60
-gm_formats_beta.y = 300
-gm_formats_beta.type = checkbox
-gm_formats_beta.label = Betacam (Beta)
-gm_formats_beta.tooltip = If activated this creates a Betacam directory with ACCESS and PRESERVATION folders.
-gm_formats_beta.default = ${gm_formats_beta}
+#GM_FORMATS_Betacam
+GM_FORMATS_BETA.x = 60
+GM_FORMATS_BETA.y = 300
+GM_FORMATS_BETA.type = checkbox
+GM_FORMATS_BETA.label = Betacam (Beta)
+GM_FORMATS_BETA.tooltip = If activated this creates a Betacam directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_BETA.default = ${GM_FORMATS_BETA}
 
-#gm_formats_BetacamSP
-gm_formats_betasp.x = 60
-gm_formats_betasp.y = 280
-gm_formats_betasp.type = checkbox
-gm_formats_betasp.label = BetacamSP (BetaSP)
-gm_formats_betasp.tooltip = If activated this creates a BetacamSP directory with ACCESS and PRESERVATION folders.
-gm_formats_betasp.default = ${gm_formats_betasp}
+#GM_FORMATS_BetacamSP
+GM_FORMATS_BETASP.x = 60
+GM_FORMATS_BETASP.y = 280
+GM_FORMATS_BETASP.type = checkbox
+GM_FORMATS_BETASP.label = BetacamSP (BetaSP)
+GM_FORMATS_BETASP.tooltip = If activated this creates a BetacamSP directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_BETASP.default = ${GM_FORMATS_BETASP}
 
-#gm_formats_Digital Betacam
-gm_formats_digibeta.x = 60
-gm_formats_digibeta.y = 260
-gm_formats_digibeta.type = checkbox
-gm_formats_digibeta.label = Digital Betacam (DigiBeta)
-gm_formats_digibeta.tooltip = If activated this creates a DigiBeta directory with ACCESS and PRESERVATION folders.
-gm_formats_digibeta.default = ${gm_formats_digibeta}
+#GM_FORMATS_Digital Betacam
+GM_FORMATS_DIGIBETA.x = 60
+GM_FORMATS_DIGIBETA.y = 260
+GM_FORMATS_DIGIBETA.type = checkbox
+GM_FORMATS_DIGIBETA.label = Digital Betacam (DigiBeta)
+GM_FORMATS_DIGIBETA.tooltip = If activated this creates a DigiBeta directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_DIGIBETA.default = ${GM_FORMATS_DIGIBETA}
 
-#gm_formats_OneInchVideo
-gm_formats_oneinchvideo.x = 60
-gm_formats_oneinchvideo.y = 240
-gm_formats_oneinchvideo.type = checkbox
-gm_formats_oneinchvideo.label = 1\" Video (TypeC)
-gm_formats_oneinchvideo.tooltip = If activated this creates a OneInchVideo directory with ACCESS and PRESERVATION folders.
-gm_formats_oneinchvideo.default = ${gm_formats_oneinchvideo}
+#GM_FORMATS_OneInchVideo
+GM_FORMATS_ONEINCHVIDEO.x = 60
+GM_FORMATS_ONEINCHVIDEO.y = 240
+GM_FORMATS_ONEINCHVIDEO.type = checkbox
+GM_FORMATS_ONEINCHVIDEO.label = 1\" Video (TypeC)
+GM_FORMATS_ONEINCHVIDEO.tooltip = If activated this creates a OneInchVideo directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_ONEINCHVIDEO.default = ${GM_FORMATS_ONEINCHVIDEO}
 
-#gm_formats_HalfInchVideo
-gm_formats_halfinchvideo.x = 60
-gm_formats_halfinchvideo.y = 220
-gm_formats_halfinchvideo.type = checkbox
-gm_formats_halfinchvideo.label = 1/2\" Open-Reel Video (EIAJ)
-gm_formats_halfinchvideo.tooltip = If activated this creates a HalfInchVideo directory with ACCESS and PRESERVATION folders.
-gm_formats_halfinchvideo.default = ${gm_formats_halfinchvideo}
+#GM_FORMATS_HalfInchVideo
+GM_FORMATS_HALFINCHVIDEO.x = 60
+GM_FORMATS_HALFINCHVIDEO.y = 220
+GM_FORMATS_HALFINCHVIDEO.type = checkbox
+GM_FORMATS_HALFINCHVIDEO.label = 1/2\" Open-Reel Video (EIAJ)
+GM_FORMATS_HALFINCHVIDEO.tooltip = If activated this creates a HalfInchVideo directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_HALFINCHVIDEO.default = ${GM_FORMATS_HALFINCHVIDEO}
 
-#gm_formats_CompactAudioCassette
-gm_formats_compactaudiocassette.x = 60
-gm_formats_compactaudiocassette.y = 200
-gm_formats_compactaudiocassette.type = checkbox
-gm_formats_compactaudiocassette.label = Compact Audio Cassette (CAC)
-gm_formats_compactaudiocassette.tooltip = If activated this creates a CompactAudioCassette directory with ACCESS and PRESERVATION folders.
-gm_formats_compactaudiocassette.default = ${gm_formats_compactaudiocassette}
+#GM_FORMATS_CompactAudioCassette
+GM_FORMATS_COMPACTAUDIOCASSETTE.x = 60
+GM_FORMATS_COMPACTAUDIOCASSETTE.y = 200
+GM_FORMATS_COMPACTAUDIOCASSETTE.type = checkbox
+GM_FORMATS_COMPACTAUDIOCASSETTE.label = Compact Audio Cassette (CAC)
+GM_FORMATS_COMPACTAUDIOCASSETTE.tooltip = If activated this creates a CompactAudioCassette directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_COMPACTAUDIOCASSETTE.default = ${GM_FORMATS_COMPACTAUDIOCASSETTE}
 
-#gm_formats_QuarterInchOpenReelAudio
-gm_formats_quarterinchopenreelaudio.x = 60
-gm_formats_quarterinchopenreelaudio.y = 180
-gm_formats_quarterinchopenreelaudio.type = checkbox
-gm_formats_quarterinchopenreelaudio.label = 1/4\" Reel-To-Reel Audio (QinA)
-gm_formats_quarterinchopenreelaudio.tooltip = If activated this creates a QuarterInchOpenReelAudio directory with ACCESS and PRESERVATION folders.
-gm_formats_quarterinchopenreelaudio.default = ${gm_formats_quarterinchopenreelaudio}
+#GM_FORMATS_QuarterInchOpenReelAudio
+GM_FORMATS_QUARTERINCHOPENREELAUDIO.x = 60
+GM_FORMATS_QUARTERINCHOPENREELAUDIO.y = 180
+GM_FORMATS_QUARTERINCHOPENREELAUDIO.type = checkbox
+GM_FORMATS_QUARTERINCHOPENREELAUDIO.label = 1/4\" Reel-To-Reel Audio (QinA)
+GM_FORMATS_QUARTERINCHOPENREELAUDIO.tooltip = If activated this creates a QuarterInchOpenReelAudio directory with ACCESS and PRESERVATION folders.
+GM_FORMATS_QUARTERINCHOPENREELAUDIO.default = ${GM_FORMATS_QUARTERINCHOPENREELAUDIO}
 
-#gm_profile_last
-gm_profile_last.x = 20
-gm_profile_last.y = 130
-gm_profile_last.type = textfield
-gm_profile_last.mandatory = true
-gm_profile_last.label = Enter last name of Great Migration appointment:
-gm_profile_last.width = 125
-gm_profile_last.default = ${gm_profile_last}
+#GM_PROFILE_LAST
+GM_PROFILE_LAST.x = 20
+GM_PROFILE_LAST.y = 130
+GM_PROFILE_LAST.type = textfield
+GM_PROFILE_LAST.mandatory = true
+GM_PROFILE_LAST.label = Enter last name of Great Migration appointment:
+GM_PROFILE_LAST.width = 125
+GM_PROFILE_LAST.default = ${GM_PROFILE_LAST}
 
-#gm_profile_first
-gm_profile_first.x = 20
-gm_profile_first.y = 80
-gm_profile_first.type = textfield
-gm_profile_first.mandatory = true
-gm_profile_first.label = Enter first name of Great Migration appointment:
-gm_profile_first.width = 125
-gm_profile_first.default = ${gm_profile_first}
+#GM_PROFILE_FIRST
+GM_PROFILE_FIRST.x = 20
+GM_PROFILE_FIRST.y = 80
+GM_PROFILE_FIRST.type = textfield
+GM_PROFILE_FIRST.mandatory = true
+GM_PROFILE_FIRST.label = Enter first name of Great Migration appointment:
+GM_PROFILE_FIRST.width = 125
+GM_PROFILE_FIRST.default = ${GM_PROFILE_FIRST}
 
-#gm_operator
-gm_operator.x = 20
-gm_operator.y = 30
-gm_operator.type = textfield
-gm_operator.mandatory = true
-gm_operator.label = Enter the name of the technician running the appointment:
-gm_operator.width = 125
-gm_operator.default = ${gm_operator}
+#GM_OPERATOR
+GM_OPERATOR.x = 20
+GM_OPERATOR.y = 30
+GM_OPERATOR.type = textfield
+GM_OPERATOR.mandatory = true
+GM_OPERATOR.label = Enter the name of the technician running the appointment:
+GM_OPERATOR.width = 125
+GM_OPERATOR.default = ${GM_OPERATOR}
 
 # GM naming
 gmnaming.x = 300
@@ -293,32 +293,6 @@ if [[ "${RUNPASHUA}" = "Y" ]] ; then
         #exec $(basename "${0}") -t
    		exit
     fi
-    #write to the config file
-    {
-        echo "gm_dir=\"${gm_dir}\""
-        echo "gm_formats_35mm=\"${gm_formats_35mm}\""
-        echo "gm_formats_16mm=\"${gm_formats_16mm}\""
-        echo "gm_formats_r8=\"${gm_formats_r8}\""
-        echo "gm_formats_s8=\"${gm_formats_s8}\""
-        echo "gm_formats_vhs=\"${gm_formats_vhs}\""
-        echo "gm_formats_minidv=\"${gm_formats_minidv}\""
-        echo "gm_formats_v8=\"${gm_formats_v8}\""
-        echo "gm_formats_hi8=\"${gm_formats_hi8}\""
-        echo "gm_formats_d8=\"${gm_formats_d8}\""
-        echo "gm_formats_umatic=\"${gm_formats_umatic}\""
-        echo "gm_formats_beta=\"${gm_formats_beta}\""
-        echo "gm_formats_betasp=\"${gm_formats_betasp}\""
-        echo "gm_formats_digibeta=\"${gm_formats_digibeta}\""
-        echo "gm_formats_oneinchvideo=\"${gm_formats_oneinchvideo}\""
-        echo "gm_formats_halfinchvideo=\"${gm_formats_halfinchvideo}\""
-        echo "gm_formats_compactaudiocassette=\"${gm_formats_compactaudiocassette}\""
-        echo "gm_formats_quarterinchopenreelaudio=\"${gm_formats_quarterinchopenreelaudio}\""
-        echo "gm_profile_last=\"${gm_profile_last}\""
-        echo "gm_profile_first=\"${gm_profile_first}\""
-        echo "gm_operator=\"${gm_operator}\""
-        echo "makegm=\"${makegm}\""
-
-    } > "${GM_CONFIG_FILE}"
 else
     # set up configuration file using the command line
     for KEY in "${REQUIRED_VARIABLES[@]}" ; do
@@ -327,6 +301,32 @@ else
 
     echo
 
+# write to the config file
+{
+    echo "GM_DIR=\"${GM_DIR}\""
+    echo "GM_FORMATS_35MM=\"${GM_FORMATS_35MM}\""
+    echo "GM_FORMATS_16MM=\"${GM_FORMATS_16MM}\""
+    echo "GM_FORMATS_R8=\"${GM_FORMATS_R8}\""
+    echo "GM_FORMATS_S8=\"${GM_FORMATS_S8}\""
+    echo "GM_FORMATS_VHS=\"${GM_FORMATS_VHS}\""
+    echo "GM_FORMATS_MINIDV=\"${GM_FORMATS_MINIDV}\""
+    echo "GM_FORMATS_V8=\"${GM_FORMATS_V8}\""
+    echo "GM_FORMATS_HI8=\"${GM_FORMATS_HI8}\""
+    echo "GM_FORMATS_D8=\"${GM_FORMATS_D8}\""
+    echo "GM_FORMATS_UMATIC=\"${GM_FORMATS_UMATIC}\""
+    echo "GM_FORMATS_BETA=\"${GM_FORMATS_BETA}\""
+    echo "GM_FORMATS_BETASP=\"${GM_FORMATS_BETASP}\""
+    echo "GM_FORMATS_DIGIBETA=\"${GM_FORMATS_DIGIBETA}\""
+    echo "GM_FORMATS_ONEINCHVIDEO=\"${GM_FORMATS_ONEINCHVIDEO}\""
+    echo "GM_FORMATS_HALFINCHVIDEO=\"${GM_FORMATS_HALFINCHVIDEO}\""
+    echo "GM_FORMATS_COMPACTAUDIOCASSETTE=\"${GM_FORMATS_COMPACTAUDIOCASSETTE}\""
+    echo "GM_FORMATS_QUARTERINCHOPENREELAUDIO=\"${GM_FORMATS_QUARTERINCHOPENREELAUDIO}\""
+    echo "GM_PROFILE_LAST=\"${GM_PROFILE_LAST}\""
+    echo "GM_PROFILE_FIRST=\"${GM_PROFILE_FIRST}\""
+    echo "GM_OPERATOR=\"${GM_OPERATOR}\""
+    echo "MAKEGM=\"${MAKEGM}\""
+} > "${GM_CONFIG_FILE}"
+    
     _report -d "Table of existing variables:"
     for KEY in "${REQUIRED_VARIABLES[@]}" ; do
         VALUE=$(grep "^${KEY}=" "${GM_CONFIG_FILE}" | cut -d= -f2)
@@ -351,8 +351,8 @@ else
 fi
 
 # test whether requested output directory exists
-if [[ ! -d "${gm_dir}" ]] ; then
-    _report -w "${gm_dir} is not a valid directory. Exiting..."
+if [[ ! -d "${GM_DIR}" ]] ; then
+    _report -w "${GM_DIR} is not a valid directory. Exiting..."
     exit 1
     _log -a "Process terminated by script (no valid directory at requested location)."
 fi
@@ -360,4 +360,5 @@ fi
 if [[ "$makegm" = "Yes" ]]; then
   cd /Users/medialab/gitHub/nmaahc/nmaahcmm
   ./makegm
+if [[ "${MAKEGM}" = "Yes" ]]; then
 fi
