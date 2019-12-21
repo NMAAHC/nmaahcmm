@@ -1,22 +1,18 @@
 #!/usr/bin/env bash
 
 #set Great Migration appointment variables
-#
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
+
 CONFIG="Y"
 CONFIG_VERSION="1.0"
 SCRIPTDIR=$(dirname "${0}")
 . "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 RUNPASHUA="Y"
-if [ ! -d  /Volumes/ScanSAN ] ; then
-  echo
-  printf "%s/Volumes/ScanSAN is not found. This location must be present for script to run. Exiting.%s" "$bired" "$color_off"
-  echo
-  echo
-  exit
-fi
-
+GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
+# if [[ ! -d  "/Volumes/ScanSAN" ]] ; then
+#     _report -r "/Volumes/ScanSAN is not found. This location must be present for script to run. Exiting..."
+#     exit 1
+#     _log -a "Process terminated by script (no directory at requested location)."
+# fi
 
 #if [[ "$(uname -s)" = "Darwin" ]] ; then
 #    RUNPASHUA="Y"
@@ -25,16 +21,19 @@ fi
 _usage(){
     echo
     echo "$(basename "${0}") ${VERSION}"
+    echo "This application will set Great Migration appointment variables."
+    echo "Usage: $(basename ${0}) [ options ]"
     echo "  -t set configuration file using the CLI"
+    echo "  -a set configuration file using a Pashua GUI (default, will happen without specifying this option)"
+    echo "  -h display this help"
     exit
 }
 
 # local variables
-# REQUIRED_VARIABLES=("OUTDIR_INGESTFILE" "OUTDIR_INGESTXDCAM" "OUTDIR_PAPER" "AIP_STORAGE" "PODCASTDELIVER" "YOUTUBEDELIVER" "TMPDIR" "REGEX4PODCAST" "DVDLABELPREFIX" "OMNEONIP" "OMNEONPATH" "CUSTOM_LOG_DIR" "LTO_INDEX_DIR" "LOCAL_MM_DIR" "EMAIL_FROM" "MAKEYOUTUBE_DELIVERY_EMAIL_TO" "MAKEBROADCAST_DELIVERY_EMAIL_TO" "FILE_MAKER_DB" "VOLADJUST" "PREMIS_DB" "SQL_ERROR_EMAIL_TO" "PREMIS_PROFILE" "PREMIS_NAME" "PERCEPTUAL_HASH")
+REQUIRED_VARIABLES=("${gm_dir}" "${gm_profile_last}" "${gm_profile_first}" "${gm_operator}" "${makegm}")
 
 OPTIND=1
-
-while getopts ":F:abth" OPT ; do
+while getopts ":F:ath" OPT ; do
     case "${OPT}" in
         F) FORMULA="${OPTARG}" ;;
         a) RUNPASHUA="Y" ;;
@@ -50,19 +49,6 @@ done
 #    SEDTEMP=$(_maketemp)
 #    sed "s:^${1}=[^ ]*:$1=$2:" "${GM_CONFIG_FILE}" > "${SEDTEMP}"
 #    cp "${SEDTEMP}" "${GM_CONFIG_FILE}"
-#}
-
-#_test_config(){
-#    for DIRECTORYVARIABLE in OUTDIR_INGESTFILE OUTDIR_INGESTXDCAM OUTDIR_PAPER AIP_STORAGE PODCASTDELIVER YOUTUBEDELIVER TMPDIR CUSTOM_LOG_DIR LTO_INDEX_DIR ; do
-#        if [ ! -d "${!DIRECTORYVARIABLE}" ] ; then
-#            _report -w "${DIRECTORYVARIABLE} is NOT a valid directory"
-#        fi
-#    done
-#    for BOOLEANVARIABLE in VOLADJUST ; do
-#        if [[ ! "${!BOOLEANVARIABLE}" = "Y" && ! "${!BOOLEANVARIABLE}" = "N" ]] ; then
-#            _report -w "${BOOLEANVARIABLE} is NOT set to Y or N"
-#        fi
-#    done
 #}
 
 #_add_key(){
@@ -334,14 +320,6 @@ else
         _add_key "${KEY}"
     done
 
-    _report -d "(basename "${0}")"
-    _report -d "Set system variables for ${WHAT_IS_THIS}"
-    echo
-    _report -d "Notes:"
-    _report -d "VOLADJUST must be set to 'Y' or 'N'"
-    echo
-    _report -d "Testing ${GM_CONFIG_FILE} validity"
-    _test_config
     echo
 
     _report -d "Table of existing variables:"
@@ -368,8 +346,8 @@ else
 fi
 
 # test whether requested output directory exists
-if [[ ! -d "${GM_DIR}" ]] ; then
-    _report -w "${GM_DIR} is not a valid directory. Exiting..."
+if [[ ! -d "${gm_dir}" ]] ; then
+    _report -w "${gm_dir} is not a valid directory. Exiting..."
     exit 1
     _log -a "Process terminated by script (no valid directory at requested location)."
 fi

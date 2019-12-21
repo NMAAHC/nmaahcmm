@@ -3,12 +3,8 @@
 # create Great Migration directory structur as set in gmconfig
 
 ### CONSTANTS
-
-biwhite=$(tput bold)$(tput setaf 7)
-bired=$(tput bold)$(tput setaf 1)
-color_off=$(tput sgr0)
-today=$(date +"%Y%m%d")
-date=$(date +"%Y-%m-%d")
+TODAY=$(date +"%Y%m%d")
+DATE=$(date +"%Y-%m-%d")
 
 script_path=${0%/*}
 # script_path will be the directory path of {0} which is the script being called
