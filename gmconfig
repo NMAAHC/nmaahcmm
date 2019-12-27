@@ -8,15 +8,6 @@ SCRIPTDIR=$(dirname "${0}")
 . "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 # RUNPASHUA="Y" # default setting is to launch the GUI using Pashua
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
-# if [[ ! -d  "/Volumes/ScanSAN" ]] ; then
-#     _report -r "/Volumes/ScanSAN is not found. This location must be present for script to run. Exiting..."
-#     exit 1
-#     _log -a "Process terminated by script (no directory at requested location)."
-# fi
-
-#if [[ "$(uname -s)" = "Darwin" ]] ; then
-#    RUNPASHUA="Y"
-#fi
 
 _usage(){
     echo
@@ -307,6 +298,12 @@ if [[ -z "${GM_DIR}" ]] ; then
     read -e GM_DIR
     [[ "${GM_DIR}" = "q" ]] && exit 0
 fi
+# (test whether requested output directory exists and quit if not)
+if [[ ! -d "${GM_DIR}" ]] ; then
+    _report -w "${GM_DIR} is not a valid directory. Exiting..."
+    exit 1
+    _log -a "Process terminated by script (no valid directory at requested location)."
+fi
 if [[ -z "${GM_PROFILE_LAST}" ]] ; then
     printf "Enter the last name for the Great Migration appointment:"
     read -e GM_PROFILE_LAST
@@ -379,13 +376,6 @@ fi
         echo "${CONFIG_KEY} is now set to ${CONFIG_VALUE}"
         _config_edit "${CONFIG_KEY}" "${CONFIG_VALUE}"
     done
-fi
-
-# test whether requested output directory exists
-if [[ ! -d "${GM_DIR}" ]] ; then
-    _report -w "${GM_DIR} is not a valid directory. Exiting..."
-    exit 1
-    _log -a "Process terminated by script (no valid directory at requested location)."
 fi
 
 if [[ "${MAKEGM}" = "Yes" ]] ; then
