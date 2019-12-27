@@ -329,6 +329,30 @@ if [[ -z "${MAKEGM}" ]] ; then
     done
 fi
 
+# report selections back to operator
+echo "GM_DIR=\"${GM_DIR}\""
+echo "GM_FORMATS_35MM=\"${GM_FORMATS_35MM}\""
+echo "GM_FORMATS_16MM=\"${GM_FORMATS_16MM}\""
+echo "GM_FORMATS_R8=\"${GM_FORMATS_R8}\""
+echo "GM_FORMATS_S8=\"${GM_FORMATS_S8}\""
+echo "GM_FORMATS_VHS=\"${GM_FORMATS_VHS}\""
+echo "GM_FORMATS_MINIDV=\"${GM_FORMATS_MINIDV}\""
+echo "GM_FORMATS_V8=\"${GM_FORMATS_V8}\""
+echo "GM_FORMATS_HI8=\"${GM_FORMATS_HI8}\""
+echo "GM_FORMATS_D8=\"${GM_FORMATS_D8}\""
+echo "GM_FORMATS_UMATIC=\"${GM_FORMATS_UMATIC}\""
+echo "GM_FORMATS_BETA=\"${GM_FORMATS_BETA}\""
+echo "GM_FORMATS_BETASP=\"${GM_FORMATS_BETASP}\""
+echo "GM_FORMATS_DIGIBETA=\"${GM_FORMATS_DIGIBETA}\""
+echo "GM_FORMATS_ONEINCHVIDEO=\"${GM_FORMATS_ONEINCHVIDEO}\""
+echo "GM_FORMATS_HALFINCHVIDEO=\"${GM_FORMATS_HALFINCHVIDEO}\""
+echo "GM_FORMATS_COMPACTAUDIOCASSETTE=\"${GM_FORMATS_COMPACTAUDIOCASSETTE}\""
+echo "GM_FORMATS_QUARTERINCHOPENREELAUDIO=\"${GM_FORMATS_QUARTERINCHOPENREELAUDIO}\""
+echo "GM_PROFILE_LAST=\"${GM_PROFILE_LAST}\""
+echo "GM_PROFILE_FIRST=\"${GM_PROFILE_FIRST}\""
+echo "GM_OPERATOR=\"${GM_OPERATOR}\""
+echo "MAKEGM=\"${MAKEGM}\""
+
 # write to the config file
 {
     echo "GM_DIR=\"${GM_DIR}\""
@@ -355,11 +379,6 @@ fi
     echo "MAKEGM=\"${MAKEGM}\""
 } > "${GM_CONFIG_FILE}"
     
-    _report -d "Table of existing variables:"
-    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
-        VALUE=$(grep "^${KEY}=" "${GM_CONFIG_FILE}" | cut -d= -f2)
-        printf '\t%-40s %-40s\n' "${KEY}" "${VALUE}"
-    done
     while true ; do
         EDITOPTION1="Edit config file in nano"
         EDITOPTION2="Edit config file in TextMate"
