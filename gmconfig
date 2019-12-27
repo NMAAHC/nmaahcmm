@@ -35,21 +35,21 @@ while getopts ":F:ath" OPT ; do
     esac
 done
 
-#_config_edit(){
-#    SEDTEMP=$(_maketemp)
-#    sed "s:^${1}=[^ ]*:$1=$2:" "${GM_CONFIG_FILE}" > "${SEDTEMP}"
-#    cp "${SEDTEMP}" "${GM_CONFIG_FILE}"
-#}
+_config_edit(){
+   [ -z "${1}" -o -z "${2}" ] && { _report -r "The config_edit function requires two arguments. Error." ; exit ;};
+   SEDTEMP=$(_maketemp)
+   sed "s:^${1}=[^ ]*:$1=$2:" "${GM_CONFIG_FILE}" > "${SEDTEMP}"
+   cp "${SEDTEMP}" "${GM_CONFIG_FILE}"
+}
 
-#_add_key(){
-#    KEY_TO_ADD="${1}"
-#    grep -q "^${KEY_TO_ADD}=" "${GM_CONFIG_FILE}" ; GREP_CODE="$?"
-#    if [[ ! "${GREP_CODE}" -eq "0" ]] ; then
-#        echo "${KEY_TO_ADD}=" >> "${GM_CONFIG_FILE}"
-#    fi
-#}
-#   [ -z "${1}" -o -z "${2}" ] && { _report -r "The config_edit function requires two arguments. Error." ; exit ;};
-#       _report -tg "Adding NEW variable ${KEY_TO_ADD} to ${GM_CONFIG_FILE}"
+_add_key(){
+   KEY_TO_ADD="${1}"
+   grep -q "^${KEY_TO_ADD}=" "${GM_CONFIG_FILE}" ; GREP_CODE="$?"
+   if [[ ! "${GREP_CODE}" -eq "0" ]] ; then
+       _report -tg "Adding NEW variable ${KEY_TO_ADD} to ${GM_CONFIG_FILE}"
+       echo "${KEY_TO_ADD}=" >> "${GM_CONFIG_FILE}"
+   fi
+}
 
 ## PASHUA INTERFACE
 
@@ -379,22 +379,33 @@ echo "MAKEGM=\"${MAKEGM}\""
     echo "MAKEGM=\"${MAKEGM}\""
 } > "${GM_CONFIG_FILE}"
     
-    while true ; do
-        EDITOPTION1="Edit config file in nano"
-        EDITOPTION2="Edit config file in TextMate"
-        _report -b "Edit a variable? "
-        PS3="Selection (enter by number)? "
-        select CONFIG_KEY in "${EDITOPTION1}" "${EDITOPTION2}" "${REQUIRED_VARIABLES[@]}" "Quit" ; do
-            break
-        done
-        [ "${CONFIG_KEY}" = "Quit" ] && { echo Goodbye. ; exit 1 ;};
-        [ "${CONFIG_KEY}" = "${EDITOPTION1}" ] && { nano "${GM_CONFIG_FILE}" ; exit 1 ;};
-        [ "${CONFIG_KEY}" = "${EDITOPTION2}" ] && { mate "${GM_CONFIG_FILE}" ; exit 1 ;};
-        echo -n "Enter the value for ${CONFIG_KEY}: "
-        read -e "CONFIG_VALUE"
-        echo "${CONFIG_KEY} is now set to ${CONFIG_VALUE}"
-        _config_edit "${CONFIG_KEY}" "${CONFIG_VALUE}"
+# ask operator if they'd like to edit the config file on the command line (won't pop up for GUI users)
+if [[ "${RUNPASHUA}" != "Y" ]] ; then
+    _report -b "Do these variables look good?"
+    PS3="Selection: "
+    select EDIT_CHOICE in "Yes, let's continue" "No, I need to change some variables" ; do
+        break
     done
+    if [[ "${EDIT_CHOICE}" == "Yes, let's continue" ]] ; then
+        _report -g "Continuing..."
+    else
+        while true ; do
+            EDITOPTION1="Edit config file in nano"
+            EDITOPTION2="Edit config file in TextMate"
+            _report -b "Edit a variable? "
+            PS3="Selection (enter by number)? "
+            select CONFIG_KEY in "${EDITOPTION1}" "${EDITOPTION2}" "${REQUIRED_VARIABLES[@]}" "Quit" ; do
+                break
+            done
+            [ "${CONFIG_KEY}" = "Quit" ] && { echo Goodbye. ; exit 1 ;};
+            [ "${CONFIG_KEY}" = "${EDITOPTION1}" ] && { nano "${GM_CONFIG_FILE}" ; exit 1 ;};
+            [ "${CONFIG_KEY}" = "${EDITOPTION2}" ] && { mate "${GM_CONFIG_FILE}" ; exit 1 ;};
+            echo -n "Enter the value for ${CONFIG_KEY}: "
+            read -e "CONFIG_VALUE"
+            echo "${CONFIG_KEY} is now set to ${CONFIG_VALUE}"
+            _config_edit "${CONFIG_KEY}" "${CONFIG_VALUE}"
+        done
+    fi
 fi
 
 if [[ "${MAKEGM}" = "Yes" ]] ; then
