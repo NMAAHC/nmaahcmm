@@ -36,7 +36,6 @@ while getopts ":F:ath" OPT ; do
 done
 
 #_config_edit(){
-#    [ -z "${1}" -o -z "${2}" ] && { _report -w "The config_edit function requires two arguments. Error." ; exit ;};
 #    SEDTEMP=$(_maketemp)
 #    sed "s:^${1}=[^ ]*:$1=$2:" "${GM_CONFIG_FILE}" > "${SEDTEMP}"
 #    cp "${SEDTEMP}" "${GM_CONFIG_FILE}"
@@ -46,10 +45,11 @@ done
 #    KEY_TO_ADD="${1}"
 #    grep -q "^${KEY_TO_ADD}=" "${GM_CONFIG_FILE}" ; GREP_CODE="$?"
 #    if [[ ! "${GREP_CODE}" -eq "0" ]] ; then
-#        _report -td "Adding NEW variable ${KEY_TO_ADD} to ${GM_CONFIG_FILE}"
 #        echo "${KEY_TO_ADD}=" >> "${GM_CONFIG_FILE}"
 #    fi
 #}
+#   [ -z "${1}" -o -z "${2}" ] && { _report -r "The config_edit function requires two arguments. Error." ; exit ;};
+#       _report -tg "Adding NEW variable ${KEY_TO_ADD} to ${GM_CONFIG_FILE}"
 
 ## PASHUA INTERFACE
 
@@ -300,7 +300,7 @@ if [[ -z "${GM_DIR}" ]] ; then
 fi
 # (test whether requested output directory exists and quit if not)
 if [[ ! -d "${GM_DIR}" ]] ; then
-    _report -w "${GM_DIR} is not a valid directory. Exiting..."
+    _report -r "${GM_DIR} is not a valid directory. Exiting..."
     exit 1
     _log -a "Process terminated by script (no valid directory at requested location)."
 fi
@@ -382,7 +382,7 @@ echo "MAKEGM=\"${MAKEGM}\""
     while true ; do
         EDITOPTION1="Edit config file in nano"
         EDITOPTION2="Edit config file in TextMate"
-        _report -q "Edit a variable? "
+        _report -b "Edit a variable? "
         PS3="Selection (enter by number)? "
         select CONFIG_KEY in "${EDITOPTION1}" "${EDITOPTION2}" "${REQUIRED_VARIABLES[@]}" "Quit" ; do
             break
