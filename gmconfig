@@ -291,12 +291,46 @@ if [[ "${RUNPASHUA}" = "Y" ]] ; then
    		exit
     fi
 else
-    # set up configuration file using the command line
-    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
-        _add_key "${KEY}"
-    done
-
+    # query operator on the command line for media formats
+    printf "Select the media format you want to create directories for: "
     echo
+    PS3="Selection (you can only select one format at a time): "
+    select MEDIATYPE in "35mm" "16mm" "Regular 8mm" "Super 8mm" "VHS" "MiniDV" "Video8" "Hi8" "Digital8" "U-matic" "Betacam" "Betacam SP" "Digital Betacam" "1\" Video (Type C)" "1/2\" open-reel video (EIAJ)" "Compact Audio Cassette" "1/4\" reel-to-reel audio"
+    do
+        break
+    done
+fi
+
+# check for missing variables and add to config file
+if [[ -z "${GM_DIR}" ]] ; then
+    printf "Drag in the Great Migration directory to save to, or type 'q' to quit: "
+    read -e GM_DIR
+    [[ "${GM_DIR}" = "q" ]] && exit 0
+fi
+if [[ -z "${GM_PROFILE_LAST}" ]] ; then
+    printf "Enter the last name for the Great Migration appointment:"
+    read -e GM_PROFILE_LAST
+    [[ "${GM_PROFILE_LAST}" = "q" ]] && exit 0
+fi
+if [[ -z "${GM_PROFILE_FIRST}" ]] ; then
+    printf "Enter the first name for the Great Migration appointment:"
+    read -e GM_PROFILE_FIRST
+    [[ "${GM_PROFILE_FIRST}" = "q" ]] && exit 0
+fi
+if [[ -z "${GM_OPERATOR}" ]] ; then
+    printf "Enter the name of the technician running the appointment:"
+    read -e GM_OPERATOR
+    [[ "${GM_OPERATOR}" = "q" ]] && exit 0
+fi
+if [[ -z "${MAKEGM}" ]] ; then
+    printf "Create ACCESS and PRESERVATION directories for each format selected?"
+    echo
+    PS3="Selection: "
+    select MAKEGM in "Yes" "No"
+    do
+        break
+    done
+fi
 
 # write to the config file
 {
