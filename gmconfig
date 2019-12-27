@@ -75,7 +75,7 @@ GM_DIR.y = 570
 GM_DIR.type = openbrowser
 GM_DIR.label = Please navigate to and select the Great Migration directory to save to:
 GM_DIR.width = 600
-GM_DIR.default = /Volumes/ScanSAN/00_Great_Migration_SC_0001/2018
+GM_DIR.default = ${GM_DIR}
 
 #GM_FORMATS
 GM_FORMATS.text = Please choose the formats for this Great Migration appointment:
