@@ -1,0 +1,292 @@
+#!/usr/bin/env bash
+
+# a script to turn SIPs into AIPs
+
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+
+## USAGE
+
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This script will run an interactive interview and then process an input file accordingly."
+    echo "Dependencies: ${DEPENDENCIES[@]}"
+    echo "Usage: $(basename ${0}) [ -options ]"
+    echo "  Local mode: presents a graphical user interface to specify file, media ID, and other options. Automatically creates an H264 access copy and generates metadata files if not already present."
+    echo "  -h display this help"
+    echo
+    exit
+}
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+## PASHUA INTERFACE
+
+CONF="
+# Set transparency: 0 is transparent, 1 is opaque
+*.transparency=1.00
+
+# Set window title
+*.title = Ingest File
+
+# intro text
+intro.x = 20
+intro.y = 720
+intro.width = 500
+intro.type = text
+intro.text = Ingest file options. Leave the option blank to be prompted.
+
+# ask operator
+OP.x = 20
+OP.y = 660
+OP.type = textfield
+OP.label = Please enter your name:
+OP.width = 300
+
+# mediaid
+MEDIAID.x = 20
+MEDIAID.y = 600
+MEDIAID.type = textfield
+MEDIAID.label = Please enter a unique media ID/package name (letters, numbers, hyphens, underscores only). Leave blank for DPX packages.
+MEDIAID.width = 300
+
+# input directory
+INPUT.x = 20
+INPUT.y = 540
+INPUT.type = openbrowser
+INPUT.label = Select your package:
+INPUT.width=400
+
+# package type
+PACKAGETYPE.x = 20
+PACKAGETYPE.y = 480
+PACKAGETYPE.type = combobox
+PACKAGETYPE.label = Please indicate the type of package being submitted.
+PACKAGETYPE.option =
+PACKAGETYPE.option = Digitized Film (DPX package)
+PACKAGETYPE.option = Digitized Film (MOV and/or MP4 files only)
+PACKAGETYPE.option = Digitized Analog Video (vrecord package)
+PACKAGETYPE.option = Transferred DV (MOV and/or MP4 files)
+PACKAGETYPE.option = Other/Unknown
+PACKAGETYPE.width = 400
+
+# DPX reel count
+REELS.x = 20
+REELS.y = 420
+REELS.type = combobox
+REELS.label = If your package is a DPX, select the number of reels (if not a DPX, leave blank).
+REELS.option =
+REELS.option = 1
+REELS.option = 2
+REELS.option = 3
+REELS.width=400
+
+# DPX object ID
+DPXID.x = 20
+DPXID.y = 360
+DPXID.type = textfield
+DPXID.label = If your package is a DPX, enter a DPX object ID (ex. 2012_79_1_54).
+DPXID.option =
+DPXID.width=200
+
+# DPX title
+DPXTITLE.x = 20
+DPXTITLE.y = 300
+DPXTITLE.type = textfield
+DPXTITLE.label = If your package is a DPX, enter a DPX title (ex. Something_to_Build_On).
+DPXTITLE.option =
+DPXTITLE.width=200
+
+# destination
+DESTINATION.x = 20
+DESTINATION.y = 240
+DESTINATION.type = openbrowser
+DESTINATION.label = Select where the package will go.
+DESTINATION.width = 400
+
+# cleanup decision
+CLEANUPDECISION.x = 20
+CLEANUPDECISION.y = 180
+CLEANUPDECISION.type = combobox
+CLEANUPDECISION.label = Select a cleanup strategy
+CLEANUPDECISION.default = Leave source files where they are
+CLEANUPDECISION.option =
+CLEANUPDECISION.option = Leave source files where they are
+CLEANUPDECISION.option = Remove source files after successful ingest
+CLEANUPDECISION.width = 300
+
+# Add a cancel button with default label
+cb.type=cancelbutton
+
+";
+
+# run Pashua
+PASHUA_CONFIGFILE=`/usr/bin/mktemp /tmp/pashua_XXXXXXXXX`
+echo "${CONF}" > "${PASHUA_CONFIGFILE}"
+_pashua_run
+rm "${PASHUA_CONFIGFILE}"
+echo "  OPERATOR = ${OP}"
+echo "  INPUT = ${INPUT}"
+echo "  MEDIAID = ${MEDIAID}"
+echo "  PACKAGETYPE = ${PACKAGETYPE}"
+echo "  REELS = ${REELS}"
+echo "  DPXID = ${DPXID}"
+echo "  DPXTITLE = ${DPXTITLE}"
+echo "  DESTINATION = ${DESTINATION}"
+echo "  CLEANUPDECISION = ${CLEANUPDECISION}"
+echo ""
+
+# check that all inputs were entered
+if [[ -z "${OP}" ]] ; then
+    printf "Enter the name of the operator or 'q' to quit: "
+    read -e OP
+    [[ -z "${OP}" ]] && _ask_operator
+    [[ "${OP}" = "q" ]] && exit 0
+fi
+if [[ -z "${INPUT}" ]] ; then
+    printf "Drag in the input directory or type 'q' to quit: "
+    read -e INPUT
+    [[ "${INPUT}" = "q" ]] && exit 0
+    basename=$(basename "${INPUT}")
+fi
+if [[ -z "${PACKAGETYPE}" ]] ; then
+    printf "Select a package type:"
+    echo
+    PS3="Selection: "
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
+    do
+        break
+    done
+fi
+if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+    printf "Enter a unique package name or 'q' to quit: "
+    read -e MEDIAID
+    [[ "${MEDIAID}" = "q" ]] && exit 0
+    # validate id and perhaps fail with exit
+    [[ -z "${MEDIAID}" ]] && { _report -rt  "ERROR: You must enter a valid MEDIA ID" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt  "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
+fi
+if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+    if [[ -z "${REELS}" ]] ; then
+        printf "Select the number of reels in your DPX package:"
+        echo
+        PS3="Selection: "
+        select PACKAGETYPE in "1" "2" "3"
+        do
+            break
+        done
+    fi
+    if [[ -z "${DPXID}" ]] ; then
+        printf "Enter your DPX_Object_ID_Number with underscores:"
+        read -e DPXID
+        printf "ex. 2015_167_10_1"
+    fi
+    if [[ -z "${DPXTITLE}" ]] ; then
+        printf "Enter your DPX_Object_Title with underscores:"
+        printf "ex. Juke_Joint"
+        read -e DPXTITLE
+    fi
+    MEDIAID="${DPXID}__${DPXTITLE}"
+fi
+if [[ -z "${DESTINATION}" ]] ; then
+    printf "Drag in the destination directory or type 'q' to quit: "
+    read -e DESTINATION
+    [[ "${DESTINATION}" = "q" ]] && exit 0
+fi
+if [[ -z "${CLEANUPDECISION}" ]] ; then
+    printf "Select a cleanup strategy:"
+    echo
+    select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest"
+    do
+        break
+    done
+fi
+
+## SCRIPT ACTIONS
+
+# log script beginning
+_log -b
+
+# record variables in ingest log
+_writelog "OPERATOR" "${OP}"
+_writelog "INPUT" "${INPUT}"
+_writelog "MEDIAID" "${MEDIAID}"
+_writelog "PACKAGETYPE" "${PACKAGETYPE}"
+_writelog "REELS" "${REELS}"
+_writelog "DPXID" "${DPXID}"
+_writelog "DPXTITLE" "${DPXTITLE}"
+_writelog "DESTINATION" "${DESTINATION}"
+_writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
+_writelog "START TIME" "$(date +%FT%T)"
+_writelog " " " "
+
+# make AIP directory
+mkdir -p "${DESTINATION}/${MEDIAID}"
+# remove .DS_Store files and log action if successful
+"${SCRIPTDIR}/removeDSStore" "${INPUT}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
+
+if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+    # if working with a DPX package, run restructureDPX microservice
+    if [[ "${CLEANUPDECISION}" == "Leave source files where they are" ]] ; then
+        "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" "${INPUT}"
+    elif [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
+        "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" -c "${INPUT}"
+    fi
+    _writelog "Invoked restructureDPX:" "$(date +%FT%T)"
+elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+    "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -f "${INPUT}"
+elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
+    rsync -av "${INPUT}/derivative/"*.mp4 "${INPUT}" # move derivative files up to main package level so that makeH264 can see there are derivatives already created
+    "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -v "${INPUT}"
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
+    "${SCRIPT_PATH}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
+    "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -d "${INPUT}"
+elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
+    "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -u "${INPUT}"
+fi
+
+# REDUNDANT - copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
+# if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+#     rsync -av "${INPUT}" "${DESTINATION}/${MEDIAID}"
+#     RSYNC_ERR="${?}"
+#     if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
+#         echo "${RSYNC_ERR}"
+#         _report -rt  "ERROR: rsync process failed. Exiting..."
+#         _log -a "Process terminated by script (rsync failure)."
+#         exit 1
+#     fi
+# fi
+# clean up original files if requested - hardcoded OFF during testing
+#if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
+#    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
+#        echo "${RSYNC_ERR}"
+#        _report -rt  "Cancelling requested deletion of source file, not looking safe."
+#    else
+#        _report -g "Removing the source file from ${INPUT} as requested..."
+#        _run rm -f "${INPUT}"
+#    fi
+#fi
+
+# log script ending
+_log -e
+_writelog "END TIME" "$(date +%FT%T)"
+
+echo "Process done...might have been successful...it's a WIP."

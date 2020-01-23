@@ -1,0 +1,149 @@
+#!/bin/bash
+# verifySIP creates a temporary XML of a SIP and compares it against an expected directory structure, using XML Starlet
+# verifySIP checks for key files in each SIP: the master file, the derivative file, and the MD5 file (if expected within that package)
+
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+DEPENDENCIES=(xmlstarlet) # list dependencies required by script
+_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
+
+## USAGE
+
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo
+    echo "This application will create a temporary tree of a SIP and compare it against an expected directory structure, using a series of xpath statements. It outputs mismatches and unexpected items found in AIPs into the terminal window."
+    echo "The script applies rules based on what kind of package it thinks it's looking at. The packages are defined as follows:"
+    echo "  film / analog / digitized in-house: script looks for .dpx files"
+    echo "  film / analog / digitized on-location: script looks for directories named after derivatives, e.g. 'MP4_2048x1152'"
+    echo "  video / analog / digitized on-location: script looks for the capture_options.log and/or qctools.xml.gz files generated in the vrecord process"
+    echo "  video / DV / transferred on-location: script looks for the string 'DV' in filenames"
+    echo "If your package does not fall into one of the above categories, the script will apply a simpler baseline set of comparisons."
+    echo "See the nmaachmm README for more information on package definitions."
+    echo
+    echo "Usage: $(basename ${0}) package"
+    echo
+    exit
+}
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+# define _runtest function
+_runtest(){
+    OPTIND=1
+    # by default, the test reports positively that a specified file or directory was found
+    # if the test is inverted, it will report positively that the file or directory is missing
+    INVERT_TEST="N"
+    while getopts ":i" OPT ; do
+        case "${OPT}" in
+            i) INVERT_TEST="Y";;
+        esac
+    done
+    shift $(( ${OPTIND} - 1 ))
+    LABEL="${1}"
+    RUN_ERR=""
+    shift
+    XMLRESULT=$("${@}") # the result of the xpath statement
+    RUN_ERR="${?}" # any stderr output by the xpath function
+    if [[ "${RUN_ERR}" != 0 ]] ; then
+        printf "${LABEL}" # the error message associated with each xpath query
+        _report -wt "ERROR: Running: \"${*}\" gave Error Code ${RUN_ERR}"
+        echo "${XMLRESULT}"
+    fi
+    # if the xpath statement finds a file that the test is looking for (default test); || OR if the xpath statement does NOT find a file and the test is NOT looking for one (inverted test);
+    if [[ ! -z "${XMLRESULT}" && "${INVERT_TEST}" != "Y" ]] || [[ -z "${XMLRESULT}" && "${INVERT_TEST}" == "Y" ]] ; then
+        printf "${LABEL}\n" # print the message associated with each xpath query
+        if [[ -n "${XMLRESULT}" ]] ; then
+            echo "${XMLRESULT}"
+        fi
+    fi
+}
+
+# log script beginning
+_log -b
+
+# input the package
+while [[ "${*}" != "" ]] ; do
+    PACKAGE="${1}"
+    shift
+    if [[ ! -d "${PACKAGE}" ]] ; then
+        _report -wt "The package you supplied is not a directory! Moving to next package if present..."
+    elif [[ -d "${PACKAGE}" ]] ; then
+        MEDIAID=$(basename "${PACKAGE}")
+        _report -g "running verifySIP on ${PACKAGE}..." #the name of the package being verified
+        "${SCRIPTDIR}/removeDSStore" "${PACKAGE}"
+        # make a new temp tree file
+        TEMPTREE=$(_maketemp)
+        tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" -I "tree.xml" "${PACKAGE}" > "${TEMPTREE}"
+
+        # PACKAGE TYPE: film / analog / digitized in-house
+        # looks for DPX files
+        _runtest "Based on the presence of .dpx files, this SIP is a DPX package." xmlstarlet sel -t -v "/tree/directory/directory/file[substring(@name,string-length(@name)-2)='dpx']/@name" -n "${TEMPTREE}"
+        if [[ -n "${XMLRESULT}" ]] ; then
+            SIP="FILM_DPX"
+            _report -g "Checking for DPX package conformance..."
+            # to be filled out with DPX package example
+        fi
+
+        # PACKAGE TYPE: film / analog / digitized on-location
+        # looks for directories named after derivatives; note presence of additional subdirectory above content
+        _runtest "Based on directory names, this SIP is digitized film in non-DPX format." xmlstarlet sel -t -v "/tree/directory/directory/directory[@name='MP4_2048x1152' or @name='ProRes_2048x1536']/@name" -n "${TEMPTREE}"
+        if [[ -n "${XMLRESULT}" ]] ; then
+            SIP="FILM_FILES"
+            _report -g "Checking for non-DPX film package conformance..."
+            _runtest -i "This package is missing a ProRes master file!" xmlstarlet sel -t -v "/tree/directory/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
+        fi
+
+        # PACKAGE TYPE: video / analog / digitized on-location
+        # looks for key files generated in the vrecord process
+        _runtest "Based on the presence of vrecord files, this SIP is digitized video." xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-13)='qctools.xml.gz' or substring(@name,string-length(@name)-19)='capture_options.log']/@name" -n "${TEMPTREE}"
+        if [[ -n "${XMLRESULT}" ]] ; then
+            SIP="VIDEO_VRECORD"
+            _report -g "Checking for digitized video package conformance..."
+            _runtest -i "This package is missing an MKV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mkv']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing a frameMD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-7)='framemd5']/@name" -n "${TEMPTREE}"
+        fi
+
+        # PACKAGE TYPE: video / DV / transferred on-location
+        # looks for filenames incorporating the string 'DV'
+        # this test does not work yet!
+        _runtest "Based on the presence of files with 'DV' in the filename, this SIP is transferred DV." xmlstarlet sel -t -v "/tree/directory[@name='*DV*']/@name" -n "${TEMPTREE}"
+        if [[ -n "${XMLRESULT}" ]] ; then
+            SIP="VIDEO_DV"
+            _report -g "Checking for DV package conformance..."
+            _runtest -i "This package is missing an MOV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='derivative']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing an MD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='md5']/@name" -n "${TEMPTREE}"
+        fi
+
+        # FOR ALL PACKAGES:
+        #looks for unexpected directories within the package
+        if [[ "${SIP}" != "FILM_FILES" ]] ; then # the non-DPX digitized film packages have an extra subdirectory with an unpredictable name
+            _runtest "There are unexpected subdirectories in your package!" xmlstarlet sel -t -v "/tree/directory/directory[@name!='derivative' and @name!='MP4_2048x1152' and @name!='ProRes_2048x1536' and @name!='DPX' and @name!='MOV' and @name!='WAV']/@name" -n "${TEMPTREE}"
+        fi
+        #finds any empty files
+        _runtest "There are empty files in your package!" xmlstarlet sel -t -v "//file[@size='0']/@name" -n  "${TEMPTREE}"
+        #makes sure no file names contain colons
+        _runtest "There are improperly named files in this package!" xmlstarlet sel -t -v "//file[contains(@name,':')]/@name" -n  "${TEMPTREE}"
+        #finds any hidden files
+        _runtest "There are hidden files in this package!" xmlstarlet sel -t -v "//file[starts-with(@name,'.')]/@name" -n  "${TEMPTREE}"
+    fi
+done
+
+# log script ending
+_log -e
+_report -g "verifySIP process complete."

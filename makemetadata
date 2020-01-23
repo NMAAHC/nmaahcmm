@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# a script to generate metadata sidecar files for video files
+
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+DEPENDENCIES=(tree ffprobe mediaconch exiftool qcli md5deep mkvpropedit) # list dependencies required by script
+_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
+
+## USAGE
+
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo
+    echo "This application will generate metadata sidecar files for all video files in a package. It takes one or more packages as input."
+    echo "The application generates all of the following files: a tree XML, a MediaInfo XML, a MediaTrace XML, an FFprobe XML, and an Exiftool XML."
+    echo "The option -m will generate an MD5 sidecar file. The option -q will generate a QCTools XML as well; this option is recommended for digitized video only. Both of these files may take a while to generate, depending on the size of your video file."
+    echo "The application will check for existing sidecar files before creating them again. To overwrite any existing metadata files, use option -o."
+    echo "If the video file is an MKV file, the script can embed a copy of the metadata files it generates into the MKV wrapper using option -e."
+    echo
+    echo "Usage: $(basename ${0}) [ -e | -m | -o | -q | -h ] package1 [ package2 ...]"
+    echo "      -e embed metadata files in MKV files"
+    echo "      -m generate MD5 file"
+    echo "      -o overwrite existing metadata files"
+    echo "      -q generate QCTools XML"
+    echo "      -h (display this help menu)"
+    exit
+}
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
+# getopts loop
+OPTIND=1
+while getopts ":hemoq" OPT; do
+    case "${OPT}" in
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        e) EMBED="Y" ;;
+        m) MD5="Y" ;;
+        o) OVERWRITE="Y" ;;
+        q) QCTOOLS="Y" ;;
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+## SCRIPT ACTIONS
+
+# log script beginning
+_log -b
+
+while [ "${*}" != "" ] ; do
+    if [[ -d "${1}" ]] ; then
+        PACKAGE_PATH="${1}"
+    else
+        _report -rt "ERROR: ${1} is not a directory. Moving to next package if present..."
+    fi
+    shopt -s nullglob
+    for FILE in $(find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" ) ; do
+        _report -g "Making metadata reports for ${FILE}..."
+        BASENAMEFILE=$(basename "${FILE}")
+        FILEOUTPUT=$(dirname "${FILE}")
+        TREEXML="${FILEOUTPUT}/${BASENAMEFILE}.tree.xml"
+        FFPROBEXML="${FILEOUTPUT}/${BASENAMEFILE}.ffprobe.xml"
+        MEDIAINFOXML="${FILEOUTPUT}/${BASENAMEFILE}.mediainfo.xml"
+        MEDIATRACEXML="${FILEOUTPUT}/${BASENAMEFILE}.mediatrace.xml"
+        EXIFTOOLXML="${FILEOUTPUT}/${BASENAMEFILE}.exiftool.xml"
+        # if requested: remove existing metadata files to be overwritten
+        if [[ "${OVERWRITE}" == "Y" ]] ; then
+            rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
+        fi
+        # if the metadata files don't already exist, create them; the command following "&&" will only execute if the test before it is successful
+        [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${PACKAGE_PATH}" > "${TREEXML}"
+        [[ ! -f "${FFPROBEXML}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBEXML}"
+        [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
+        [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"
+        [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
+        # generate MD5 checksum if requested; overwrite if requested
+        if [[ "${MD5}" == "Y" ]] ; then
+            MD5FILE="${FILEOUTPUT}/${BASENAMEFILE}.md5"
+            if [[ "${OVERWRITE}" == "Y" ]] ; then
+                rm "${MD5FILE}"
+                md5deep -bre "${FILE}" >> "${MD5FILE}" # -b=strip leading directory info, -r=recursive, -e=display progress indicator
+            elif [[ ! -f "${MD5FILE}" ]] ; then
+                md5deep -bre "${FILE}" >> "${MD5FILE}"
+            fi
+        fi
+        # generate QCTools XML if requested; overwrite if requested
+        if [[ "${QCTOOLS}" == "Y" ]] ; then
+            QCTOOLSXML="${FILEOUTPUT}/${BASENAMEFILE}.qctools.xml.gz"
+            if [[ "${OVERWRITE}" == "Y" ]] ; then
+                rm "${QCTOOLSXML}"
+                qcli -i "${FILE}" -o "${QCTOOLSXML}"
+            elif [[ ! -f "${QCTOOLSXML}" ]] ; then
+                qcli -i "${FILE}" -o "${QCTOOLSXML}"
+            fi
+        fi
+        # embed metadata files in MKV file if requested
+        # to see what attachments are in your file and what ID #s they have, run: mkvmerge --identify ${filename}
+        # to extract those attachments, run: mkvextract ${filename}.mkv attachments ${ID#}:${extracted_output_filename.ext} ---> e.g. if you see that attachment 1 is a mediainfo xml and you want to extract it into a file on the Desktop called "mediainfo.xml," run: mkvextract file.mkv 1:~/Desktop/mediainfo.xml
+        # to delete attachments, run: mkvpropedit ${filename}.mkv --delete-attachment ${ID#}
+        # right now, the script will just add more and more attachments if it's run on the same file multiple times. MKV attachments are identified by numbers, so it can be complicated to delete/overwrite based on content.
+        if [[ "${EMBED}" == "Y" ]] ; then
+            if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
+                _report -g "Embedding metadata reports in MKV file ${FILE}..."
+                mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
+                mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
+                mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
+                mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOLXML}"
+                if [[ "${MD5}" = "Y" ]] ; then
+                    mkvpropedit "${FILE}" --attachment-description "MD5 checksum $(date +%Y%m%d-%H%M%S)" --add-attachment "${MD5FILE}"
+                fi
+                if [[ "${QCTOOLS}" = "Y" ]] ; then
+                    mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLSXML}"
+                fi
+            fi
+        fi
+        _report -g "Moving to next file if present..."
+    done
+    shift
+done
+
+# log script ending
+_log -e
+_report -g "makemetadata process complete."
+echo

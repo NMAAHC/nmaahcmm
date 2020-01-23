@@ -1,18 +1,19 @@
-#!/usr/bin/env bash
-
 # assign variables
 SCRIPTNAME=$(basename "${0}")
 SCRIPTDIR=$(dirname "${0}")
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
+# global variables
+LOGDIR="./Desktop/logs"
+
 # You can't directly call a function in another shell script. You can move your function definitions into a separate file and then load them into your script using the . command, like this:
 # . /path/to/functions.sh
 # The script will interpret functions.sh as if its content were actually present in your file at this point. It is a common mechanism for implementing shared libraries of shell functions, and is how each script in nmaahcmm can reference the shared functions in this file.
 # Here is an example specific to NMAAHC:
-## script_path=${0%/*}      # script_path will be the directory path of {0} which is the script being called
-## . "${script_path}/nmaahcmmfunctions"         # loads the functions in nmaahcmmfunctions into this script
-## [[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};        # checks to see that that nmaahcmmfunctions exists; if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
+## SCRIPT_PATH="${0%/*}"      # SCRIPT_PATH will be the directory path of {0} which is the script being called
+## . "${SCRIPT_PATH}/nmaahcmmfunctions"         # loads the functions in nmaahcmmfunctions into this script
+## [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};        # checks to see that that nmaahcmmfunctions exists; if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
 
 # load configuration file
 if [ -f "${GM_CONFIG_FILE}" ] ; then
@@ -23,33 +24,33 @@ elif [ ! "${CONFIG}" = "Y" -a "${REQUIRECONFIG}" = "Y" ] ; then
 fi
 
 # set text colors; can be used to differentiate statements that display in the terminal window
-function _setcolors(){
+_setcolors(){
     date="$(date +%Y%m%d)"
-    biwhite=$(tput bold)$(tput setaf 7)
-    bired=$(tput bold)$(tput setaf 1)
-    biyellow=$(tput bold)$(tput setaf 3)
-    gray=$(tput setaf 7)
-    color_off=$(tput sgr0)
+    BIWHITE=$(tput bold)$(tput setaf 7)
+    BIRED=$(tput bold)$(tput setaf 1)
+    BIYELLOW=$(tput bold)$(tput setaf 3)
+    GRAY=$(tput setaf 7)
+    COLOR_OFF=$(tput sgr0)
 }
 
 # this function helps the system gracefully exit the script; it will only run when the operator presses ctrl+C
-function _initialize_make(){
+_initialize_make(){
     _cleanup(){
-            printf "\n${bired}Process cancelled\n${color_off}" # tell operator that script is ending, then turn all colors off
+        _report -rt "Process cancelled" # tell operator that script is ending
         exit 1
     }
     trap _cleanup SIGHUP SIGINT SIGTERM # "termination signals" that ask the system to clean up and safely kill the ongoing process, with increasing urgency
 }
 
 # a substitute for the plain mkdir tool; adds a more explicit warning to the operator if there is already a directory at that location
-function _mkdir(){
+_mkdir(){
     local DIR2MAKE=""
     while [ "${*}" != "" ] ; do
         DIR2MAKE="${1}"
         if [ ! -d "${DIR2MAKE}" ] ; then
             mkdir -p "${DIR2MAKE}"
             if [ "${?}" -ne 0 ]; then
-                printf "${bired}" "${0}: Can't create directory at ${DIR2MAKE}"
+                _report -rt "${0}: Can't create directory at ${DIR2MAKE}"
                 exit 1
             fi
         fi
@@ -58,7 +59,7 @@ function _mkdir(){
 }
 
 # removes hidden files (always identified with a period at the beginning of the filename - ".*")
-function _removehidden(){
+_removehidden(){
     if [ -z "${1}" ] ; then
         cowsay "no argument provided to remove hidden files. tootles."
     else
@@ -67,7 +68,7 @@ function _removehidden(){
     fi
 }
 
-function _sortk2(){
+_sortk2(){
     if [ -z "${1}" ]; then
         cowsay "no argument provided to sort. tootles."
     else
@@ -76,7 +77,7 @@ function _sortk2(){
     fi
 }
 
-function _pashua_run(){
+_pashua_run(){
     # Wrapper function for interfacing to Pashua. Written by Carsten
     # Bluem <carsten@bluem.net> in 10/2003, modified in 12/2003 (including
     # a code snippet contributed by Tor Sigurdsson), 08/2004 and 12/2004.
@@ -118,4 +119,117 @@ function _pashua_run(){
             eval "${VARNAME}"="${VARVALUE}"
         done
     fi
+}
+
+_check_deliverdir(){
+    if [[ ! -d "${DELIVERDIR}" ]] ; then
+        _report -rt "The delivery directory, ${DELIVERDIR}, does not exist. Cannot deliver the OUTPUT of $(basename "${0}")."
+    fi
+}
+
+_log(){
+    if [[ ! -d "${LOGDIR}" ]] ; then
+        mkdir "${LOGDIR}"
+        if [[ "${?}" -ne 0 ]] ; then
+            _report -rt "${0}: Can't create log directory at ${LOGDIR}, exiting..."
+            exit 1
+        fi
+    fi
+    MMLOGNAME="nmaahcmm.log"
+    OPTIND=1
+    while getopts ":beacw" OPT; do
+        case "${OPT}" in
+            b) STATUS="start" ;;              # script is beginning
+            e) STATUS="end"   ;;              # script is ending
+            a) STATUS="abort" ;;              # script is aborted
+            c) STATUS="comment" ;;            # comment about what script is doing
+            w) STATUS="warning" ;;            # warning information
+        esac
+    done
+    shift $(( ${OPTIND} - 1 ))
+    NOTE="${1}"
+    echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${MMLOGNAME}"
+}
+
+_writelog(){
+    LOGNAME="$(basename "${0}")_$(date +%F).log"
+    if [[ -z "${LOGNAME}" ]] ; then
+        echo "Error, can not write to log, ingest log not yet created"
+        exit
+    fi
+    if [[ ! -f "${LOGNAME}" ]] ; then
+        mkdir -p $(dirname "${LOGNAME}")
+        touch "${LOGNAME}"
+    fi
+    KEY="${1}"
+    VALUE="${2}"
+    # need to add yaml style escaping
+    echo "${KEY}: ${VALUE}" >> "${LOGDIR}/${LOGNAME}"
+}
+
+_maketemp(){
+    mktemp -q "/tmp/$(basename "${0}").XXXXXX"
+    if [ "${?}" -ne 0 ]; then
+        _report -rt "${0}: Can't create temp file, exiting..."
+        _writeerrorlog "_maketemp" "was unable to create the temp file, so the script had to exit."
+        exit 1
+    fi
+}
+
+_check_dependencies(){
+    DEPS_OK=YES
+    while [ "${*}" != "" ] ; do
+        DEPENDENCY="${1}"
+        if [[ ! $(which "${DEPENDENCY}") ]] ; then
+            _report -rt "This script requires ${DEPENDENCY} to run but it is not installed."
+            printf "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
+            printf "sudo apt-get install ${DEPENDENCY}"
+            printf "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
+            printf "brew install ${DEPENDENCY}"
+            DEPS_OK=NO
+        fi
+        shift
+    done
+    if [[ "${DEPS_OK}" = "NO" ]]; then
+        _report -rt "Unmet dependencies. Exiting..."
+        _log -a "Process terminated by script (unmet dependencies)."
+        exit 1
+    else
+        return 0
+    fi
+}
+
+_report(){
+    local RED="$(tput setaf 1)"   # Red      - For Warnings
+    local GREEN="$(tput setaf 2)" # Green    - For Declarations
+    local BLUE="$(tput setaf 4)"  # Blue     - For Questions
+    local NC="$(tput sgr0)"       # No Color
+    local COLOR=""
+    local STARTMESSAGE=""
+    local ENDMESSAGE=""
+    local ECHOOPT=""
+    local LOG_MESSAGE=""
+    OPTIND=1
+    while getopts ":bgrstn" OPT; do
+        case "${OPT}" in
+            b) COLOR="${BLUE}" ;;                         # question mode, use color blue
+            g) COLOR="${GREEN}" ;;                        # declaration mode, use color green
+            r) COLOR="${RED}" ; LOG_MESSAGE="Y" ;;        # warning mode, use color red
+            s) STARTMESSAGE+=([$(basename "${0}")] ) ;;   # prepend scriptname to the message
+            t) STARTMESSAGE+=($(date +%FT%T) '- ' ) ;;   # prepend timestamp to the message
+            n) ECHOOPT="-n" ;;                            # to avoid line breaks after echo
+        esac
+    done
+    shift $(( ${OPTIND} - 1 ))
+    MESSAGE="${1}"
+    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]}${MESSAGE}${NC}"
+    [ "${LOG_MESSAGE}" = "Y" ] && _log -w "${MESSAGE}"
+}
+
+_seconds_to_hhmmss(){
+    num=$1
+    h=`expr "$num" / 3600`
+    m=`expr "$num"  % 3600 / 60`
+    s=`expr "$num" % 60`
+    printf "%02d:%02d:%02d\n" $h $m $s
 }

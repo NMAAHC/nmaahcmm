@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# script to create test directories based on NMAAHC package documentation
+# creates empty files and 3-second test pattern videos with generic expected filenames
+
+TEST_DIR="nmaahcmm_testpackages_$(date +%F)"
+mkdir "${TEST_DIR}"
+
+# FILM / analog / digitized in-house
+# create .dpx, .mov, .wav files for a 2-reel DPX
+DPX_DIR="${TEST_DIR}/DPXTEST_SC0001_YYYYMMDD_LASTNAME_S8"
+mkdir -p "${DPX_DIR}" "${DPX_DIR}/DPX" "${DPX_DIR}/MOV" "${DPX_DIR}/WAV" 
+ffmpeg -f lavfi -i smptebars -c:v prores -t 3 "${DPX_DIR}/MOV/DPXTEST_SC0001_YYYYMMDD_LASTNAME_S8_R1_ProRes.mov"
+ffmpeg -f lavfi -i smptebars -c:v prores -t 3 "${DPX_DIR}/MOV/DPXTEST_SC0001_YYYYMMDD_LASTNAME_S8_R2_ProRes.mov"
+ffmpeg -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:a pcm_s16le -t 3 "${DPX_DIR}/WAV/DPXTEST_SC0001_YYYYMMDD_LASTNAME_S8_R1.wav"
+ffmpeg -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:a pcm_s16le -t 3 "${DPX_DIR}/WAV/DPXTEST_SC0001_YYYYMMDD_LASTNAME_S8_R2.wav"
+ffmpeg -f lavfi -i smptebars -t 3 "${DPX_DIR}/DPX/DPXTEST_SC0001_YYYYMMDD_LASTNAME_S8_R1_%06d.dpx"
+ffmpeg -f lavfi -i smptebars -t 3 "${DPX_DIR}/DPX/DPXTEST_SC0001_YYYYMMDD_LASTNAME_S8_R2_%06d.dpx"
+
+# FILM / analog / digitized on-location
+# create .mp4 and .mov files
+MOV_DIR="${TEST_DIR}/MOVTEST_SC0001_YYYYMMDD_LASTNAME/S8_01_03"
+mkdir -p "${MOV_DIR}" "${MOV_DIR}/ProRes_2048x1536" "${MOV_DIR}/MP4_2048x1152"
+ffmpeg -f lavfi -i "smptebars=size=2048x1536" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v prores -c:a pcm_s16le -t 3 "${MOV_DIR}/ProRes_2048x1536/MOVTEST_SC0001_YYYYMMDD_LASTNAME_S8_01_03.mov"
+ffmpeg -f lavfi -i "smptebars=size=2048x1152" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v libx264 -c:a aac -t 3 "${MOV_DIR}/MP4_2048x1152/MOVTEST_SC0001_YYYYMMDD_LASTNAME_S8_01_03.mp4"
+
+# VIDEO / analog / digitized on-location
+# create vrecord process files
+VRECORD_DIR="${TEST_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01"
+mkdir -p "${VRECORD_DIR}"
+ffmpeg -f lavfi -i "smptebars=size=720x486" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v ffv1 -c:a pcm_s16le -t 3 "${VRECORD_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01.mkv"
+ffmpeg -f lavfi -i "smptebars=size=720x486" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v libx264 -c:a aac -t 3 "${VRECORD_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01.mp4"
+touch "${VRECORD_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01.framemd5" "${VRECORD_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01.mkv.qctools.xml.gz" "${VRECORD_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01_QC_output_graphs.jpeg" "${VRECORD_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01_capture_options.log" "${VRECORD_DIR}/VRECORDTEST_SC0001_YYYYMMDD_LASTNAME_VHS_01_ffmpeg_decklink_input.log"
+
+# VIDEO / DV / transferred on-location
+# create DV + sidecar files
+DV_DIR="${TEST_DIR}/DVTEST_SC0001_YYYYMMDD_LASTNAME/SC0001_YYYYMMDD_LASTNAME_MiniDV_02_TITLEOFTAPE"
+mkdir -p "${DV_DIR}" "${DV_DIR}/derivative"
+ffmpeg -f lavfi -i "smptebars=size=720x480" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v dvvideo -c:a pcm_s16le -t 3 "${DV_DIR}/DVTEST_SC0001_YYYYMMDD_LASTNAME_MiniDV_02_TITLEOFTAPE.mov"
+touch "${DV_DIR}/SC0001_YYYYMMDD_LASTNAME_MiniDV_02_TITLEOFTAPE_YYYYMMDD_checksums.md5"
+ffmpeg -f lavfi -i "smptebars=size=720x480" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v libx264 -c:a aac -t 3 "${DV_DIR}/derivative/DVTEST_SC0001_YYYYMMDD_LASTNAME_MiniDV_02_TITLEOFTAPE.mp4"
+
+cowsay "Test files created"

@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+DEPENDENCIES=(ffmpeg framemd5) # list dependencies required by script
+_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 
 ### USAGE
 
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will generate frame MD5s for all frames in a video file. It takes a video file or package as an argument. (If a package, the application will generate frame MD5s for all .mov files in the package.) The frame MD5s will be stored as text in a file with extension .framemd5.md5"
@@ -10,31 +17,37 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 # getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+        h) _usage ;; # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 
+# log script beginning
+_log -b
+
 shopt -s globstar
 
 while [ "${*}" != "" ] ; do
     #name input as the first argument sent to script
     INPUT="${1}"
-    if [ -d "${INPUT}" ] ; then
-        for file in "${1}"/**/*.mov ; do # find the first .mov file two subdirectories down from the input
-            ffmpeg -i "${file}" -an -f framemd5 "${file}.framemd5.md5"
+    if [[ -d "${INPUT}" ]] ; then
+        for FILE in "${1}"/**/*.mov ; do # find the first .mov file two subdirectories down from the input
+            ffmpeg -i "${FILE}" -an -f framemd5 "${FILE}.framemd5.md5"
         done
-    elif [ -f "${INPUT}" ]; then
+    elif [[ -f "${INPUT}" ]] ; then
         ffmpeg -i "${INPUT}" -an -f framemd5 "${INPUT}.framemd5.md5"
     fi
     shift
 done
-printf "${biwhite}makeframemd5 process complete.${color_off}\n"
+
+# log script ending
+_log -e
+_report -g "makeframemd5 process complete."

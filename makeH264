@@ -1,25 +1,27 @@
 #!/usr/bin/env bash
 
 # a script to create a H264 derivative of a given input. Make access happen!
-# all comments refer to line(s) above unless placed in-line with code or specified otherwise
+# unlike makeDer, this script does not allow the operator to select a CRF value or preset encoding speed; those values and the maximum bitrate are set at the top of the script
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
+DEPENDENCIES=(ffmpeg) # list dependencies required by script
+_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 
-relativepath="derivative"
-suffix="" #suffix is blank here but can be filled in with desired characters for inlcusion in filename
-extension="mp4"
-crfvalue=18
-presetspeed=medium
-maxrate=8000
+RELATIVEPATH="derivative"
+SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
+EXTENSION="mp4"
+CRFVALUE=18
+PRESETSPEED=medium
+MAXRATE=8000
+ERRORS=0
 
 ## USAGE
 
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes one or more video files or packages as input. You may pass both video files and packages in the same command."
@@ -29,70 +31,91 @@ usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && usage # if the command is run with no arguments then usage is called
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 # getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) usage ;;  # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 
-while [ "${*}" != "" ] ; do
-    input="${1}" #set $input as the first argument sent to script
+# log script beginning
+_log -b
 
-    # process if input is a file
-    if [[ -f "${input}" ]] ; then
-        output_dir="$(dirname ${input})/${relativepath}" # set output_dir to input name with extension stripped plus relativepath
-        mediaid="${input##*/}" #set $mediaid to basename of $input
-        mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
-        output="${output_dir}/${mediaid%.*}${suffix}.${extension}" #set $output
-        [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
-        if [[ -s "${output}" ]] ; then #check to see if $output exists
-            printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
-            printf "Moving to next file if present...\n${color_off}"
+while [ "${*}" != "" ] ; do
+    INPUT="${1}" #set $INPUT as the first argument sent to script
+
+    # process if INPUT is a file
+    if [[ -f "${INPUT}" ]] ; then
+        OUTPUT_DIR="$(dirname ${INPUT})/${RELATIVEPATH}" # set OUTPUT_DIR to INPUT name with extension stripped plus relativepath
+        MEDIAID="${INPUT##*/}" #set $MEDIAID to basename of $INPUT
+        MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
+        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+        [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
+        if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
+            _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
+            _report -rt "Moving to next file if present..."
         else
-            printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
-            printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
-            printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
-            printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
-            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${input}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-            printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
-            printf "Moving to next file if present...\n${color_off}"
-        fi
-    # process if input is a directory
-    elif [[ -d "${input}" ]] ; then
-        input="${input%/}" # strip trailing / if any
-        output_dir="${input}/${relativepath}" # set output_dir to input name plus relativepath
-        shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
-        for file in "${input}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
-            [[ ! -d "${output_dir}" ]] && mkdir -p "${output_dir}" # make output directory if it doesn't already exist
-            mediaid="${file##*/}" #set $mediaid to basename of $input
-            mediaid="${mediaid%.*}" #set $mediaid to $mediaid with extension stripped
-            output="${output_dir}/${mediaid%.*}${suffix}.${extension}" #set $output
-            if [[ -s "${output}" ]] ; then #check to see if $output exists
-                printf "%sWARNING ${output} already exists, skipping transcode of %s.%s%s\n" "${bired}" "${input}" "${color_off}" "${biwhite}"
+            _report -g "The MEDIA ID is: ${MEDIAID}"
+            _report -g "The OUTPUT directory is: ${OUTPUT_DIR}"
+            _report -g "The OUTPUT file is: ${OUTPUT}"
+            _report -g "making .mp4 derivative of ${MEDIAID}"
+            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+            if [[ -s "${OUTPUT}" ]] ; then
+                _report -g "Success! Derivative $(basename ${OUTPUT}) created."
             else
-                printf "%smediaid is: %s%s\n" "${color_off}" "${biwhite}" "${mediaid}"
-                printf "%sThe output directory is: %s%s\n" "${color_off}" "${biwhite}" "${output_dir}"
-                printf "%soutput is: %s%s\n" "${color_off}" "${biwhite}" "${output}"
-                printf "\n%smaking .mp4 derivative of %s%s%s\n" "${color_off}" "${biwhite}" "${mediaid}" "${color_off}" 
-                ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${file}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${crfvalue}" -preset "${presetspeed}" -maxrate "${maxrate}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${output}"
-                printf "\nSuccess! Derivative ${biwhite}$(basename ${output})${color_off} created.\n\n"
+                _report -rt  "Hmm...derivative $(basename ${OUTPUT}) was not successfully created."
+                ((ERRORS++))
             fi
-            printf "Moving to next file if present...\n${color_off}"
+            _report -g "Moving to next file if present..."
+        fi
+    # process if INPUT is a directory
+    elif [[ -d "${INPUT}" ]] ; then
+        INPUT="${INPUT%/}" # strip trailing / if any
+        OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # set OUTPUT_DIR to INPUT name plus relativepath
+        shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
+        for FILE in "${INPUT}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
+            [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
+            MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
+            MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
+            OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+            if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
+                _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
+            else
+                _report -g "The MEDIA ID is: ${MEDIAID}"
+                _report -g "The OUTPUT directory is: ${OUTPUT_DIR}"
+                _report -g "The OUTPUT file is: ${OUTPUT}"
+                _report -g "making .mp4 derivative of ${MEDIAID}"
+                ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${FILE}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+                if [[ -s "${OUTPUT}" ]] ; then
+                    _report -g "Success! Derivative $(basename ${OUTPUT}) created."
+                else
+                    _report -rt  "Hmm...derivative $(basename ${OUTPUT}) not successfully created."
+                    ((ERRORS++))
+                fi
+            fi
+            _report -g "Moving to next file if present..."
         done
     else
-        printf "${bired}Input is not a file or directory. Exiting script..."
+        _report -rt  "ERROR: Input ${INPUT} is not a file or directory. Exiting..."
+        _log -a "Process terminated by script (input was not a file or directory)."
         exit 1
     fi
     shift
 done
 
-printf "${biwhite}makeH264 process complete.${color_off}\n"
-
+# log script ending
+_log -e
+_report -g "makeH264 process complete."
+if [[ "${ERRORS}" -gt 0 ]] ; then
+    _report -r "Not all derivatives were successfully created. Please double-check the terminal output!"
+    _report -r "Total number of derivative errors found: ${ERRORS}"
+    _log -w "${ERRORS} error/s occurred during derivative creation."
+fi
+echo
 exit "$?"

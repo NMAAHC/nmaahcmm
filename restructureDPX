@@ -3,314 +3,289 @@
 # a script to create a the desired directory structure and filenames for DPX packages received from VFS
 
 # load nmaahcmmfunctions into this script
-script_path=${0%/*}
-. "${script_path}/nmaahcmmfunctions"
-[[ -f "${script_path}/nmaahcmmfunctions" ]] || { echo "Missing '${script_path}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-_setcolors # assigns colors using a function defined in nmaahcmmfunctions
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
+RSYNC_ERROR_COUNT=0
+RSYNC_ERROR_FILES=""
 
 ### USAGE
-usage(){
+_usage(){
     echo
     echo "$(basename "${0}")"
-    echo "This application will create a the desired directory structure and filenames for DPX packages received from VFS. It does not take any arguments."
-    echo "Usage: $(basename ${0})"
+    echo "This application will create a the desired directory structure and filenames for DPX packages received from VFS."
+    echo "The options below are optional; simply run '$(basename ${0})' if you would prefer to be prompted for each input."
+    echo "Usage: $(basename ${0}) [ -d /path/to/deliver/to/ ] [ -i DPX_Object_ID ] [ -t DPX_Object_Title ] [ -r (number of reels) ] [ -c ] dpxpackage"
+    echo "  -d directory (directory to deliver the resulting package to)"
+    echo "  -i DPX_Object_ID (ex. 2012_79_1_54)"
+    echo "  -t DPX_Object_Title (ex. Something_to_Build_On)"
+    echo "  -r number (number of reels in the package, up to 3)"
+    echo "  -c cleanup source files (remove all source files after script runs)"
+    echo "  -h (display this help)"
     echo
     exit
 }
 # getopts loop
 OPTIND=1
-while getopts ":h" OPT; do
+while getopts ":d:i:t:r:ch" OPT; do
     case "${OPT}" in
-        h) usage ;; # if the operator runs "[scriptname] -h" then the usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; usage ;; # if the operator tries to use an option other than the ones listed above, the usage text will display in the terminal
+        d) DELIVERDIR="${OPTARG}" && _check_deliverdir ;; # _check_DELIVERDIR defined in nmaahcmmfunctions
+        i) DPXID="${OPTARG}" ;;
+        t) TITLE="${OPTARG}" ;;
+        r) REELNUMBER="${OPTARG}" ;;
+        c) CLEANUPDECISION="Y" ;;
+        h) _usage ;; # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
+# if rsync output code indicates a failed transfer, increment the total number of failed transfers; rsync -v will also report this information in the terminal
+_check_rsync_output(){
+    RSYNC_ERR="$?"
+    if [[ "${RSYNC_ERR}" != 0 ]] ; then
+        ((RSYNC_ERROR_COUNT++))
+    else
+        continue
+    fi
+}
 
-restructureDPX(){
-    printf "%sPlease enter the number of reels your DPX package has: %s" "${biwhite}" "${color_off}"
-    read -r reelnumber
-    echo
-    printf "%sPlease enter DPX Object ID Number with underscores:\n" "${biwhite}"
-    printf "ex. 2015_167_10_1\n%s" "${color_off}"
-    read -r dpxid
-    echo
-    printf "%sPlease enter DPX Object title with underscores:\n" "${biwhite}"
-    printf "ex. Juke_Joint\n%s" "${color_off}"
-    read -r title
-    echo
-    printf "%sPlease enter destination for directory tree to be created:\n%s" "${biwhite}" "${color_off}"
-    read -r dest
-    echo
-    printf "%sPlease enter directory to be worked with:\n%s" "${biwhite}" "${color_off}"
-    read -r input
+_restructureDPX(){
+    INPUT="${1}"
+    
+    if [[ -z "${REELNUMBER}" ]] ; then
+        _report -b "Please enter the number of reels your DPX package has:"
+        read -r REELNUMBER
+        echo
+    fi
+    if [[ -z "${DPXID}" ]] ; then
+        _report -b "Please enter DPX_Object_ID_Number with underscores:"
+        _report -b "ex. 2015_167_10_1"
+        read -r DPXID
+        echo
+    fi
+    if [[ -z "${TITLE}" ]] ; then
+        _report -b "Please enter DPX_Object_Title with underscores:"
+        _report -b "ex. Juke_Joint"
+        read -r TITLE
+        echo
+    fi
+    if [[ -z "${DELIVERDIR}" ]] ; then
+        _report -b "Please drag in the full path to the destination (where the new directory should be created):"
+        read -r DELIVERDIR
+        echo
+    fi
+    if [[ -z "${INPUT}" ]] ; then
+        _report -b "Please drag in the full path to the input directory:"
+        read -r INPUT
+        echo
+    fi
+    MEDIAID="${DPXID}__${TITLE}"
+    OUTPUTDIR="${DELIVERDIR}/${MEDIAID}"
+    mkdir "${OUTPUTDIR}"
+    
+    # record variables in ingest log
+    _writelog "DPX ID" "${DPXID}"
+    _writelog "TITLE" "${TITLE}"
+    _writelog "MEDIAID" "${MEDIAID}"
+    _writelog "REELS" "${REELNUMBER}"
+    _writelog "INPUT" "${INPUT}"
+    _writelog "START TIME" "$(date +%FT%T)"
 
-    case "${reelnumber}" in
+    case "${REELNUMBER}" in
         1 )
-            # make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
-            echo
-            destination="${dest}/${dpxid}__${title}"
-            mkdir "${destination}"
-
-            echo
-            printf "%sMoving files from %s ${input}\n" "${biwhite}" "${color_off}"
-            # find and move any .wav files fom $input to $destination
-            if [[ -d "${destination}" ]] ; then
-                for wav in "${input}"/*WAV ; do
-                    if [[ ! -d "${wav}" ]] ; then
-                        printf "\n\t%sNo .wav directory found.%s\n" "${biwhite}" "${color_off}"
-                        echo
+            _report -g "Moving files from ${INPUT}"
+            if [[ -d "${OUTPUTDIR}" ]] ; then
+                # remove any .DS_Store files to begin
+                "${SCRIPTDIR}/removeDSStore" "${OUTPUTDIR}"
+                # move wav directory and rename in standard format
+                for WAVPATH in "${INPUT}"/*WAV ; do
+                    if [[ ! -d "${WAVPATH}" ]]; then
+                        _report -rt "No .wav directory found."
                     else
-                        while [[ -d "${wav}" ]] ; do
-                            aud=("${destination}/${dpxid}__${title}__Audio") &&
-                            printf "\n\t%sFound .wav directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${aud}" "${color_off}" &&
-                            find "${input}" -type d -name "*WAV" -exec mv -i "{}" "${destination}/${dpxid}__${title}__Audio" \;
-                            echo
+                        while [[ -d "${WAVPATH}" ]] ; do
+                            AUDPATH=("${OUTPUTDIR}/${DPXID}__${TITLE}__Audio") &&
+                            _report -g "Found .wav directory ${WAVPATH}. Renaming to: ${AUDPATH}" &&
+                            mv -i "${WAVPATH}" "${AUDPATH}"
+                        done
+                    fi
+                done
+                # move mov directory and rename in standard format
+                for MOVPATH in "${INPUT}"/*MOV ; do
+                    if [[ ! -d "${MOVPATH}" ]] ; then
+                        _report -rt "No .mov directory found."
+                    else
+                        while [[ -d "${MOVPATH}" ]] ; do
+                            DER=("${OUTPUTDIR}/${DPXID}__${TITLE}__Derivatives") &&
+                            _report -g "Found .mov directory ${MOVPATH}. Renaming to: ${DER}" &&
+                            mv -i "${MOVPATH}" "${DER}"
+                        done
+                    fi
+                done
+                # move dpx directory and rename in standard format
+                for DPXPATH in "${INPUT}"/*DPX ; do
+                    if [[ ! -d "${DPXPATH}" ]] ; then
+                        _report -rt "No DPX directory found."
+                    else
+                        while [[ -d "${DPXPATH}" ]] ; do
+                            DPX=("${OUTPUTDIR}/${DPXID}__${TITLE}__DPX") &&
+                            _report -g "Found DPX directory ${DPXPATH}. Renaming to: ${DPX}" &&
+                            mv -i "${DPXPATH}" "${DPX}"
                         done
                     fi
                 done
             else
-                printf "%sMissing%s %s" "${bired}" "${color_off}" "${destination}"
-                echo
+                _report -rt "ERROR: ${OUTPUTDIR} does not exist. Exiting..."
+                _log -a "Process terminated by script (no directory at requested location)."
                 exit 1
             fi
-            # find and move and .mov files from $input to $destination
-                for mov in "${input}"/*MOV ; do
-                    if [[ ! -d "$mov" ]] ; then
-                        printf "\n\t%sNo .mov directory found.%s\n" "${biwhite}" "${color_off}"
-                        echo
-                    else
-                        while [[ -d "$mov" ]] ; do
-                            der=("${destination}/${dpxid}__${title}__Derivatives") &&
-                            printf "\n\t%sFound .mov directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${der}" "${color_off}" &&
-                            find "${input}" -type d -name "*MOV" -exec mv -i "{}" "${destination}/${dpxid}__${title}__Derivatives" \;
-                            echo
-                        done
-                    fi
-                done
-            # move DPX directory from $input to $destination and rename
-                for dpx in "${input}"/*DPX ; do
-                    if [[ ! -d "${dpx}" ]] ; then
-                        printf "\n\t%sNo DPX directory found.%s\n" "${biwhite}" "${color_off}"
-                        echo
-                    else
-                        while [[ -d "${dpx}" ]] ; do
-                            dpxdir=("${destination}/${dpxid}__${title}__DPX") &&
-                            printf "\n\t%sFound DPX directory.\n\tRenaming to:\n\t%s%s\n" "${biwhite}" "${dpxdir}" "${color_off}" &&
-                            find "${input}" -type d -name "*DPX" -exec mv -i {} "${destination}/${dpxid}__${title}__DPX" \;
-                            echo
-                        done
-                    fi
-                done
+            # find the .wav and .mov files and rename them according to NMAAHC naming structures. Finds files based on filenaming + extension; assumes each file will have descriptive filename + regular extension.
+            _report -g "Renaming files in ${OUTPUTDIR}"
             echo
-            # find the .wav and .mov files and rename them according to NMAAHC naming structures. Finds files based on filenaming + extension; assumes each file will have descriptive filename + lowercase extension.
-            printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
-            echo
-            if [[ -d "${aud}" ]] ; then
-                find "${aud}" -name "*.wav" -exec mv -i "{}" "${aud}/${dpxid}_AUD.wav" \;
-                wav="${aud}/${dpxid}_AUD.wav"
-                printf "\n\t%sRenamed audio file to %s%s\n" "${biwhite}" "${wav}" "${color_off}"
+            if [[ -d "${AUDPATH}" ]] ; then
+                find "${AUDPATH}" -iname "*.wav" -exec mv -i "{}" "${AUDPATH}/${DPXID}_AUD.wav" \;
+                WAV="${AUDPATH}/${DPXID}_AUD.wav"
+                _report -g "Renamed audio file to ${WAV}"
             fi
-            if [[ -d "${der}" ]] ; then
-                find "${der}" -name "*ProRes*.mov" -exec mv -i "{}" "${der}/${dpxid}_DER_01.mov" \;
-                der1="${der}/${dpxid}_DER_01.mov"
-                printf "\n\t%sRenamed ProRes file to %s%s\n" "${biwhite}" "${der1}" "${color_off}"
+            if [[ -d "${DER}" ]] ; then
+                find "${DER}" -iname "*ProRes*.mov" -exec mv -i "{}" "${DER}/${DPXID}_DER_01.mov" \;
+                DER1="${DER}/${DPXID}_DER_01.mov"
+                _report -g "Renamed ProRes file to ${DER1}"
                 fi
-            if [[ -d "${der}" ]] ; then
-                find "${der}" -name "*Uncompressed.mov" -exec mv -i "{}" "${der}/${dpxid}_DER_02.mov" \;
-                der2="${der}/${dpxid}_DER_02.mov"
-                printf "\n\t%sRenamed uncompressed file to %s%s\n" "${biwhite}" "${der2}" "${color_off}"
+            if [[ -d "${DER}" ]] ; then
+                find "${DER}" -iname "*Uncompressed.mov" -exec mv -i "{}" "${DER}/${DPXID}_DER_02.mov" \;
+                DER2="${DER}/${DPXID}_DER_02.mov"
+                _report -g "Renamed uncompressed file to ${DER2}"
                 echo
             fi
-            # remove the $input directory
-            printf "%sRemoving:\n\t%s%s\n" "${biwhite}" "${color_off}" "${input}"
-            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
         2 )
-            # make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
-            destination=("$dest/${dpxid}__${title}")
             # make separate subdirectories for R1 and R2, with further subdirectories for the different components
-            R1=("${destination}/${dpxid}__${title}_R1/${dpxid}__${title}_R1")
-            audR1="${R1}__Audio"
-            derR1="${R1}__Derivatives"
-            dpxR1="${R1}__DPX"
-            R2=("${destination}/${dpxid}__${title}_R2/${dpxid}__${title}_R2")
-            audR2="${R2}__Audio"
-            derR2="${R2}__Derivatives"
-            dpxR2="${R2}__DPX"
-            
-            mkdir -p "${destination}" "${R1}" "${audR1}" "${derR1}" "${dpxR1}" "${R2}" "${audR2}" "${derR2}" "${dpxR2}"
-            
-            echo
-            printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
+            R1=("${OUTPUTDIR}/${MEDIAID}_R1")
+            AUD_R1="${R1}/${MEDIAID}_R1__Audio"
+            DER_R1="${R1}/${MEDIAID}_R1__Derivatives"
+            DPXR1="${R1}/${MEDIAID}_R1__DPX"
+            R2=("${OUTPUTDIR}/${MEDIAID}_R2")
+            AUD_R2="${R2}/${MEDIAID}_R2__Audio"
+            DER_R2="${R2}/${MEDIAID}_R2__Derivatives"
+            DPXR2="${R2}/${MEDIAID}_R2__DPX"
 
-            # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
-            if [[ -d "${audR1}" ]] ; then
-                find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
-            else
-                printf "%sMissing ${audR1}%s" "${bired}" "${color_off}"
+            mkdir -p "${R1}" "${AUD_R1}" "${DER_R1}" "${DPXR1}" "${R2}" "${AUD_R2}" "${DER_R2}" "${DPXR2}"
+            MKDIR_ERR="${?}"
+            if [[ "${MKDIR_ERR}" -gt 0 ]] ; then
+                _report -rt "Not all directories were created. Please double check that you have write permission to output directory ${OUTPUTDIR}"
                 exit 1
-            fi
-            if [[ -d "${derR1}" ]] ; then
-                find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
+                _log -a "Process terminated by script (directories not created)."
             else
-                printf "%sMissing ${derR1}%s" "${bired}" "${color_off}"
-                exit 1
+                echo
+                # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
+                _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \; #-exec _check_rsync_output \;
+                echo
+                # rename files according to NMAAHC filenaming guidelines
+                _report -g "Renaming files in ${OUTPUTDIR}"
+                find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
+                find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
+                find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
+                find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
+                find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
+                find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
             fi
-            if [[ -d "${dpxR1}" ]] ; then
-                find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
-            else
-                printf "%sMissing ${dpxR1}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-
-            if [[ -d "${audR2}" ]] ; then
-                find "${input}" -name "*R2*.wav" -exec mv -vi {} "${audR2}" \;
-            else
-                printf "%sMissing ${audR2}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-            if [[ -d "${derR2}" ]] ; then
-                find "${input}" -name "*R2*.mov" -exec mv -vi {} "${derR2}" \;
-            else
-                printf "%sMissing ${derR2}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-            if [[ -d "${dpxR2}" ]] ; then
-                find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
-            else
-                printf "%sMissing ${dpxR2}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-
-            echo
-            # rename files according to NMAAHC filenaming guidelines
-            printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
-            find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}/${dpxid}_R1_AUD.wav" \;
-            find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_01.mov" \;
-            find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_02.mov" \;
-            find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}/${dpxid}_R2_AUD.wav" \;
-            find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_01.mov" \;
-            find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_02.mov" \;
-
-            echo
-            printf "%sRemoving %s\n" "${biwhite}" "${color_off}" "${input}"
-            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=interactive (prompts before every removal)
             ;;
 
         3 )
-            # make $destination directory inside of $dest ex. 2012_79_1_54__Something_to_Build_On
-            destination=("$dest/${dpxid}__${title}")
             # make separate subdirectories for R1, R2, and R3, with further subdirectories for the different components
-            R1=("${destination}/${dpxid}__${title}_R1/${dpxid}__${title}_R1")
-            audR1="${R1}__Audio"
-            derR1="${R1}__Derivatives"
-            dpxR1="${R1}__DPX"
-            R2=("${destination}/${dpxid}__${title}_R2/${dpxid}__${title}_R2")
-            audR2="${R2}__Audio"
-            derR2="${R2}__Derivatives"
-            dpxR2="${R2}__DPX"
-            R3=("${destination}/${dpxid}__${title}_R3/${dpxid}__${title}_R3")
-            audR3="${R3}__Audio"
-            derR3="${R3}__Derivatives"
-            dpxR3="${R3}__DPX"
-            
-            mkdir -p "${destination}" "${R1}" "${audR1}" "${derR1}" "${dpxR1}" "${R2}" "${audR2}" "${derR2}" "${dpxR2}" "${R3}" "${audR3}" "${derR3}" "${dpxR3}"
-            
-            echo
-            printf "%sMoving files from%s %s" "${biwhite}" "${color_off}" "${input}"
+            R1=("${OUTPUTDIR}/${MEDIAID}_R1")
+            AUD_R1="${R1}/${MEDIAID}_R1__Audio"
+            DER_R1="${R1}/${MEDIAID}_R1__Derivatives"
+            DPXR1="${R1}/${MEDIAID}_R1__DPX"
+            R2=("${OUTPUTDIR}/${MEDIAID}_R2")
+            AUD_R2="${R2}/${MEDIAID}_R2__Audio"
+            DER_R2="${R2}/${MEDIAID}_R2__Derivatives"
+            DPXR2="${R2}/${MEDIAID}_R2__DPX"
+            R3=("${OUTPUTDIR}/${MEDIAID}_R3")
+            AUD_R3="${R3}/${MEDIAID}_R3__Audio"
+            DER_R3="${R3}/${MEDIAID}_R3__Derivatives"
+            DPXR3="${R3}/${MEDIAID}_R3__DPX"
 
-            # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + lowercase extension.
-            if [[ -d "${audR1}" ]] ; then
-                find "${input}" -name "*R1*.wav" -exec mv -vi {} "${audR1}" \;
-            else
-                printf "%sMissing ${audR1}%s" "${bired}" "${color_off}"
+            mkdir -p "${R1}" "${AUD_R1}" "${DER_R1}" "${DPXR1}" "${R2}" "${AUD_R2}" "${DER_R2}" "${DPXR2}" "${R3}" "${AUD_R3}" "${DER_R3}" "${DPXR3}"
+            MKDIR_ERR="${?}"
+            if [[ "${MKDIR_ERR}" -gt 0 ]] ; then
+                _report -rt "Not all directories were created. Please double check that you have write permission to output directory ${OUTPUTDIR}"
                 exit 1
-            fi
-            if [[ -d "${derR1}" ]] ; then
-                find "${input}" -name "*R1*.mov" -exec mv -vi {} "${derR1}" \;
+                _log -a "Process terminated by script (directories not created)."
             else
-                printf "%sMissing ${derR1}%s" "${bired}" "${color_off}"
-                exit 1
+                true
+                echo
+                # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
+                _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.wav" -exec rsync -av {} "${AUD_R3}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.mov" -exec rsync -av {} "${DER_R3}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -av {} "${DPXR3}" \; # -exec _check_rsync_output \;
+                echo
+                # rename files according to NMAAHC filenaming guidelines
+                _report -g "Renaming files in ${OUTPUTDIR}"
+                find "${AUD_R1}" -iname "*R1*.wav" -exec mv -vi {} "${AUD_R1}/${DPXID}_R1_AUD.wav" \;
+                find "${DER_R1}" -iname "*R1*ProRes*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_01.mov" \;
+                find "${DER_R1}" -iname "*R1*Uncompressed*.mov" -exec mv -vi {} "${DER_R1}/${DPXID}_R1_DER_02.mov" \;
+                find "${AUD_R2}" -iname "*R2*.wav" -exec mv -vi {} "${AUD_R2}/${DPXID}_R2_AUD.wav" \;
+                find "${DER_R2}" -iname "*R2*ProRes*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_01.mov" \;
+                find "${DER_R2}" -iname "*R2*Uncompressed*.mov" -exec mv -vi {} "${DER_R2}/${DPXID}_R2_DER_02.mov" \;
+                find "${AUD_R3}" -iname "*R3*.wav" -exec mv -vi {} "${AUD_R3}/${DPXID}_R3_AUD.wav" \;
+                find "${DER_R3}" -iname "*R3*ProRes*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_01.mov" \;
+                find "${DER_R3}" -iname "*R3*Uncompressed*.mov" -exec mv -vi {} "${DER_R3}/${DPXID}_R3_DER_02.mov" \;
             fi
-            if [[ -d "${dpxR1}" ]] ; then
-                find "${input}" -name "*R1*.dpx" -exec mv -vi {} "${dpxR1}" \;
-            else
-                printf "%sMissing ${dpxR1}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-
-            if [[ -d "${audR2}" ]] ; then
-                find "${input}" -name "*R2*.wav" -exec mv -vi {} "${audR2}" \;
-            else
-                printf "%sMissing ${audR2}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-            if [[ -d "${derR2}" ]] ; then
-                find "${input}" -name "*R2*.mov" -exec mv -vi {} "${derR2}" \;
-            else
-                printf "%sMissing ${derR2}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-            if [[ -d "${dpxR2}" ]] ; then
-                find "${input}" -name "*R2*.dpx" -exec mv -vi {} "${dpxR2}" \;
-            else
-                printf "%sMissing ${dpxR2}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-
-            if [[ -d "${audR3}" ]] ; then
-                find "${input}" -name "*R3*.wav" -exec mv -vi {} "${audR3}" \;
-            else
-                printf "%sMissing ${audR3}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-            if [[ -d "${derR3}" ]] ; then
-                find "${input}" -name "*R3*.mov" -exec mv -vi {} "${derR3}" \;
-            else
-                printf "%sMissing ${derR3}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-            if [[ -d "${dpxR3}" ]] ; then
-                find "${input}" -name "*R3*.dpx" -exec mv -vi {} "${dpxR3}" \;
-            else
-                printf "%sMissing ${dpxR3}%s" "${bired}" "${color_off}"
-                exit 1
-            fi
-
-            echo
-            # rename files according to NMAAHC filenaming guidelines
-            printf "%sRenaming files in %s%s\n" "${biwhite}" "${color_off}" "${destination}"
-            find "${audR1}" -name "*R1*.wav" -exec mv -vi {} "${audR1}/${dpxid}_R1_AUD.wav" \;
-            find "${derR1}" -name "*R1*ProRes*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_01.mov" \;
-            find "${derR1}" -name "*R1*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R1_DER_02.mov" \;
-            find "${audR2}" -name "*R2*.wav" -exec mv -vi {} "${audR2}/${dpxid}_R2_AUD.wav" \;
-            find "${derR2}" -name "*R2*ProRes*.mov" -exec mv -vi {} "${derR2}/${dpxid}_R2_DER_01.mov" \;
-            find "${derR2}" -name "*R2*Uncompressed*.mov" -exec mv -vi {} "${derR1}/${dpxid}_R2_DER_02.mov" \;
-            find "${audR3}" -name "*R3*.wav" -exec mv -vi {} "${audR3}/${dpxid}_R3_AUD.wav" \;
-            find "${derR3}" -name "*R3*ProRes*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_01.mov" \;
-            find "${derR3}" -name "*R3*Uncompressed*.mov" -exec mv -vi {} "${derR3}/${dpxid}_R3_DER_02.mov" \;
-
-            echo
-            printf "%sRemoving \n" "${biwhite}" "${color_off}" "${input}"
-            rm -vri "${input}" # remove input directory. -v=verbose, -r=recursive, -i=prompt before every removal
             ;;
 
             *   )
-            printf "%sERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later." "${bired}"
+            _report -rt "ERROR. Presently, this script can only handle DPX packages of 1 or 2 or 3 reels. Check back later."
             echo
             cowsay "SORRY!"
+            _log -w "Attempt to run restructureDPX with >3 reels in package."
             ;;
-
     esac
 }
 
 ## SCRIPT ACTIONS
 
-restructureDPX "${@}"
-printf "${biwhite}restructureDPX process complete.${color_off}\n"
+# log script beginning
+_log -b
+_restructureDPX "${@}"
+# remove input files - HARDCODED OFF DURING TESTING
+# if [[ -z "${CLEANUPDECISION}" ]] ; then
+#     _report -b "Remove input directory? Type Y or y for yes, any other key for no: "
+#     read CLEANUPDECISION
+# fi
+# don't allow removal of input directory if there were any rsync errors
+if [[ "${CLEANUPDECISION}" == [Yy] ]] ; then
+    if [[ "${RSYNC_ERROR_COUNT}" -eq 0 ]] ; then
+        true
+        #_report -g "Deleting input directory..."
+        # rm -vr "${INPUT}" # remove input directory. -v=verbose, -r=recursive - HARDCODED OFF DURING TESTING
+    else
+        _report -rt "ERROR: Not all rsync processes completed successfully. Cancelling requested deletion of input directory."
+    fi
+fi
+# summarize rsync errors for operator
+if [[ "${RSYNC_ERROR_COUNT}" -gt 0 ]] ; then
+    _report -rt "ERROR: ${RSYNC_ERROR_COUNT} file/s experienced issues during the rsync process. Please review the rsync output in the terminal window."
+fi
+# log script ending
+_log -e
+_writelog "END TIME" "$(date +%FT%T)"
+_report -g "restructureDPX process complete."
 exit $?
