@@ -146,6 +146,14 @@ function nmaahcmm () {
 }
 export -f nmaahcmm
 
+	# make directories named after files
+function makedirfile () {
+	for file in *.*; do
+    mkdir -p "${file%.*}";
+done
+}
+export -f makedirfile
+
 	# rsync transfer for DAMS uploads
 function rsyncDAMS () {
 	rsync -avvPhi --no-p --stats "${@}"
