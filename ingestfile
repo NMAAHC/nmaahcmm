@@ -43,35 +43,28 @@ CONF="
 
 # intro text
 intro.x = 20
-intro.y = 720
+intro.y = 600
 intro.width = 500
 intro.type = text
 intro.text = Ingest file options. Leave the option blank to be prompted.
 
 # ask operator
 OP.x = 20
-OP.y = 660
+OP.y = 540
 OP.type = textfield
 OP.label = Please enter your name:
-OP.width = 300
-
-# mediaid
-MEDIAID.x = 20
-MEDIAID.y = 600
-MEDIAID.type = textfield
-MEDIAID.label = Please enter a unique media ID/package name (letters, numbers, hyphens, underscores only). Leave blank for DPX packages.
-MEDIAID.width = 300
+OP.width = 250
 
 # input directory
 INPUT.x = 20
-INPUT.y = 540
+INPUT.y = 480
 INPUT.type = openbrowser
 INPUT.label = Select your package:
 INPUT.width=400
 
 # package type
 PACKAGETYPE.x = 20
-PACKAGETYPE.y = 480
+PACKAGETYPE.y = 420
 PACKAGETYPE.type = combobox
 PACKAGETYPE.label = Please indicate the type of package being submitted.
 PACKAGETYPE.option =
@@ -82,50 +75,57 @@ PACKAGETYPE.option = Transferred DV (MOV and/or MP4 files)
 PACKAGETYPE.option = Other/Unknown
 PACKAGETYPE.width = 400
 
+# mediaid
+MEDIAID.x = 20
+MEDIAID.y = 360
+MEDIAID.type = textfield
+MEDIAID.label = Enter a unique media ID/package name ([aA-zZ][0-9]-_ only). LEAVE BLANK for DPX packages.
+MEDIAID.width = 250
+
+# DPX object ID
+DPXID.x = 20
+DPXID.y = 300
+DPXID.type = textfield
+DPXID.label = If your package is a DPX, enter a DPX object ID (ex. 2012_79_1_54).
+DPXID.option =
+DPXID.width=250
+
+# DPX title
+DPXTITLE.x = 20
+DPXTITLE.y = 240
+DPXTITLE.type = textfield
+DPXTITLE.label = If your package is a DPX, enter a DPX title (ex. Something_to_Build_On).
+DPXTITLE.option =
+DPXTITLE.width=250
+
 # DPX reel count
 REELS.x = 20
-REELS.y = 420
+REELS.y = 180
 REELS.type = combobox
 REELS.label = If your package is a DPX, select the number of reels (if not a DPX, leave blank).
 REELS.option =
 REELS.option = 1
 REELS.option = 2
 REELS.option = 3
-REELS.width=400
-
-# DPX object ID
-DPXID.x = 20
-DPXID.y = 360
-DPXID.type = textfield
-DPXID.label = If your package is a DPX, enter a DPX object ID (ex. 2012_79_1_54).
-DPXID.option =
-DPXID.width=200
-
-# DPX title
-DPXTITLE.x = 20
-DPXTITLE.y = 300
-DPXTITLE.type = textfield
-DPXTITLE.label = If your package is a DPX, enter a DPX title (ex. Something_to_Build_On).
-DPXTITLE.option =
-DPXTITLE.width=200
+REELS.width=100
 
 # destination
 DESTINATION.x = 20
-DESTINATION.y = 240
+DESTINATION.y = 120
 DESTINATION.type = openbrowser
 DESTINATION.label = Select where the package will go.
 DESTINATION.width = 400
 
 # cleanup decision
 CLEANUPDECISION.x = 20
-CLEANUPDECISION.y = 180
+CLEANUPDECISION.y = 60
 CLEANUPDECISION.type = combobox
 CLEANUPDECISION.label = Select a cleanup strategy
 CLEANUPDECISION.default = Leave source files where they are
 CLEANUPDECISION.option =
 CLEANUPDECISION.option = Leave source files where they are
 CLEANUPDECISION.option = Remove source files after successful ingest
-CLEANUPDECISION.width = 300
+CLEANUPDECISION.width = 400
 
 # Add a cancel button with default label
 cb.type=cancelbutton
@@ -152,7 +152,6 @@ echo ""
 if [[ -z "${OP}" ]] ; then
     printf "Enter the name of the operator or 'q' to quit: "
     read -e OP
-    [[ -z "${OP}" ]] && _ask_operator
     [[ "${OP}" = "q" ]] && exit 0
 fi
 if [[ -z "${INPUT}" ]] ; then

@@ -114,7 +114,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     _log -a "Process terminated by script (operator redirected to appropriate microservice)."
     exit 0
 else
-    echo "making directory"
+    echo "Making objects and metadata directories..."
     mkdir -p "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
     _report -g "Moving SIP to output package..."
 fi
