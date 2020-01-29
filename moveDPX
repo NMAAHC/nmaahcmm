@@ -12,7 +12,7 @@ RSYNC_ERROR_COUNT=0
 RSYNC_ERROR_FILES=""
 
 # (hardcoded) designated parent folder where the files will be moved
-DESTINATION_PARENT_DIR="/Users/Annie/Dropbox/Annie/2019_fall/NMAAHC-test-files/dpx_dest"
+DESTINATION_PARENT_DIR="/Volumes/nmaahc-borndigital/06_DPX_checksums"
 
 ## USAGE
 

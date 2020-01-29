@@ -5,7 +5,8 @@ GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
 # global variables
-LOGDIR="./Desktop/logs"
+LOGDIR="${SCRIPTDIR}/logs/" # temp - this should be changed in local instances to another folder outside of your script directory
+[[ ! -d "${SCRIPTDIR}/logs/" ]] && mkdir "${SCRIPTDIR}/logs/"
 
 # You can't directly call a function in another shell script. You can move your function definitions into a separate file and then load them into your script using the . command, like this:
 # . /path/to/functions.sh
