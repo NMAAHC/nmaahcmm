@@ -361,5 +361,3 @@ if [[ "$makegm" = "Yes" ]]; then
   cd /Users/medialab/gitHub/nmaahc/nmaahcmm
   ./makegm
 fi
-if [[ "${MAKEGM}" = "Yes" ]]; then
-fi
