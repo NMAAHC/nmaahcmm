@@ -122,39 +122,38 @@ fi
 # perform restructuring actions on other SIPs
 if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
-        rsync -avh "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mkv -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mkv -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mkv -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mkv -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
 fi

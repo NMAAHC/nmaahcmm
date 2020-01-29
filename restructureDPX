@@ -175,12 +175,14 @@ _restructureDPX(){
                 echo
                 # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
                 _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
-                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \; #-exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \; #-exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \; #-exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \; #-exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \; #-exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \; #-exec _check_rsync_output \;
+                for FILE in $(find "${INPUT}" -iname "*R1*.wav") ;
+                    rsync -avh --progress "${FILE}" "${AUD_R1}"
+                    _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -avh --progress {} "${DER_R1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -avh --progress {} "${DPXR1}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -avh --progress {} "${AUD_R2}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -avh --progress {} "${DER_R2}" \; #-exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -avh --progress {} "${DPXR2}" \; #-exec _check_rsync_output \;
                 echo
                 # rename files according to NMAAHC filenaming guidelines
                 _report -g "Renaming files in ${OUTPUTDIR}"
@@ -219,15 +221,15 @@ _restructureDPX(){
                 echo
                 # find and move audio, derivatives, and DPX files for each reel in turn. Finds files based on filenaming + extension; assumes each file will have reel # in filename + regular extension.
                 _report -g "Moving files from ${INPUT} to ${OUTPUTDIR}"
-                find "${INPUT}" -iname "*R1*.wav" -exec rsync -av {} "${AUD_R1}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.mov" -exec rsync -av {} "${DER_R1}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -av {} "${DPXR1}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.wav" -exec rsync -av {} "${AUD_R2}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.mov" -exec rsync -av {} "${DER_R2}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -av {} "${DPXR2}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R3*.wav" -exec rsync -av {} "${AUD_R3}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R3*.mov" -exec rsync -av {} "${DER_R3}" \; # -exec _check_rsync_output \;
-                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -av {} "${DPXR3}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.wav" -exec rsync -avh --progress {} "${AUD_R1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.mov" -exec rsync -avh --progress {} "${DER_R1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R1*.dpx" -exec rsync -avh --progress {} "${DPXR1}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.wav" -exec rsync -avh --progress {} "${AUD_R2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.mov" -exec rsync -avh --progress {} "${DER_R2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R2*.dpx" -exec rsync -avh --progress {} "${DPXR2}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.wav" -exec rsync -avh --progress {} "${AUD_R3}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.mov" -exec rsync -avh --progress {} "${DER_R3}" \; # -exec _check_rsync_output \;
+                find "${INPUT}" -iname "*R3*.dpx" -exec rsync -avh --progress {} "${DPXR3}" \; # -exec _check_rsync_output \;
                 echo
                 # rename files according to NMAAHC filenaming guidelines
                 _report -g "Renaming files in ${OUTPUTDIR}"

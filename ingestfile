@@ -250,7 +250,7 @@ elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; th
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -f "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    rsync -av "${INPUT}/derivative/"*.mp4 "${INPUT}" # move derivative files up to main package level so that makeH264 can see there are derivatives already created
+    rsync -avh --progress "${INPUT}/derivative/"*.mp4 "${INPUT}" # move derivative files up to main package level so that makeH264 can see there are derivatives already created
     _check_rsync_output
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
@@ -267,7 +267,7 @@ fi
 
 # REDUNDANT - copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
 # if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
-#     rsync -av "${INPUT}" "${DESTINATION}/${MEDIAID}"
+#     rsync -avh --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
 #     _check_rsync_output
 #     if [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
 #         _report -rt  "ERROR: rsync process failed. Exiting..."
