@@ -158,6 +158,11 @@ if [[ -z "${INPUT}" ]] ; then
     printf "Drag in the input directory or type 'q' to quit: "
     read -e INPUT
     [[ "${INPUT}" = "q" ]] && exit 0
+    if [[ ! -d "${INPUT}" ]] ; then
+        _report -rt "ERROR: Input ${INPUT} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
     basename=$(basename "${INPUT}")
 fi
 if [[ -z "${PACKAGETYPE}" ]] ; then
@@ -203,6 +208,11 @@ if [[ -z "${DESTINATION}" ]] ; then
     printf "Drag in the destination directory or type 'q' to quit: "
     read -e DESTINATION
     [[ "${DESTINATION}" = "q" ]] && exit 0
+    if [[ ! -d "${DESTINATION}" ]] ; then
+        _report -rt "ERROR: Destination ${DESTINATION} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
 fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     printf "Select a cleanup strategy:"

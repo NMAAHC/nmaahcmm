@@ -79,6 +79,11 @@ if [[ -z "${DELIVERDIR}" ]] ; then
     _report -b "Drag in the DELIVERDIR directory or type 'q' to quit: "
     read -e DELIVERDIR
     [[ "${DELIVERDIR}" = "q" ]] && exit 0
+    if [[ ! -d "${DELIVERDIR}" ]] ; then
+        _report -rt "ERROR: Destination ${DELIVERDIR} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
 fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     CLEANUPDECISION="Leave source files where they are"
