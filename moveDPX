@@ -8,6 +8,8 @@ SCRIPTDIR=$(dirname "${0}")
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(rsync) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
+RSYNC_ERROR_COUNT=0
+RSYNC_ERROR_FILES=""
 
 # (hardcoded) designated parent folder where the files will be moved
 DESTINATION_PARENT_DIR="/Users/Annie/Dropbox/Annie/2019_fall/NMAAHC-test-files/dpx_dest"
@@ -38,8 +40,6 @@ shift $(( ${OPTIND} - 1 ))
 
 # log script beginning
 _log -b
-RSYNC_ERROR_COUNT=0
-RSYNC_ERROR_FILES=""
 
 while [[ "${*}" != "" ]] ; do
     DPX_SOURCE="${1}"
@@ -59,17 +59,10 @@ while [[ "${*}" != "" ]] ; do
         if [[ -f "${DPX_DESTINATION}"/*.dpx ]] ; then # if .dpx file is found in the destination folder, do:
             _report -g "Verifying checksum for ${FILE##*/} ..."
             rsync -avPhic "${FILE}" "${DPX_DESTINATION}" # move file securely to the target folder. -a="archive," -v=verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes, -c=with a built-in checksum check
-            RSYNC_ERR_1="$?" # assign rsync output code to a variable
+            _check_rsync_output
         else
             rsync -avPhi "${FILE}" "${DPX_DESTINATION}" # move file securely to the destination folder (no checksum check)
-            RSYNC_ERR_1="$?" # assign rsync output code to a variable
-        fi
-        # if rsync output code indicates a failed transfer, add failure to a summary report; rsync -v also reports this information in the terminal
-        if [[ "${RSYNC_ERR_1}" != 0 ]] ; then
-            ((RSYNC_ERROR_COUNT++))
-            RSYNC_ERROR_FILES+=(${FILE} )
-        else
-            continue
+            _check_rsync_output
         fi
         break 1
     done
@@ -78,17 +71,10 @@ while [[ "${*}" != "" ]] ; do
         if [[ -f "${DPX_DESTINATION}"/*.md5 ]] ; then # if .md5 checksum file is found as expected, do:
             _report -g "Verifying checksum for ${MD5##*/}..." # move file securely to the target folder (with built-in checksum check)
             rsync -avPhic "${MD5}" "${DPX_DESTINATION}"
-            RSYNC_ERR_2="$?" # assign rsync output code to a variable
+            _check_rsync_output
         else
             rsync -avPhi "${MD5}" "${DPX_DESTINATION}" # move file securely to the target folder (no checksum check)
-            RSYNC_ERR_2="$?" # assign rsync output code to a variable
-        fi
-        # if rsync output code indicates a failed transfer, add failure to a summary report; rsync -v also reports this information in the terminal
-        if [[ "${RSYNC_ERR_2}" != 0 ]] ; then
-            ((RSYNC_ERROR_COUNT++))
-            RSYNC_ERROR_FILES+="${MD5} "
-        else
-            continue
+            _check_rsync_output
         fi
     done
     _report -g "Moving to next DPX directory if supplied..."

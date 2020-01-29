@@ -43,14 +43,6 @@ shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 # if rsync output code indicates a failed transfer, increment the total number of failed transfers; rsync -v will also report this information in the terminal
-_check_rsync_output(){
-    RSYNC_ERR="$?"
-    if [[ "${RSYNC_ERR}" != 0 ]] ; then
-        ((RSYNC_ERROR_COUNT++))
-    else
-        continue
-    fi
-}
 
 _restructureDPX(){
     INPUT="${1}"
