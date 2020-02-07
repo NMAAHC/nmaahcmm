@@ -44,14 +44,14 @@ _makeconcat(){
     while [ "${*}" != "" ] ; do # while the number of arguments is not zero do X
         for FILE in ${1} ; do # for the first argument do X
             SUFFIX="${FILE##*.}" # set $SUFFIX to whatever the extension of your $FILE is
-            PATH="${FILE%/*}" # the $PATH is set as the dirname of the first argument
-            TXTFILE="${PATH}/${CONCATFILE}.txt" # the $TXTFILE will be created in the same dir as the first argument and named after $CONCATFILE
+            FILE_PATH="${FILE%/*}" # the $FILE_PATH is set as the dirname of the first argument
+            TXTFILE="${FILE_PATH}/${CONCATFILE}.txt" # the $TXTFILE will be created in the same dir as the first argument and named after $CONCATFILE
             touch "${TXTFILE}" # the $TXTFILE is created, aka "touched"
-            printf "FILE '${FILE}'\n" >> "${TXTFILE}" # the first argument is written to $TXTFILE in the appropriate syntax for ffmpeg
+            printf "file '${FILE}'\n" >> "${TXTFILE}" # the first argument is written to $TXTFILE in the appropriate syntax for ffmpeg
             shift # the script shifts from the first argument to the second argument. It will do this until there are no more arguments.
         done
     done
-    CONCATFILE="${PATH}/${CONCATFILE}.$SUFFIX"
+    CONCATFILE="${FILE_PATH}/${CONCATFILE}.$SUFFIX"
     ffmpeg -f concat -safe 0 -i "${TXTFILE}" -c copy "${CONCATFILE}" # ffmpeg creates the concatenated FILE in the same directory as $FILEs
     echo
     cowsay "Done. Your concatenated video FILE is ready fo action." # cowsay tells it like it is.
