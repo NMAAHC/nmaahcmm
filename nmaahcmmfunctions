@@ -5,7 +5,8 @@ GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
 # global variables
-LOGDIR="./Desktop/logs"
+LOGDIR="${SCRIPTDIR}/logs/" # temp - this should be changed in local instances to another folder outside of your script directory
+[[ ! -d "${SCRIPTDIR}/logs/" ]] && mkdir "${SCRIPTDIR}/logs/"
 
 # You can't directly call a function in another shell script. You can move your function definitions into a separate file and then load them into your script using the . command, like this:
 # . /path/to/functions.sh
@@ -232,4 +233,13 @@ _seconds_to_hhmmss(){
     m=`expr "$num"  % 3600 / 60`
     s=`expr "$num" % 60`
     printf "%02d:%02d:%02d\n" $h $m $s
+}
+
+_check_rsync_output(){
+    RSYNC_ERR="$?"
+    if [[ "${RSYNC_ERR}" != 0 ]] ; then
+        ((RSYNC_ERROR_COUNT++))
+    else
+        continue
+    fi
 }

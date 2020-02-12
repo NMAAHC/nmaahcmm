@@ -174,4 +174,4 @@ makegm ()
 
 makegm "${@}"
 
-exit "$?"
+exit "$?

@@ -10,6 +10,7 @@ SCRIPTDIR=$(dirname $(which "${0}"))
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(rsync) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
+RSYNC_ERROR_COUNT=0
 
 ## USAGE
 
@@ -78,6 +79,11 @@ if [[ -z "${DELIVERDIR}" ]] ; then
     _report -b "Drag in the DELIVERDIR directory or type 'q' to quit: "
     read -e DELIVERDIR
     [[ "${DELIVERDIR}" = "q" ]] && exit 0
+    if [[ ! -d "${DELIVERDIR}" ]] ; then
+        _report -rt "ERROR: Destination ${DELIVERDIR} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
 fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     CLEANUPDECISION="Leave source files where they are"
@@ -113,7 +119,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     _log -a "Process terminated by script (operator redirected to appropriate microservice)."
     exit 0
 else
-    echo "making directory"
+    echo "Making objects and metadata directories..."
     mkdir -p "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
     _report -g "Moving SIP to output package..."
 fi
@@ -121,46 +127,46 @@ fi
 # perform restructuring actions on other SIPs
 if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
+        _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
+        _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mkv -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
+        _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mkv -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
+        _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
+        _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
+        _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mkv -o -iname *.mp4) ; do
-        rsync -av "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
+        _check_rsync_output
     done
     for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mkv -not -iname *.mp4) ; do
-        rsync -av "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata"
-        RSYNC_ERR="${?}"
+        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
+        _check_rsync_output
     done
 fi
 
 # clean up original files if requested - hardcoded OFF during testing
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
-#    if [[ -n "${RSYNC_ERR}" ]] && [[ "${RSYNC_ERR}" -gt "0" ]] ; then
-#        echo "${RSYNC_ERR}"
+#    if [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
+#        echo "There were ${RSYNC_ERROR_COUNT} errors during the rsync process!"
 #        _report -rt "Cancelling requested deletion of source file, not looking safe."
 #    else
 #        _report -g "Removing the source file from ${INPUT} as requested."

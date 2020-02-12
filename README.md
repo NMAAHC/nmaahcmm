@@ -93,7 +93,7 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
 * Your command will look like this: `removeDSStore [input]`
   
 #### restructureDPX
-* This application will create a the desired directory structure and filenames for DPX packages received from VFS.
+* This application will create the desired directory structure and filenames for DPX packages received from VFS.
 * This script takes a set of options. Options can be combined, and the order of the options does not matter, as long as they are in between "restructureDPX" and your input. Some options require an argument following immediately after the option flag (e.g., -d must be followed with the path of the directory you specify: `-d [directory/path]`); these arguments are detailed below. None of the options are required to run the command; the script will interview the operator if any of the options are left out.
     * -d: specify an output directory to deliver the resulting package
         * Your command will look like this: `restructureDPX -d /path/to/deliver/to/ dpxpackage`
