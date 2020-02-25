@@ -9,7 +9,7 @@ SCRIPTDIR=$(dirname "${0}")
 RUNPASHUA="Y"
 if [ ! -d  /Volumes/ScanSAN ] ; then
   echo
-  printf "%s/Volumes/ScanSAN is not found. This location must be present for script to run. Exiting.%s" "$bired" "$color_off"
+  _report -r "/Volumes/ScanSAN is not found. This location must be present for script to run. Exiting."
   echo
   echo
   exit
@@ -329,8 +329,6 @@ if [[ ! -d "${GM_DIR}" ]] ; then
     _log -a "Process terminated by script (no valid directory at requested location)."
 fi
 
-if [[ "$makegm" = "Yes" ]]; then
-  cd /Users/medialab/gitHub/nmaahc/nmaahcmm
-  ./makegm
 if [[ "${MAKEGM}" = "Yes" ]]; then
+  "${SCRIPTDIR}/makegm"
 fi
