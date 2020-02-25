@@ -259,11 +259,11 @@ if [[ "${RUNPASHUA}" = "Y" ]] ; then
     _pashua_run
     rm "${PASHUA_CONFIGFILE}"
     if [ "${PASHUAFAIL}" = "Y" ] ; then
-    	echo "Pashua is not installed. Exiting."
+        echo "Pashua is not installed. Exiting."
         #echo "Pashua is not installed.  Opening via CLI."
         #sleep 1
         #exec $(basename "${0}") -t
-   		exit
+        exit
     fi
 else
     # set up configuration file using the command line
