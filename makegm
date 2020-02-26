@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-
-# create Great Migration directory structur as set in gmconfig
+# makegm
+# create Great Migration directory structure as set in gmconfig
 
 ### CONSTANTS
-DATE_ISO=$(date +%Y%m%d)
-DATE_HYPHEN=$(date +%Y-%m-%d)
+DATE_ISO="$(date +%Y%m%d)"
+DATE_HYPHEN="$(date +%Y-%m-%d)"
 
 SCRIPT_PATH=${0%/*}
 # script_path will be the directory path of {0} which is the script being called
@@ -21,128 +21,128 @@ SCRIPT_PATH=${0%/*}
 
 makegm ()
 {
-    GM_DIR="${GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}"
-    mkdir -p "${GM_DIR}"
-    GENERAL_NOTES="${GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_generalNotes.txt"
+    CURRENT_GM_DIR="${GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}"
+    mkdir -p "${CURRENT_GM_DIR}"
+    GENERAL_NOTES="${CURRENT_GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_generalNotes.txt"
     touch "${GENERAL_NOTES}"
     echo "These are general notes concerning the appointment of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} on ${DATE_HYPHEN}. They were written by the operator, ${GM_OPERATOR}, and contain observations about the appointment and information relayed by ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST}." >> "${GENERAL_NOTES}"
 
     #35mm
     if [ "${GM_FORMATS_35MM}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/35mm/ACCESS" "${GM_DIR}/35mm/PRESERVATION"
-        35MM_NOTES="${GM_DIR}/35mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_35mm_Notes.txt"
-        touch "${35MM_NOTES}"
-        echo "These are notes concerning the 35mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were scanned on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and scanning, not content of the films." >> "${35MM_NOTES}"
+        mkdir -p "${CURRENT_GM_DIR}/35mm/ACCESS" "${CURRENT_GM_DIR}/35mm/PRESERVATION"
+        NOTES_35MM="${CURRENT_GM_DIR}/35mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_35mm_Notes.txt"
+        touch "${NOTES_35MM}"
+        echo "These are notes concerning the 35mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were scanned on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and scanning, not content of the films." >> "${NOTES_35MM}"
     fi
     #16mm
     if [ "${GM_FORMATS_16MM}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/16mm/ACCESS" "${GM_DIR}/16mm/PRESERVATION"
-        16MM_NOTES="${GM_DIR}/16mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_16mm_Notes.txt"
-        touch "${16MM_NOTES}"
-        echo "These are notes concerning the 16mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were scanned on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and scanning, not content of the films." >> "${16MM_NOTES}"
+        mkdir -p "${CURRENT_GM_DIR}/16mm/ACCESS" "${CURRENT_GM_DIR}/16mm/PRESERVATION"
+        NOTES_16MM="${CURRENT_GM_DIR}/16mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_NOTES_16MM.txt"
+        touch "${NOTES_16MM}"
+        echo "These are notes concerning the 16mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were scanned on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and scanning, not content of the films." >> "${NOTES_16MM}"
     fi
     #Regular 8
     if [ "${GM_FORMATS_R8}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/Regular8mm/ACCESS" "${GM_DIR}/Regular8mm/PRESERVATION"
-        R8_NOTES="${GM_DIR}/Regular8mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Regular8mm_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/Regular8mm/ACCESS" "${CURRENT_GM_DIR}/Regular8mm/PRESERVATION"
+        R8_NOTES="${CURRENT_GM_DIR}/Regular8mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Regular8mm_Notes.txt"
         touch "${R8_NOTES}"
         echo "These are notes concerning the Regular 8mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were scanned on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and scanning, not content of the films." >> "${R8_NOTES}"
     fi
     #Super 8
     if [ "${GM_FORMATS_S8}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/Super8/ACCESS" "${GM_DIR}/Super8/PRESERVATION"
-        S8_NOTES="${GM_DIR}/Super8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Super8_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/Super8/ACCESS" "${CURRENT_GM_DIR}/Super8/PRESERVATION"
+        S8_NOTES="${CURRENT_GM_DIR}/Super8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Super8_Notes.txt"
         touch "${S8_NOTES}"
         echo "These are notes concerning the Super 8 films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were scanned on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and scanning, not content of the films." >> "${S8_NOTES}"
     fi
     #VHS
     if [ "${GM_FORMATS_VHS}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/VHS/ACCESS" "${GM_DIR}/VHS/PRESERVATION"
-        VHS_NOTES="${GM_DIR}/VHS/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_VHS_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/VHS/ACCESS" "${CURRENT_GM_DIR}/VHS/PRESERVATION"
+        VHS_NOTES="${CURRENT_GM_DIR}/VHS/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_VHS_Notes.txt"
         touch "${VHS_NOTES}"
         echo "These are notes concerning the VHS tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${VHS_NOTES}"
     fi
     #MiniDV
     if [ "${GM_FORMATS_VHS}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/MiniDV/ACCESS" "${GM_DIR}/MiniDV/PRESERVATION"
-        MINIDV_NOTES="${GM_DIR}/MiniDV/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_MiniDV_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/MiniDV/ACCESS" "${CURRENT_GM_DIR}/MiniDV/PRESERVATION"
+        MINIDV_NOTES="${CURRENT_GM_DIR}/MiniDV/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_MiniDV_Notes.txt"
         touch "${MINIDV_NOTES}"
         echo "These are notes concerning the MiniDV tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${MINIDV_NOTES}"
     fi
     #Video8
     if [ "${GM_FORMATS_V8}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/Video8/ACCESS" "${GM_DIR}/Video8/PRESERVATION"
-        V8_NOTES="${GM_DIR}/Video8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_V8_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/Video8/ACCESS" "${CURRENT_GM_DIR}/Video8/PRESERVATION"
+        V8_NOTES="${CURRENT_GM_DIR}/Video8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_V8_Notes.txt"
         touch "${V8_NOTES}"
         echo "These are notes concerning the Video8 tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${V8_NOTES}"
     fi
     #Hi8
     if [ "${GM_FORMATS_V8}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/Hi8/ACCESS" "${GM_DIR}/Hi8/PRESERVATION"
-        HI8_NOTES="${GM_DIR}/Hi8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Hi8_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/Hi8/ACCESS" "${CURRENT_GM_DIR}/Hi8/PRESERVATION"
+        HI8_NOTES="${CURRENT_GM_DIR}/Hi8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Hi8_Notes.txt"
         touch "${HI8_NOTES}"
         echo "These are notes concerning the Hi8 tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${HI8_NOTES}"
     fi
     #Digital8
     if [ "${GM_FORMATS_D8}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/Digital8/ACCESS" "${GM_DIR}/Digital8/PRESERVATION"
-        DIGITAL8_NOTES="${GM_DIR}/Digital8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Digital8_Notes.txt"
-        touch ${DIGITAL8_NOTES}
+        mkdir -p "${CURRENT_GM_DIR}/Digital8/ACCESS" "${CURRENT_GM_DIR}/Digital8/PRESERVATION"
+        DIGITAL8_NOTES="${CURRENT_GM_DIR}/Digital8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Digital8_Notes.txt"
+        touch "${DIGITAL8_NOTES}"
         echo "These are notes concerning the Digital8 tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${DIGITAL8_NOTES}"
     fi
     #U-matic
     if [ "${GM_FORMATS_UMATIC}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/Umatic/ACCESS" "${GM_DIR}/Umatic/PRESERVATION"
-        UMATIC_NOTES="${GM_DIR}/Umatic/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Umatic_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/Umatic/ACCESS" "${CURRENT_GM_DIR}/Umatic/PRESERVATION"
+        UMATIC_NOTES="${CURRENT_GM_DIR}/Umatic/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Umatic_Notes.txt"
         touch "${UMATIC_NOTES}"
         echo "These are notes concerning the U-matic tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${UMATIC_NOTES}"
     fi
     #Betacam
     if [ "${GM_FORMATS_BETA}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/Betacam/ACCESS" "${GM_DIR}/Betacam/PRESERVATION"
-        BETA_NOTES="${GM_DIR}/Betacam/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Betacam_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/Betacam/ACCESS" "${CURRENT_GM_DIR}/Betacam/PRESERVATION"
+        BETA_NOTES="${CURRENT_GM_DIR}/Betacam/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Betacam_Notes.txt"
         touch "${BETA_NOTES}"
         echo "These are notes concerning the Betacam tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${BETA_NOTES}"
     fi
     #BetacamSP
     if [ "${GM_FORMATS_BETASP}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/BetacamSP/ACCESS" "${GM_DIR}/BetacamSP/PRESERVATION"
-        BETASP_NOTES="${GM_DIR}/BetacamSP/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_BetacamSP_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/BetacamSP/ACCESS" "${CURRENT_GM_DIR}/BetacamSP/PRESERVATION"
+        BETASP_NOTES="${CURRENT_GM_DIR}/BetacamSP/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_BetacamSP_Notes.txt"
         touch "${BETASP_NOTES}"
         echo "These are notes concerning the BetacamSP tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${BETASP_NOTES}"
     fi
     #DigiBeta
     if [ "${GM_FORMATS_DIGIBETA}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/DigiBeta/ACCESS" "${GM_DIR}/DigiBeta/PRESERVATION"
-        DIGIBETA_NOTES="${GM_DIR}/DigiBeta/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_DigiBeta_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/DigiBeta/ACCESS" "${CURRENT_GM_DIR}/DigiBeta/PRESERVATION"
+        DIGIBETA_NOTES="${CURRENT_GM_DIR}/DigiBeta/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_DigiBeta_Notes.txt"
         touch "${DIGIBETA_NOTES}"
         echo "These are notes concerning the DigiBeta tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${DIGIBETA_NOTES}"
     fi
     #1" Video
     if [ "${GM_FORMATS_ONEINCHVIDEO}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/OneInchVideo/ACCESS" "${GM_DIR}/OneInchVideo/PRESERVATION"
-        ONEINCHVIDEO_NOTES="${GM_DIR}/OneInchVideo/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_OneInchVideo_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/OneInchVideo/ACCESS" "${CURRENT_GM_DIR}/OneInchVideo/PRESERVATION"
+        ONEINCHVIDEO_NOTES="${CURRENT_GM_DIR}/OneInchVideo/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_OneInchVideo_Notes.txt"
         touch "${ONEINCHVIDEO_NOTES}"
         echo "These are notes concerning the 1 Video tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${ONEINCHVIDEO_NOTES}"
     fi
     #1/2" Video
     if [ "${GM_FORMATS_HALFINCHVIDEO}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/HalfInchVideo/ACCESS" "${GM_DIR}/HalfInchVideo/PRESERVATION"
-        HALFINCHVIDEO_NOTES="${GM_DIR}/HalfInchVideo/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_HalfInchVideo_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/HalfInchVideo/ACCESS" "${CURRENT_GM_DIR}/HalfInchVideo/PRESERVATION"
+        HALFINCHVIDEO_NOTES="${CURRENT_GM_DIR}/HalfInchVideo/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_HalfInchVideo_Notes.txt"
         touch "${HALFINCHVIDEO_NOTES}"
         echo "These are notes concerning the 1/2 Video tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${HALFINCHVIDEO_NOTES}"
     fi
     #Compact Audio Cassette
     if [ "${GM_FORMATS_COMPACTAUDIOCASSETTE}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/AudioCassette/ACCESS" "${GM_DIR}/AudioCassette/PRESERVATION"
-        COMPACTAUDIOCASSETTE_NOTES="${GM_DIR}/AudioCassette/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_AudioCassette_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/AudioCassette/ACCESS" "${CURRENT_GM_DIR}/AudioCassette/PRESERVATION"
+        COMPACTAUDIOCASSETTE_NOTES="${CURRENT_GM_DIR}/AudioCassette/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_AudioCassette_Notes.txt"
         touch "${COMPACTAUDIOCASSETTE_NOTES}"
         echo "These are notes concerning the Compact Audio Cassette tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${COMPACTAUDIOCASSETTE_NOTES}"
     fi
     # 1/4" Open Reel Audio
     if [ "${GM_FORMATS_QUARTERINCHOPENREELAUDIO}" = "1" ] ; then
-        mkdir -p "${GM_DIR}/QuarterInchOpenReel/ACCESS" "${GM_DIR}/QuarterInchOpenReel/PRESERVATION"
-        QUARTERINCHOPENREEL_NOTES="${GM_DIR}/QuarterInchOpenReel/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_QuarterInchOpenReel_Notes.txt"
+        mkdir -p "${CURRENT_GM_DIR}/QuarterInchOpenReel/ACCESS" "${CURRENT_GM_DIR}/QuarterInchOpenReel/PRESERVATION"
+        QUARTERINCHOPENREEL_NOTES="${CURRENT_GM_DIR}/QuarterInchOpenReel/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_QuarterInchOpenReel_Notes.txt"
         touch "${QUARTERINCHOPENREEL_NOTES}"
         echo "These are notes concerning the 1/4 Open Reel tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${QUARTERINCHOPENREEL_NOTES}"
     fi
