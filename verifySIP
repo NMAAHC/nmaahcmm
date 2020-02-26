@@ -97,7 +97,11 @@ while [[ "${*}" != "" ]] ; do
             _report -g "Based on the presence of .dpx files, this SIP is a DPX package."
             SIP="FILM_DPX"
             echo "Checking for DPX package conformance..."
-            # to be filled out with DPX package example
+            [[ -z $(find "${PACKAGE}" -iname "*DPX*" -mindepth 1 -type d) ]] && _report -r "This package is missing a DPX directory!"
+            [[ -z $(find "${PACKAGE}" -iname "*WAV*" -type d) ]] && _report -r "This package is missing a WAV directory!"
+            [[ -z "$(grep -i \.wav "${TEMPTREE}")" ]] && _report -r "This package is missing .WAV files!"
+            [[ -z $(find "${PACKAGE}" -iname "*MOV*" -type d) ]] && _report -r "This package is missing an MOV directory!"
+            [[ -z "$(grep -i \.mov "${TEMPTREE}")" ]] && _report -r "This package is missing .MOV files!"
 
         elif [[ -n "$(egrep -i "ProRes_2048x1536|MP4_2048x1152" "${TEMPTREE}")" ]] ; then
             # PACKAGE TYPE: film / analog / digitized on-location
