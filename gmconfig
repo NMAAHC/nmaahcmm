@@ -265,13 +265,6 @@ if [[ "${RUNPASHUA}" = "Y" ]] ; then
         #exec $(basename "${0}") -t
         exit
     fi
-else
-    # set up configuration file using the command line
-    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
-        _add_key "${KEY}"
-    done
-
-    echo
 
 # write to the config file
 {
@@ -298,7 +291,11 @@ else
     echo "GM_OPERATOR=\"${GM_OPERATOR}\""
     echo "MAKEGM=\"${MAKEGM}\""
 } > "${GM_CONFIG_FILE}"
-    
+else
+    # set up configuration file using the command line
+    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
+        _add_key "${KEY}"
+    done
     _report -d "Table of existing variables:"
     for KEY in "${REQUIRED_VARIABLES[@]}" ; do
         VALUE=$(grep "^${KEY}=" "${GM_CONFIG_FILE}" | cut -d= -f2)
@@ -330,5 +327,5 @@ if [[ ! -d "${GM_DIR}" ]] ; then
 fi
 
 if [[ "${MAKEGM}" = "Yes" ]]; then
-  "${SCRIPTDIR}/makegm"
+    "${SCRIPTDIR}/makegm"
 fi
