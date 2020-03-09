@@ -1,6 +1,7 @@
 # assign variables
 SCRIPTNAME=$(basename "${0}")
 SCRIPTDIR=$(dirname "${0}")
+NMAAHCMM_CONFIG_FILE="${SCRIPTDIR}/nmaahcmm.conf"
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
@@ -15,6 +16,14 @@ LOGDIR="${SCRIPTDIR}/logs/" # temp - this should be changed in local instances t
 ## SCRIPT_PATH="${0%/*}"      # SCRIPT_PATH will be the directory path of {0} which is the script being called
 ## . "${SCRIPT_PATH}/nmaahcmmfunctions"         # loads the functions in nmaahcmmfunctions into this script
 ## [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};        # checks to see that that nmaahcmmfunctions exists; if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
+
+# load configuration file
+if [ -f "${NMAAHCMM_CONFIG_FILE}" ] ; then
+    . "${NMAAHCMM_CONFIG_FILE}"
+elif [ ! "${CONFIG}" = "Y" -a "${REQUIRECONFIG}" = "Y" ] ; then
+    echo "The configuration file is not set. You must first create ${NMAAHCMM_CONFIG_FILE} by running nmaahcmmconfig." 1>&2
+    exit 1
+fi
 
 # load configuration file
 if [ -f "${GM_CONFIG_FILE}" ] ; then

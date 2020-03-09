@@ -7,13 +7,6 @@ CONFIG_VERSION="1.0"
 SCRIPTDIR=$(dirname "${0}")
 . "${SCRIPTDIR}/nmaahcmmfunctions" || { echo "Missing '${SCRIPTDIR}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 RUNPASHUA="Y"
-if [ ! -d  /Volumes/ScanSAN ] ; then
-  echo
-  printf "%s/Volumes/ScanSAN is not found. This location must be present for script to run. Exiting.%s" "$bired" "$color_off"
-  echo
-  echo
-  exit
-fi
 
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 
@@ -84,7 +77,7 @@ GM_DIR.y = 570
 GM_DIR.type = openbrowser
 GM_DIR.label = Please navigate to and select the Great Migration directory to save to:
 GM_DIR.width = 600
-GM_DIR.default = /Volumes/ScanSAN/00_Great_Migration_SC_0001/2018
+GM_DIR.default = ${GM_DIR}
 #GM_FORMATS
 GM_FORMATS.text = Please choose the formats for this Great Migration appointment:
 GM_FORMATS.type = text
@@ -259,19 +252,12 @@ if [[ "${RUNPASHUA}" = "Y" ]] ; then
     _pashua_run
     rm "${PASHUA_CONFIGFILE}"
     if [ "${PASHUAFAIL}" = "Y" ] ; then
-    	echo "Pashua is not installed. Exiting."
+        echo "Pashua is not installed. Exiting."
         #echo "Pashua is not installed.  Opening via CLI."
         #sleep 1
         #exec $(basename "${0}") -t
-   		exit
+        exit
     fi
-else
-    # set up configuration file using the command line
-    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
-        _add_key "${KEY}"
-    done
-
-    echo
 
 # write to the config file
 {
@@ -298,7 +284,11 @@ else
     echo "GM_OPERATOR=\"${GM_OPERATOR}\""
     echo "MAKEGM=\"${MAKEGM}\""
 } > "${GM_CONFIG_FILE}"
-    
+else
+    # set up configuration file using the command line
+    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
+        _add_key "${KEY}"
+    done
     _report -d "Table of existing variables:"
     for KEY in "${REQUIRED_VARIABLES[@]}" ; do
         VALUE=$(grep "^${KEY}=" "${GM_CONFIG_FILE}" | cut -d= -f2)
@@ -329,7 +319,6 @@ if [[ ! -d "${GM_DIR}" ]] ; then
     _log -a "Process terminated by script (no valid directory at requested location)."
 fi
 
-if [[ "$makegm" = "Yes" ]]; then
-  cd /Users/medialab/gitHub/nmaahc/nmaahcmm
-  ./makegm
+if [[ "${MAKEGM}" = "Yes" ]]; then
+    "${SCRIPTDIR}/makegm"
 fi
