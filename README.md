@@ -68,7 +68,16 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
 * Your command will look like this: `makeH264 fileorpackage1 [ fileorpackage2 ...]`
   
 #### makemetadata
-* This application will generate metadata sidecar files for all video files in a package. It takes one or more packages as input. The application generates all of the following files: a tree XML, a MediaInfo XML, a MediaTrace XML, an FFprobe XML, and an Exiftool XML.
+* This application will generate metadata sidecar files for all video files in a package. It takes one or more packages as input. The application generates all of the following files: an MD5 checksum, a tree XML, a MediaInfo XML, a MediaTrace XML, an FFprobe XML, and an Exiftool XML.
+* You have the option of embedding all these files except the checksum in your MKV master file. To work with these files:
+    * To see what attachments are in your file and what ID #s they have, run: `mkvmerge --identify file`
+        * For example: `mkvmerge --identify /path/to/file.mkv`
+    * To extract those attachments, run: `mkvextract file attachments idnumber:outputfile`
+        * For example, if you see that attachment 1 is a MediaInfo XML and you want to extract it into a file on the Desktop called "mediainfo.xml," run: `mkvextract /path/to/file.mkv 1:~/Desktop/mediainfo.xml`
+    * To delete attachments, run: `mkvpropedit file --delete-attachment idnumber`
+        * For example, to delete attachment 1: `mkvpropedit /path/to/file.mkv --delete-attachment 1`
+        * Currently, the script will just continue to add attachments if it's run on the same file multiple times.
+        * MKV attachments are only identified by numbers, so be sure you have extracted and looked at the content of the attachment you're trying to delete.
 * This script takes a set of options. Options can be combined, and the order of the options does not matter, as long as they are in between "makemetadata" and your input. None of the options are required.
     * -m: generate an MD5 sidecar file. This file may take a while to generate, depending on the size of your video file.
         * Your command will look like this: `makemetadata -m package`
