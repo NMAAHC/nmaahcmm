@@ -75,16 +75,6 @@ while [ "${*}" != "" ] ; do
         [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
         [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"
         [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
-        # generate MD5 checksum if requested; overwrite if requested
-        if [[ "${MD5}" == "Y" ]] ; then
-            MD5FILE="${FILEOUTPUT}/${BASENAMEFILE}.md5"
-            if [[ "${OVERWRITE}" == "Y" ]] ; then
-                rm "${MD5FILE}"
-                md5deep -bre "${FILE}" >> "${MD5FILE}" # -b=strip leading directory info, -r=recursive, -e=display progress indicator
-            elif [[ ! -f "${MD5FILE}" ]] ; then
-                md5deep -bre "${FILE}" >> "${MD5FILE}"
-            fi
-        fi
         # generate QCTools XML if requested; overwrite if requested
         if [[ "${QCTOOLS}" == "Y" ]] ; then
             QCTOOLSXML="${FILEOUTPUT}/${BASENAMEFILE}.qctools.xml.gz"
@@ -107,12 +97,19 @@ while [ "${*}" != "" ] ; do
                 mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
                 mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
                 mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOLXML}"
-                if [[ "${MD5}" = "Y" ]] ; then
-                    mkvpropedit "${FILE}" --attachment-description "MD5 checksum $(date +%Y%m%d-%H%M%S)" --add-attachment "${MD5FILE}"
-                fi
                 if [[ "${QCTOOLS}" = "Y" ]] ; then
                     mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLSXML}"
                 fi
+            fi
+        fi
+        # generate MD5 checksum if requested; overwrite if requested
+        if [[ "${MD5}" == "Y" ]] ; then
+            MD5FILE="${FILEOUTPUT}/${BASENAMEFILE}.md5"
+            if [[ "${OVERWRITE}" == "Y" ]] ; then
+                rm "${MD5FILE}"
+                md5deep -bre "${FILE}" >> "${MD5FILE}" # -b=strip leading directory info, -r=recursive, -e=display progress indicator
+            elif [[ ! -f "${MD5FILE}" ]] ; then
+                md5deep -bre "${FILE}" >> "${MD5FILE}"
             fi
         fi
         _report -g "Moving to next file if present..."
