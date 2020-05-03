@@ -161,20 +161,19 @@ The documentation below sets expectations for the types of files that are create
   
 #### proposed AIP directory structure
   
-├── Digitization_Location  
-│   ├── Name_Of_Event  
-│   │   ├── Collection name: SC0001_YYYYMMDD_LASTNAME1  
-│   │   │   ├── AIP name: SC0001_YYYYMMDD_LASTNAME1_FORMAT_ITEM#  
-│   │   │   │   ├── objects  
-│   │   │   │   │   └── videofiles.xyz  
-│   │   │   │   └── metadata  
-│   │   │   │   │   └── metadatafiles.xyz  
-│   │   ├── Collection name: SC0001_YYYYMMDD_LASTNAME2  
-│   │   │   ├── AIP name: SC0001_YYYYMMDD_LASTNAME2_FORMAT_ITEM#  
-│   │   │   │   ├── objects  
-│   │   │   │   │   └── videofiles.xyz  
-│   │   │   │   └── metadata  
-│   │   │   │   │   └── metadatafiles.xyz  
+  
+├── Collection name: SC0001_YYYYMMDD_LASTNAME1  
+│   ├── AIP name: SC0001_YYYYMMDD_LASTNAME1_FORMAT_ITEM#  
+│   │   ├── objects  
+│   │   │   └── videofiles.xyz  
+│   │   └── metadata  
+│   │   │   └── metadatafiles.xyz  
+├── Collection name: SC0001_YYYYMMDD_LASTNAME2  
+│   ├── AIP name: SC0001_YYYYMMDD_LASTNAME2_FORMAT_ITEM#  
+│   │   ├── objects  
+│   │   │   └── videofiles.xyz  
+│   │   └── metadata  
+│   │   │   └── metadatafiles.xyz  
   
   
 Example AIP directory structures:  
@@ -185,17 +184,17 @@ Example AIP directory structures:
 │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
 │   ├── metadata  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
+│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.md5  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.ffprobe.xml  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediainfo.xml  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediatrace.xml  
-│   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.md5  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2  
 │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.exiftool.xml  
 ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01  
 │   ├── objects  
 │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
 │   ├── metadata  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
+│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.md5  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.framemd5  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.ffprobe.xml  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mediainfo.xml  
@@ -205,21 +204,6 @@ Example AIP directory structures:
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_QC_output_graphs.jpeg  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_capture_options.log  
 │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01_ffmpeg_decklink_input.log  
-├── SC0001_YYYYMMDD_LASTNAME2_VHS_05  
-│   ├── objects  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mkv  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mp4  
-│   ├── metadata  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.framemd5  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.ffprobe.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mediainfo.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mediatrace.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.exiftool.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mkv.qctools.xml.gz  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05_QC_output_graphs.jpeg  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05_capture_options.log  
-│   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_05_ffmpeg_decklink_input.log  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3  
 ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02  
 │   ├── objects  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mov  
