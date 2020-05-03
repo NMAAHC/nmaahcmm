@@ -127,10 +127,10 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
         * Your command will look like this: `restructureSIP -r /path/to/SIP`
     * There is also a set of options available that specify a package type. Choose a package type (required) from one of the following options:
         * -x Package type: Digitized Film (DPX package)
-        * -f Package type: Digitized Film (MOV and/or MP4 files only)
+        * -f Package type: Digitized Film (MOV files only)
         * -v Package type: Digitized Analog Video (vrecord package)
-        * -d Package type: Transferred DV (MOV and/or MP4 files)
-        * -u Package type: Other/Unknown
+        * -d Package type: Transferred DV (MOV files only)
+        * -u Package type: Other/Unknown -> this package type assumes an MOV or MKV file as the master video object
         * If you have a DPX package as your input, your command will look like this: `restructureSIP -x /path/to/SIP`
 * Your overall command will look like this: `restructureSIP [ -x | -f | -v | -d | -u | -r ] [ -m MEDIAID ] [ -o /path/to/output/directory ] /path/to/SIP`
   
@@ -141,7 +141,7 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
         * film / analog / digitized on-location: script looks for directories named after derivatives, e.g. 'MP4_2048x1152'
         * video / analog / digitized on-location: script looks for the capture_options.log and/or qctools.xml.gz files generated in the vrecord process
         * video / DV / transferred on-location: script looks for the string 'DV' in filenames
-        * If your package does not fall into one of the above categories, the script will apply a simpler baseline set of comparisons.
+        * If your package does not fall into one of the above categories, the script will apply a simpler baseline set of comparisons. It will assume an MOV or MKV file is the master video object.
 * Your command will look like this: `verifySIP package`
   
 
@@ -182,20 +182,20 @@ Example AIP directory structures:
 
 ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03  
 │   ├── objects  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
 │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
 │   ├── metadata  
+│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.ffprobe.xml  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediainfo.xml  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediatrace.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.exiftool.xml  
 │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.md5  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2  
+│   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.exiftool.xml  
 ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01  
 │   ├── objects  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
+│   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
 │   ├── metadata  
+│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.framemd5  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.ffprobe.xml  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mediainfo.xml  
@@ -223,8 +223,8 @@ Example AIP directory structures:
 ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02  
 │   ├── objects  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mov  
-│   │   └── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mp4  
 │   ├── metadata  
+│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mp4  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.md5  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.ffprobe.xml  
 │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mediainfo.xml  

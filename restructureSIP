@@ -28,9 +28,9 @@ _usage(){
     echo "Usage: $(basename ${0}) [ -x | -f | -v | -d | -u | -r ] [ -m MEDIAID ] [ -o /path/to/output/directory ] /path/to/SIP"
     echo "  "
     echo "  -x Package type: Digitized Film (DPX package)"
-    echo "  -f Package type: Digitized Film (MOV and/or MP4 files only)"
+    echo "  -f Package type: Digitized Film (MOV files only)"
     echo "  -v Package type: Digitized Analog Video (vrecord package)"
-    echo "  -d Package type: Transferred DV (MOV and/or MP4 files)"
+    echo "  -d Package type: Transferred DV (MOV files only)"
     echo "  -u Package type: Other/Unknown"
     echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
     echo "  -o /path/to/output/directory (directory to deliver the resulting package to)"
@@ -44,9 +44,9 @@ OPTIND=1
 while getopts ":m:o:xfvdurh" OPT; do
     case "${OPT}" in
         x) PACKAGETYPE="Digitized Film (DPX package)" ;;
-        f) PACKAGETYPE="Digitized Film (MOV and/or MP4 files only)" ;;
+        f) PACKAGETYPE="Digitized Film (MOV files only)" ;;
         v) PACKAGETYPE="Digitized Analog Video (vrecord package)" ;;
-        d) PACKAGETYPE="Transferred DV (MOV and/or MP4 files)" ;;
+        d) PACKAGETYPE="Transferred DV (MOV files only)" ;;
         u) PACKAGETYPE="Other/Unknown" ;;
         m) MEDIAID="${OPTARG}" ;;
         o) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
@@ -125,39 +125,39 @@ else
 fi
 
 # perform restructuring actions on other SIPs
-if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
+if [[ "${PACKAGETYPE}" == "Digitized Film (MOV files only)" ]] ; then
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov) ; do
         rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov) ; do
         rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mkv -o -iname *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mkv) ; do
         rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mkv -not -iname *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mkv) ; do
         rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
-elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV files only)" ]] ; then
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov) ; do
         rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov) ; do
         rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mkv -o -iname *.mp4) ; do
+    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mkv) ; do
         rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
         _check_rsync_output
     done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mkv -not -iname *.mp4) ; do
+    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mkv) ; do
         rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
