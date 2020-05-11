@@ -43,28 +43,28 @@ CONF="
 
 # intro text
 intro.x = 20
-intro.y = 600
+intro.y = 420
 intro.width = 500
 intro.type = text
 intro.text = Ingest file options. Leave the option blank to be prompted.
 
 # ask operator
 OP.x = 20
-OP.y = 540
+OP.y = 360
 OP.type = textfield
 OP.label = Please enter your name:
 OP.width = 250
 
 # input directory
 INPUT.x = 20
-INPUT.y = 480
+INPUT.y = 300
 INPUT.type = openbrowser
 INPUT.label = Select your package:
 INPUT.width=400
 
 # package type
 PACKAGETYPE.x = 20
-PACKAGETYPE.y = 420
+PACKAGETYPE.y = 240
 PACKAGETYPE.type = combobox
 PACKAGETYPE.label = Please indicate the type of package being submitted.
 PACKAGETYPE.option =
@@ -77,37 +77,10 @@ PACKAGETYPE.width = 400
 
 # mediaid
 MEDIAID.x = 20
-MEDIAID.y = 360
+MEDIAID.y = 180
 MEDIAID.type = textfield
-MEDIAID.label = Enter a unique media ID/package name ([aA-zZ][0-9]-_ only). LEAVE BLANK for DPX packages.
+MEDIAID.label = Enter a unique media ID/package name ([aA-zZ][0-9]-_ only).
 MEDIAID.width = 250
-
-# DPX object ID
-DPXID.x = 20
-DPXID.y = 300
-DPXID.type = textfield
-DPXID.label = If your package is a DPX, enter a DPX object ID (ex. 2012_79_1_54).
-DPXID.option =
-DPXID.width=250
-
-# DPX title
-DPXTITLE.x = 20
-DPXTITLE.y = 240
-DPXTITLE.type = textfield
-DPXTITLE.label = If your package is a DPX, enter a DPX title (ex. Something_to_Build_On).
-DPXTITLE.option =
-DPXTITLE.width=250
-
-# DPX reel count
-REELS.x = 20
-REELS.y = 180
-REELS.type = combobox
-REELS.label = If your package is a DPX, select the number of reels (if not a DPX, leave blank).
-REELS.option =
-REELS.option = 1
-REELS.option = 2
-REELS.option = 3
-REELS.width=100
 
 # destination
 DESTINATION.x = 20
@@ -141,9 +114,6 @@ echo "  OPERATOR = ${OP}"
 echo "  INPUT = ${INPUT}"
 echo "  MEDIAID = ${MEDIAID}"
 echo "  PACKAGETYPE = ${PACKAGETYPE}"
-echo "  REELS = ${REELS}"
-echo "  DPXID = ${DPXID}"
-echo "  DPXTITLE = ${DPXTITLE}"
 echo "  DESTINATION = ${DESTINATION}"
 echo "  CLEANUPDECISION = ${CLEANUPDECISION}"
 echo ""
@@ -174,35 +144,13 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
         break
     done
 fi
-if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+if [[ -z "${MEDIAID}" ]] ; then
     printf "Enter a unique package name or 'q' to quit: "
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
     [[ -z "${MEDIAID}" ]] && { _report -rt  "ERROR: You must enter a valid MEDIA ID" ; exit ;};
     [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt  "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
-fi
-if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
-    if [[ -z "${REELS}" ]] ; then
-        printf "Select the number of reels in your DPX package:"
-        echo
-        PS3="Selection: "
-        select PACKAGETYPE in "1" "2" "3"
-        do
-            break
-        done
-    fi
-    if [[ -z "${DPXID}" ]] ; then
-        printf "Enter your DPX_Object_ID_Number with underscores:"
-        read -e DPXID
-        printf "ex. 2015_167_10_1"
-    fi
-    if [[ -z "${DPXTITLE}" ]] ; then
-        printf "Enter your DPX_Object_Title with underscores:"
-        printf "ex. Juke_Joint"
-        read -e DPXTITLE
-    fi
-    MEDIAID="${DPXID}__${DPXTITLE}"
 fi
 if [[ -z "${DESTINATION}" ]] ; then
     printf "Drag in the destination directory or type 'q' to quit: "
@@ -233,9 +181,6 @@ _writelog "OPERATOR" "${OP}"
 _writelog "INPUT" "${INPUT}"
 _writelog "MEDIAID" "${MEDIAID}"
 _writelog "PACKAGETYPE" "${PACKAGETYPE}"
-_writelog "REELS" "${REELS}"
-_writelog "DPXID" "${DPXID}"
-_writelog "DPXTITLE" "${DPXTITLE}"
 _writelog "DESTINATION" "${DESTINATION}"
 _writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
 _writelog "START TIME" "$(date +%FT%T)"
@@ -247,13 +192,30 @@ mkdir -p "${DESTINATION}/${MEDIAID}"
 "${SCRIPTDIR}/removeDSStore" "${INPUT}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
 
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
-    # if working with a DPX package, run restructureDPX microservice
-    if [[ "${CLEANUPDECISION}" == "Leave source files where they are" ]] ; then
-        "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" "${INPUT}"
-    elif [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
-        "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" -c "${INPUT}"
+    # if working with a DPX package, check to see if it's a deprecated package structure; new packages should have directories called MEDIAID_DPX, MEDIAID_Audio, and MEDIAID_Derivatives
+    if [[ -n $(find "${INPUT}" -iname "*MOV" -type d) ]] | [[ -n $(find "${INPUT}" -iname "*WAV" -type d) ]] ; then
+        _report -r "Your DPX directory structure may be outdated! Do you want to run restructureDPX?"
+        _report -r "If you run restructureDPX, your DPX will be repackaged according to the updated structure, after which the ingestfile process will continue."
+        printf "Select an option:"
+        echo
+        PS3="Selection: "
+        select ACTION in "Run restructureDPX" "Continue without running restructureDPX" "Cancel - don't do anything to my package and end ingestfile process"
+        do
+            break
+        done
+        if [[ "${ACTION}" == "Run restructureDPX" ]] ; then
+            # run restructureDPX microservice
+            "${SCRIPT_PATH}/restructureDPX" "${INPUT}"
+            _writelog "Invoked restructureDPX:" "$(date +%FT%T)"
+        elif [[ "${ACTION}" == "Continue without running restructureDPX" ]] ; then
+            :
+        elif [[ "${ACTION}" == "Cancel - don't do anything to my package and end ingestfile process" ]] ; then
+            exit
+        fi
+    else
+        rsync -avch --progress "${INPUT}" "${DESTINATION}"
+        # ADD restructureSIP STEP
     fi
-    _writelog "Invoked restructureDPX:" "$(date +%FT%T)"
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
