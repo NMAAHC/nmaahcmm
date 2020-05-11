@@ -186,8 +186,7 @@ The documentation below sets expectations for the types of files that are create
   
   
 Example AIP directory structures:  
-
-
+  
 ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03  
 │   ├── objects  
 │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
@@ -228,8 +227,26 @@ Example AIP directory structures:
 #### current SIP structures
 MEDIA TYPE / source format / provenance  
   
-*** FILM / analog / digitized in-house ***  
-TK: DPX package example  
+*** FILM / analog / digitized in-house / current version ***  
+2017_55_40_1a__Passin_It_On
+├── 2017_55_40_1a__Passin_It_On_YYYYMMDD_checksums.md5  
+├── 2017_55_40_1a__Passin_It_On__Audio  
+│   └── 2017_55_40_1a_AUD.wav  
+├── 2017_55_40_1a__Passin_It_On__DPX 
+│   ├── [DPX files]
+├── 2017_55_40_1a__Passin_It_On__Derivatives  
+│   ├── 2017_55_40_1a_DER_01.mov  
+│   └── 2017_55_40_1a_DER_02.mov  
+└── checksums-md5.txt  
+  
+Naming:  
+Collection directory:       n/a
+Package name:               2017_55_40_1a__Passin_It_On                 = OBJECT_ID__TITLE
+Derivative subdirectory:    2017_55_40_1a__Passin_It_On__Derivatives    = OBJECT_ID__TITLE__Derivatives  
+Filename (derivative?):     2017_55_40_1a_DER_01.mov                    = OBJECT_ID_DER_01.extension  
+  
+  
+*** FILM / analog / digitized in-house / deprecated version ***  
   
 *** FILM / analog / digitized on-location ***  
   
