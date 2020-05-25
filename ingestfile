@@ -93,7 +93,7 @@ DESTINATION.width = 400
 CLEANUPDECISION.x = 20
 CLEANUPDECISION.y = 60
 CLEANUPDECISION.type = combobox
-CLEANUPDECISION.label = Select a cleanup strategy
+CLEANUPDECISION.label = Select a cleanup strategy.
 CLEANUPDECISION.default = Leave source files where they are
 CLEANUPDECISION.option =
 CLEANUPDECISION.option = Leave source files where they are
@@ -139,8 +139,9 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
     echo
     PS3="Selection: "
-    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown" "quit"
     do
+        if [[ "${PACKAGETYPE}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
     done
 fi
@@ -165,8 +166,9 @@ fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     printf "Select a cleanup strategy:"
     echo
-    select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest"
+    select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest" "quit"
     do
+        if [[ "${CLEANUPDECISION}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
     done
 fi
