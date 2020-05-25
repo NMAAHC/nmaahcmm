@@ -213,7 +213,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
             exit
         fi
     else
-        rsync -avch --progress "${INPUT}" "${DESTINATION}"
+        rsync -avch --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
         # ADD restructureSIP STEP
     fi
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
