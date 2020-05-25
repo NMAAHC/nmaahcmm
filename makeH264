@@ -64,7 +64,7 @@ while [ "${*}" != "" ] ; do
             _report -g "The MEDIA ID is: ${MEDIAID}"
             _report -g "The OUTPUT directory is: ${OUTPUT_DIR}"
             _report -g "The OUTPUT file is: ${OUTPUT}"
-            _report -g "making .mp4 derivative of ${MEDIAID}"
+            _report -g "making .mp4 derivative of ${MEDIAID} ..."
             ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
             if [[ -s "${OUTPUT}" ]] ; then
                 _report -g "Success! Derivative $(basename ${OUTPUT}) created."
@@ -79,7 +79,7 @@ while [ "${*}" != "" ] ; do
         INPUT="${INPUT%/}" # strip trailing / if any
         OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # set OUTPUT_DIR to INPUT name plus relativepath
         shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
-        for FILE in "${INPUT}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
+        for FILE in $(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv") ; do # find .mov and .mkv files within the directory and run the ffmpeg command on those files
             [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
             MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
             MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
