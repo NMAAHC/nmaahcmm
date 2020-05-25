@@ -58,13 +58,14 @@ while [ "${*}" != "" ] ; do
     shopt -s nullglob
     for FILE in $(find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" ) ; do
         _report -g "Making metadata reports for ${FILE}..."
-        BASENAMEFILE=$(basename "${FILE}")
-        FILEOUTPUT=$(dirname "${FILE}")
-        TREEXML="${FILEOUTPUT}/${BASENAMEFILE}.tree.xml"
-        FFPROBEXML="${FILEOUTPUT}/${BASENAMEFILE}.ffprobe.xml"
-        MEDIAINFOXML="${FILEOUTPUT}/${BASENAMEFILE}.mediainfo.xml"
-        MEDIATRACEXML="${FILEOUTPUT}/${BASENAMEFILE}.mediatrace.xml"
-        EXIFTOOLXML="${FILEOUTPUT}/${BASENAMEFILE}.exiftool.xml"
+        BASENAME=$(basename "${FILE}")
+        OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
+        mkdir -p "${OUTPUT_DIR}"
+        TREEXML="${OUTPUT_DIR}/${BASENAME}.tree.xml"
+        FFPROBEXML="${OUTPUT_DIR}/${BASENAME}.ffprobe.xml"
+        MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}.mediainfo.xml"
+        MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}.mediatrace.xml"
+        EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}.exiftool.xml"
         # if requested: remove existing metadata files to be overwritten
         if [[ "${OVERWRITE}" == "Y" ]] ; then
             rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
@@ -77,7 +78,7 @@ while [ "${*}" != "" ] ; do
         [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
         # generate QCTools XML if requested; overwrite if requested
         if [[ "${QCTOOLS}" == "Y" ]] ; then
-            QCTOOLSXML="${FILEOUTPUT}/${BASENAMEFILE}.qctools.xml.gz"
+            QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}.qctools.xml.gz"
             if [[ "${OVERWRITE}" == "Y" ]] ; then
                 rm "${QCTOOLSXML}"
                 qcli -i "${FILE}" -o "${QCTOOLSXML}"
@@ -104,7 +105,7 @@ while [ "${*}" != "" ] ; do
         fi
         # generate MD5 checksum if requested; overwrite if requested
         if [[ "${MD5}" == "Y" ]] ; then
-            MD5FILE="${FILEOUTPUT}/${BASENAMEFILE}.md5"
+            MD5FILE="${OUTPUT_DIR}/${BASENAME}.md5"
             if [[ "${OVERWRITE}" == "Y" ]] ; then
                 rm "${MD5FILE}"
                 md5deep -bre "${FILE}" >> "${MD5FILE}" # -b=strip leading directory info, -r=recursive, -e=display progress indicator
