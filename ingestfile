@@ -215,26 +215,39 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
             exit
         fi
     else
+        _report -g "Moving DPX package as-is to specified destination..."
         rsync -avch --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
         # ADD restructureSIP STEP
     fi
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+    echo "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    echo "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    echo "Invoking restructureSIP..."
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -f "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     rsync -avh --progress "${INPUT}/derivative/"*.mp4 "${INPUT}" # move derivative files up to main package level so that makeH264 can see there are derivatives already created
     _check_rsync_output
+    echo "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    echo "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    echo "Invoking restructureSIP..."
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -v "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
+    echo "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
+    echo "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    echo "Invoking restructureSIP..."
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -d "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
+    echo "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    echo "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
+    echo "Invoking restructureSIP..."
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -u "${INPUT}"
 fi
 
