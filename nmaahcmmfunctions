@@ -126,7 +126,7 @@ _pashua_run(){
             VALUE=$(echo ${LINE} | sed 's/^[^=]*=\(.*\)$/\1/' | sed 's/;;;/ /g')
             VARNAME="${KEY}"
             VARVALUE="${VALUE}"
-            eval "${VARNAME}"="${VARVALUE}"
+            eval $VARNAME='$VARVALUE'
         done
     fi
 }
