@@ -11,8 +11,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(ffmpeg) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 
-SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
-EXTENSION="mp4"
+SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
 CRFVALUE=18
 PRESETSPEED=medium
 MAXRATE=8000
@@ -54,7 +53,7 @@ while [ "${*}" != "" ] ; do
         OUTPUT_DIR="$(dirname ${INPUT})/derivative" # set OUTPUT_DIR to a subdirectory called "derivative," nested under the directory where the input file is
         MEDIAID="${INPUT##*/}" #set $MEDIAID to basename of $INPUT
         MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
-        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
         [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
         if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
             _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
@@ -82,7 +81,7 @@ while [ "${*}" != "" ] ; do
             [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
             MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
             MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
-            OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+            OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
             if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
                 _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
             else
