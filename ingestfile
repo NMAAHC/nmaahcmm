@@ -216,7 +216,11 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
         fi
     else
         _report -g "Moving DPX package as-is to specified destination..."
-        rsync -avch --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
+        if [[ "$(basename ${INPUT})" == "${MEDIAID}" ]] ; then
+            rsync -avch --progress "${INPUT}" "${DESTINATION}"
+        else
+            rsync -avch --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
+        fi
         # ADD restructureSIP STEP
     fi
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
@@ -225,7 +229,7 @@ elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; th
     _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     _report -sb "Invoking restructureSIP..."
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -f "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -f "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     rsync -avh --progress "${INPUT}/derivative/"*.mp4 "${INPUT}" # move derivative files up to main package level so that makeH264 can see there are derivatives already created
     _check_rsync_output
@@ -234,21 +238,21 @@ elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     _report -sb "Invoking restructureSIP..."
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -v "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -v "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
     _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
     _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     _report -sb "Invoking restructureSIP..."
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -d "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -d "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     _report -sb "Invoking restructureSIP..."
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -u "${INPUT}"
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -u "${INPUT}"
 fi
 
 # REDUNDANT - copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
