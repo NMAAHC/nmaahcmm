@@ -72,15 +72,15 @@ if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
-    [[ -z "${MEDIAID}" ]] && { _report -rt "ERROR: You must enter a valid MEDIA ID" ; exit ;};
-    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt "ERROR: The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
+    [[ -z "${MEDIAID}" ]] && { _report -rst "ERROR: You must enter a valid MEDIA ID" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rst "ERROR: The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
 fi
 if [[ -z "${DELIVERDIR}" ]] ; then
-    _report -b "Drag in the DELIVERDIR directory or type 'q' to quit: "
+    _report -b "Drag in the destination directory or type 'q' to quit: "
     read -e DELIVERDIR
     [[ "${DELIVERDIR}" = "q" ]] && exit 0
     if [[ ! -d "${DELIVERDIR}" ]] ; then
-        _report -rt "ERROR: Destination ${DELIVERDIR} is not a directory. Exiting..."
+        _report -rst "ERROR: Destination ${DELIVERDIR} is not a directory. Exiting..."
         _log -a "Process terminated by script (input was not a directory)."
         exit 1
     fi
@@ -106,22 +106,22 @@ OUTPUT_PACKAGE="${DELIVERDIR}/${MEDIAID}"
 # if package type is unknown, check whether it looks like a DPX package
 if [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     if [[ -n $(find "${INPUT}" -iname *.dpx) ]] ; then
-        _report -g "This SIP looks like a DPX package!"
+        _report -rs "This SIP looks like a DPX package!"
         PACKAGETYPE="Digitized Film (DPX package)"
     fi
 fi
 
 # if SIP is a DPX, direct the operator to use restructureDPX instead
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
-    _report -rt "If you are trying to restructure a DPX package, please run the 'restructureDPX' microservice instead!"
+    _report -rs "If you are trying to restructure a DPX package, please run the 'restructureDPX' microservice instead!"
     _report -b "You can also run the 'ingestfile' microservice, which invokes 'restructureDPX' as well."
     cowsay "Thanks!"
     _log -a "Process terminated by script (operator redirected to appropriate microservice)."
     exit 0
 else
-    echo "Making objects and metadata directories..."
+    _report -gs "Making objects and metadata directories..."
     mkdir -p "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
-    _report -g "Moving SIP to output package..."
+    _report -gs "Moving SIP to output package..."
 fi
 
 # perform restructuring actions on other SIPs
@@ -167,13 +167,15 @@ fi
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    if [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
 #        echo "There were ${RSYNC_ERROR_COUNT} errors during the rsync process!"
-#        _report -rt "Cancelling requested deletion of source file, not looking safe."
+#        _report -rst "Cancelling requested deletion of source file, not looking safe."
 #    else
-#        _report -g "Removing the source file from ${INPUT} as requested."
+#        _report -gs "Removing the source file from ${INPUT} as requested."
 #        _run rm -f "${INPUT}"
 #    fi
 #fi
 
 # log script ending
+_report -g "restructureSIP process complete."
+echo
 _log -e
 _writelog "END TIME" "$(date +%FT%T)"

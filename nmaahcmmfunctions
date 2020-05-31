@@ -232,7 +232,7 @@ _report(){
     done
     shift $(( ${OPTIND} - 1 ))
     MESSAGE="${1}"
-    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]}${MESSAGE}${NC}"
+    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]} ${MESSAGE}${NC}"
     [ "${LOG_MESSAGE}" = "Y" ] && _log -w "${MESSAGE}"
 }
 

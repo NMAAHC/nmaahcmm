@@ -54,7 +54,7 @@ while [ "${*}" != "" ] ; do
     # process if INPUT is a file
     if [[ -f "${1}" ]] ; then
         FILE="${1}"
-        _report -g "Making metadata reports for ${FILE}..."
+        _report -gs "Making metadata reports for ${FILE}..."
         BASENAME=$(basename "${FILE}")
         OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
         mkdir -p "${OUTPUT_DIR}"
@@ -90,7 +90,7 @@ while [ "${*}" != "" ] ; do
         # right now, the script will just add more and more attachments if it's run on the same file multiple times. MKV attachments are identified by numbers, so it can be complicated to delete/overwrite based on content.
         if [[ "${EMBED}" == "Y" ]] ; then
             if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
-                _report -g "Embedding metadata reports in MKV file ${FILE}..."
+                _report -gs "Embedding metadata reports in MKV file ${FILE}..."
                 mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
                 mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
                 mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
@@ -110,12 +110,12 @@ while [ "${*}" != "" ] ; do
                 md5deep -bre "${FILE}" >> "${MD5FILE}"
             fi
         fi
-        _report -g "Moving to next file if present..."
+        _report "Moving to next file if present..."
     elif [[ -d "${1}" ]] ; then
         PACKAGE_PATH="${1}"
         shopt -s nullglob
         for FILE in $(find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" ) ; do
-            _report -g "Making metadata reports for ${FILE}..."
+            _report -gs "Making metadata reports for ${FILE}..."
             BASENAME=$(basename "${FILE}")
             OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
             mkdir -p "${OUTPUT_DIR}"
@@ -151,7 +151,7 @@ while [ "${*}" != "" ] ; do
             # right now, the script will just add more and more attachments if it's run on the same file multiple times. MKV attachments are identified by numbers, so it can be complicated to delete/overwrite based on content.
             if [[ "${EMBED}" == "Y" ]] ; then
                 if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
-                    _report -g "Embedding metadata reports in MKV file ${FILE}..."
+                    _report -gs "Embedding metadata reports in MKV file ${FILE}..."
                     mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
                     mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
                     mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
@@ -171,7 +171,7 @@ while [ "${*}" != "" ] ; do
                     md5deep -bre "${FILE}" >> "${MD5FILE}"
                 fi
             fi
-            _report -g "Moving to next file if present..."
+            _report "Moving to next file if present..."
         done
     fi
     shift
