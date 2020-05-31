@@ -23,8 +23,8 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes one or more video files or packages as input. You may pass both video files and packages in the same command."
-    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'derivative' located within the input file's parent directory."
-    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'derivative' located within the input directory."
+    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'metadata' located within the input file's parent directory."
+    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'metadata' located within the input directory."
     echo "Usage: $(basename ${0}) fileorpackage1 [ fileorpackage2 ...]"
     echo
     exit
@@ -50,7 +50,7 @@ while [ "${*}" != "" ] ; do
 
     # process if INPUT is a file
     if [[ -f "${INPUT}" ]] ; then
-        OUTPUT_DIR="$(dirname ${INPUT})/derivative" # set OUTPUT_DIR to a subdirectory called "derivative," nested under the directory where the input file is
+        OUTPUT_DIR="$(dirname ${INPUT})/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
         MEDIAID="${INPUT##*/}" #set $MEDIAID to basename of $INPUT
         MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
         OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
@@ -77,7 +77,7 @@ while [ "${*}" != "" ] ; do
         INPUT="${INPUT%/}" # strip trailing / if any
         shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
         for FILE in $(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv") ; do # find .mov and .mkv files within the directory and run the ffmpeg command on those files
-            OUTPUT_DIR="$(dirname ${FILE})/derivative" # set OUTPUT_DIR to a subdirectory called "derivative," nested under the directory where the input file is
+            OUTPUT_DIR="$(dirname ${FILE})/metadata" # set OUTPUT_DIR to a subdirectory called "derivative," nested under the directory where the input file is
             [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
             MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
             MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
