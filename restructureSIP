@@ -136,23 +136,8 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
         _report -r "There are no MOV or MP4 files in this package!"
     fi
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname "*.mkv") ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname "*.mkv") ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
-elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV files only)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname "*.mov") ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname "*.mov") ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
+    find "${INPUT}" -type f -iname "*.mkv" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+    find "${INPUT}" -type f -not -iname "*.mkv" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
 elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files only)" ]] ; then
     if [[ -n "$(find "${INPUT}" -type f -iname "*.mov")" ]] ; then # if there are mov files in the package, treat them as preservation-level files
         find "${INPUT}" -type f -iname "*.mov" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
@@ -164,14 +149,8 @@ elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files only)" ]] ; th
         _report -r "There are no MOV or MP4 files in this package!"
     fi
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname "*.mov" -o -iname "*.mkv") ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname "*.mov" -not -iname "*.mkv") ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
+    find "${INPUT}" -type f -iname "*.mov" -o -iname "*.mkv" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+    find "${INPUT}" -type f -not -iname "*.mov" -o -iname "*.mkv" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
 fi
 
 # clean up original files if requested - hardcoded OFF during testing
