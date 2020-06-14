@@ -113,8 +113,15 @@ while [ "${*}" != "" ] ; do
         _report "Moving to next file if present..."
     elif [[ -d "${1}" ]] ; then
         TEMPFILE="$(_maketemp)"
-        PACKAGE_PATH="${1}"
-        find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
+        INPUT="${1}"
+        # look for mov or mkv files to treat as input; if there are only mp4 files, treat the mp4 files as input
+        if [[ -n "$(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv")" ]] ; then
+            find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
+        elif [[ -n "$(find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*")" ]] ; then
+            find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*" >> "${TEMPFILE}"
+        else
+            _report -r "There are no MOV or MP4 files in this package!"
+        fi
         while read FILE ; do
             _report -gs "Making metadata reports for ${FILE}..."
             BASENAME=$(basename "${FILE}")
@@ -130,7 +137,7 @@ while [ "${*}" != "" ] ; do
                 rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
             fi
             # if the metadata files don't already exist, create them; the command following "&&" will only execute if the test before it is successful
-            [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${PACKAGE_PATH}" > "${TREEXML}"
+            [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${INPUT}" > "${TREEXML}"
             [[ ! -f "${FFPROBEXML}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBEXML}"
             [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
             [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"

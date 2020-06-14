@@ -28,9 +28,9 @@ _usage(){
     echo "Usage: $(basename ${0}) [ -x | -f | -v | -d | -u | -r ] [ -m MEDIAID ] [ -o /path/to/output/directory ] /path/to/SIP"
     echo "  "
     echo "  -x Package type: Digitized Film (DPX package)"
-    echo "  -f Package type: Digitized Film (MOV files only)"
+    echo "  -f Package type: Digitized Film (MOV and/or MP4 files only)"
     echo "  -v Package type: Digitized Analog Video (vrecord package)"
-    echo "  -d Package type: Transferred DV (MOV files only)"
+    echo "  -d Package type: Transferred DV (MOV and/or MP4 files only)"
     echo "  -u Package type: Other/Unknown"
     echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
     echo "  -o /path/to/output/directory (directory to deliver the resulting package to)"
@@ -44,9 +44,9 @@ OPTIND=1
 while getopts ":m:o:xfvdurh" OPT; do
     case "${OPT}" in
         x) PACKAGETYPE="Digitized Film (DPX package)" ;;
-        f) PACKAGETYPE="Digitized Film (MOV files only)" ;;
+        f) PACKAGETYPE="Digitized Film (MOV and/or MP4 files only)" ;;
         v) PACKAGETYPE="Digitized Analog Video (vrecord package)" ;;
-        d) PACKAGETYPE="Transferred DV (MOV files only)" ;;
+        d) PACKAGETYPE="Transferred DV (MOV and/or MP4 files only)" ;;
         u) PACKAGETYPE="Other/Unknown" ;;
         m) MEDIAID="${OPTARG}" ;;
         o) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
@@ -125,15 +125,16 @@ else
 fi
 
 # perform restructuring actions on other SIPs
-if [[ "${PACKAGETYPE}" == "Digitized Film (MOV files only)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname "*.mov") ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname "*.mov") ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
+if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+    if [[ -n "$(find "${INPUT}" -type f -iname "*.mov")" ]] ; then # if there are mov files in the package, treat them as preservation-level files
+        find "${INPUT}" -type f -iname "*.mov" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+        find "${INPUT}" -type f -not -iname "*.mov" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    elif [[ -n "$(find "${INPUT}" -type f -iname "*.mp4")" ]] ; then # if there are no mov files in the package, but there are .mp4 files, treat the mp4 files as preservation-level files
+        find "${INPUT}" -type f -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+        find "${INPUT}" -type f -not -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    else
+        _report -r "There are no MOV or MP4 files in this package!"
+    fi
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname "*.mkv") ; do
         rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
@@ -152,6 +153,16 @@ elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV files only)" ]] ; then
         rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
         _check_rsync_output
     done
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files only)" ]] ; then
+    if [[ -n "$(find "${INPUT}" -type f -iname "*.mov")" ]] ; then # if there are mov files in the package, treat them as preservation-level files
+        find "${INPUT}" -type f -iname "*.mov" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+        find "${INPUT}" -type f -not -iname "*.mov" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    elif [[ -n "$(find "${INPUT}" -type f -iname "*.mp4")" ]] ; then # if there are no mov files in the package, but there are .mp4 files, treat the mp4 files as preservation-level files
+        find "${INPUT}" -type f -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+        find "${INPUT}" -type f -not -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    else
+        _report -r "There are no MOV or MP4 files in this package!"
+    fi
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     for VIDEOFILE in $(find "${INPUT}" -type f -iname "*.mov" -o -iname "*.mkv") ; do
         rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"

@@ -76,13 +76,19 @@ while [ "${*}" != "" ] ; do
     elif [[ -d "${INPUT}" ]] ; then
         TEMPFILE="$(_maketemp)"
         INPUT="${INPUT%/}" # strip trailing / if any
-        shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
-        find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}" # find .mov and .mkv files within the directory and run the ffmpeg command on those files
+        # look for mov or mkv files to treat as input; if there are only mp4 files, treat the mp4 files as input
+        if [[ -n "$(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv")" ]] ; then
+            find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
+        elif [[ -n "$(find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*")" ]] ; then
+            find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*" >> "${TEMPFILE}"
+        else
+            _report -r "There are no MOV or MP4 files in this package!"
+        fi
         while read FILE ; do
             OUTPUT_DIR="$(dirname "${FILE}")/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
-            [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
-            MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
-            MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
+            [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT_DIR if it doesn't already exist
+            MEDIAID="${FILE##*/}" #strip directory from the filename used for MEDIAID
+            MEDIAID="${MEDIAID%.*}" #strip extension from the filename used for MEDIAID
             OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
             if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
                 _report -rst "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
