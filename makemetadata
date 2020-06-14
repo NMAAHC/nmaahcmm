@@ -112,9 +112,10 @@ while [ "${*}" != "" ] ; do
         fi
         _report "Moving to next file if present..."
     elif [[ -d "${1}" ]] ; then
+        TEMPFILE="$(_maketemp)"
         PACKAGE_PATH="${1}"
-        shopt -s nullglob
-        for FILE in $(find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" ) ; do
+        find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
+        while read FILE ; do
             _report -gs "Making metadata reports for ${FILE}..."
             BASENAME=$(basename "${FILE}")
             OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
@@ -172,7 +173,7 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
             _report "Moving to next file if present..."
-        done
+        done < "${TEMPFILE}"
     fi
     shift
 done

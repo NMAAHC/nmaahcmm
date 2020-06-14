@@ -74,10 +74,12 @@ while [ "${*}" != "" ] ; do
         fi
     # process if INPUT is a directory
     elif [[ -d "${INPUT}" ]] ; then
+        TEMPFILE="$(_maketemp)"
         INPUT="${INPUT%/}" # strip trailing / if any
         shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
-        for FILE in $(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv") ; do # find .mov and .mkv files within the directory and run the ffmpeg command on those files
-            OUTPUT_DIR="$(dirname ${FILE})/metadata" # set OUTPUT_DIR to a subdirectory called "derivative," nested under the directory where the input file is
+        find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}" # find .mov and .mkv files within the directory and run the ffmpeg command on those files
+        while read FILE ; do
+            OUTPUT_DIR="$(dirname "${FILE}")/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
             [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
             MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
             MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
@@ -98,7 +100,7 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
             _report -s "Moving to next file if present..."
-        done
+        done < "${TEMPFILE}"
     else
         _report -rst  "ERROR: Input ${INPUT} is not a file or directory. Exiting..."
         _log -a "Process terminated by script (input was not a file or directory)."
