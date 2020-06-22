@@ -69,9 +69,9 @@ PACKAGETYPE.type = combobox
 PACKAGETYPE.label = Please indicate the type of package being submitted [scroll for all options].
 PACKAGETYPE.option =
 PACKAGETYPE.option = Digitized Film (DPX package)
-PACKAGETYPE.option = Digitized Film (MOV and/or MP4 files only)
+PACKAGETYPE.option = Digitized Film (MOV, MKV, MP4 master files)
 PACKAGETYPE.option = Digitized Analog Video (vrecord package)
-PACKAGETYPE.option = Transferred DV (MOV and/or MP4 files only)
+PACKAGETYPE.option = Transferred DV (MOV, MKV, MP4 master files)
 PACKAGETYPE.option = Other/Unknown
 PACKAGETYPE.width = 400
 
@@ -139,7 +139,7 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
     echo
     PS3="Selection: "
-    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files only)" "Other/Unknown" "quit"
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV, MKV, MP4 master files)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV, MKV, MP4 master files)" "Other/Unknown" "quit"
     do
         if [[ "${PACKAGETYPE}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
@@ -223,7 +223,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
         fi
         # ADD restructureSIP STEP
     fi
-elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV, MKV, MP4 master files)" ]] ; then
     _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     _report -sb "Invoking makeH264..."
@@ -243,7 +243,7 @@ elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     _report -sb "Invoking restructureSIP..."
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -v "${INPUT}"
-elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files only)" ]] ; then
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV, MKV, MP4 master files)" ]] ; then
     _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
     _report -sb "Invoking makeH264..."
