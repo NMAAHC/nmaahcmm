@@ -152,7 +152,20 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
         * video / DV / transferred on-location: script looks for the string 'DV' in filenames
         * If your package does not fall into one of the above categories, the script will apply a simpler baseline set of comparisons. It will assume an MOV or MKV file is the master video object.
 * Your command will look like this: `verifySIP package`
-  
+
+***
+
+## log creation
+
+Whenever a microservice is run, the following information is recorded in a text file called `nmaahcmm.log`:
+* start time
+* end time
+* name of microservice
+
+Microservices that ask for input from the operator, such as ingestfile, restructureSIP, and restructureDPX, also generate logs with records of that operator input. A new log file is created for each date and records input for each time the microservice is invoked that day. These logs are named after their corresponding microservice and date, e.g. `ingestfile_2020-06-28.log`.  
+
+Logs are currently created within the same directory where the scripts are stored locally. They will be generated within a subdirectory called "logs." If you wish to change the location of the log output directory, change the path in the following line of `nmaahcmmfunctions`:  
+`LOGDIR="${SCRIPTDIR}/logs/"`  
 
 ***
 
@@ -163,158 +176,172 @@ The scripts in nmaahcmm take the principles of the Open Archival Information Sys
 The documentation below sets expectations for the types of files that are created and submitted in accession processes for different media formats. The following scripts rely explicitly on these structures and must be updated if the definitions change:  [restructureSIP](https://github.com/aeschweik/nmaahcmm/restructureSIP) and [verifySIP](https://github.com/aeschweik/nmaahcmm/verifySIP)  
   
 #### definitions
-* Package (SIP) = "as-submitted" directory containing the content information and preservation description information generated upon digitization of one or more media items.  
 * Package (AIP) = finalized directory with structured/fleshed-out content information (in "objects" folder) and preservation description information (in "metadata" folder) for one media item (e.g. one tape or one film).  
+* Package (SIP) = "as-submitted" directory containing the content information and preservation description information generated upon digitization of one or more media items.  
 * Collection = parent directory containing all packages that belong to the same contributor. Collections are grouped by last name and can encompass any number of format of media item.  
 * Name_Of_Event and Digitization_Location = NMAAHC digitizes both in-house and on the road. This information is included in package structures to provide context on when and where the files were created.  
   
-#### proposed AIP directory structure
+#### AIP directory structure: outline
   
   
-├── Collection name: SC0001_YYYYMMDD_LASTNAME1  
-│   ├── AIP name: SC0001_YYYYMMDD_LASTNAME1_FORMAT_ITEM#  
-│   │   ├── objects  
-│   │   │   └── videofiles.xyz  
-│   │   └── metadata  
-│   │   │   └── metadatafiles.xyz  
-├── Collection name: SC0001_YYYYMMDD_LASTNAME2  
-│   ├── AIP name: SC0001_YYYYMMDD_LASTNAME2_FORMAT_ITEM#  
-│   │   ├── objects  
-│   │   │   └── videofiles.xyz  
-│   │   └── metadata  
-│   │   │   └── metadatafiles.xyz  
+    ├── Collection name: SC0001_YYYYMMDD_LASTNAME1  
+    │   ├── AIP name: SC0001_YYYYMMDD_LASTNAME1_FORMAT_ITEM#  
+    │   │   ├── objects  
+    │   │   │   └── videofiles.xyz  
+    │   │   └── metadata  
+    │   │   │   └── metadatafiles.xyz  
+    ├── Collection name: SC0001_YYYYMMDD_LASTNAME2  
+    │   ├── AIP name: SC0001_YYYYMMDD_LASTNAME2_FORMAT_ITEM#  
+    │   │   ├── objects  
+    │   │   │   └── videofiles.xyz  
+    │   │   └── metadata  
+    │   │   │   └── metadatafiles.xyz  
   
   
-Example AIP directory structures:  
+#### AIP directory structures: examples
   
-├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03  
-│   ├── objects  
-│   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
-│   ├── metadata  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.md5  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.ffprobe.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediainfo.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediatrace.xml  
-│   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.exiftool.xml  
-├── SC0001_YYYYMMDD_LASTNAME2_VHS_01  
-│   ├── objects  
-│   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
-│   ├── metadata  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.md5  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.framemd5  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.ffprobe.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mediainfo.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mediatrace.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.exiftool.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv.qctools.xml.gz  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_QC_output_graphs.jpeg  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_capture_options.log  
-│   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01_ffmpeg_decklink_input.log  
-├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02  
-│   ├── objects  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mov  
-│   ├── metadata  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mp4  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.md5  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.ffprobe.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mediainfo.xml  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mediatrace.xml  
-│   │   └── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.exiftool.xml  
+  
+Digitized Super 8mm film; MOV file is preservation file:  
+
+    ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03  
+    │   ├── objects  
+    │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
+    │   ├── metadata  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.md5  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.ffprobe.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediainfo.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mediatrace.xml  
+    │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.exiftool.xml  
+  
+  
+Transferred MiniDV tape; MOV file is preservation file:  
+
+    ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02  
+    │   ├── objects  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mov  
+    │   ├── metadata  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mp4  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.md5  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.ffprobe.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mediainfo.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.mediatrace.xml  
+    │   │   └── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02.exiftool.xml  
+  
+  
+Analog video digitized using vrecord; MKV file is preservation file:  
+
+    ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01  
+    │   ├── objects  
+    │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
+    │   ├── metadata  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.md5  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.framemd5  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.ffprobe.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mediainfo.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mediatrace.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.exiftool.xml  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv.qctools.xml.gz  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_QC_output_graphs.jpeg  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_capture_options.log  
+    │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01_ffmpeg_decklink_input.log  
   
   
 #### current SIP structures
-MEDIA TYPE / source format / provenance  
-  
-*** FILM / analog / digitized in-house / current version ***  
-2017_55_40_1a__Passin_It_On
-├── 2017_55_40_1a__Passin_It_On_YYYYMMDD_checksums.md5  
-├── 2017_55_40_1a__Passin_It_On__Audio  
-│   └── 2017_55_40_1a_AUD.wav  
-├── 2017_55_40_1a__Passin_It_On__DPX 
-│   ├── [DPX files]
-├── 2017_55_40_1a__Passin_It_On__Derivatives  
-│   ├── 2017_55_40_1a_DER_01.mov  
-│   └── 2017_55_40_1a_DER_02.mov  
-└── checksums-md5.txt  
-  
-Naming:  
-Collection directory:       n/a
-Package name:               2017_55_40_1a__Passin_It_On                 = OBJECT_ID__TITLE
-Derivative subdirectory:    2017_55_40_1a__Passin_It_On__Derivatives    = OBJECT_ID__TITLE__Derivatives  
-Filename (derivative?):     2017_55_40_1a_DER_01.mov                    = OBJECT_ID_DER_01.extension  
   
   
-*** FILM / analog / digitized in-house / deprecated version ***  
-  
-*** FILM / analog / digitized on-location ***  
-  
-Digitization_Location  
-├── Name_Of_Event  
-│   ├── YYYYMMDD  
-│   │   └── SC0001_YYYYMMDD_LASTNAME  
-│   │     ├── S8_01_03  
-│   │     │   ├── MP4_2048x1152  
-│   │     │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
-│   │     │   └── ProRes_2048x1536  
-│   │     │       └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
-│   │     └── SC0001_YYYYMMDD_LASTNAME.cdir  
-  
-Naming:  
-Collection directory:       SC0001_YYYYMMDD_LASTNAME                = CODE_YYYYMMDD_LASTNAME  
-Package name:               S8_01_03                                = ANALOGFORMATCODE_OBJECT#_OBJECT#2  
-Derivative subdirectory:    MP4_2048x1152                           = DIGITIZEDFORMATCODE_WIDTHxHEIGHT  
-Filename (derivative?):     SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  = COLLECTIONNAME_PACKAGENAME.extension  
-  
-  
-*** VIDEO / analog / digitized on-location ***  
-  
-Digitization_Location  
-├── Name_Of_Event  
-│   ├── YYYYMMDD  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.framemd5  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv.qctools.xml.gz  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_QC_output_graphs.jpeg  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_capture_options.log  
-│   │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01_ffmpeg_decklink_input.log  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.framemd5  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mkv  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mkv.qctools.xml.gz  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mp4  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05_QC_output_graphs.jpeg  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05_capture_options.log  
-│   │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_05_ffmpeg_decklink_input.log  
+*FILM / analog / digitized in-house*  
+
+    2017_55_40_1a__Title  
+    ├── 2017_55_40_1a__Title_YYYYMMDD_checksums.md5  
+    ├── 2017_55_40_1a__Title__Audio  
+    │   └── 2017_55_40_1a_AUD.wav  
+    ├── 2017_55_40_1a__Title__DPX  
+    │   ├── [DPX files]  
+    ├── 2017_55_40_1a__Title__Derivatives  
+    │   ├── 2017_55_40_1a_DER_01.mov  
+    │   └── 2017_55_40_1a_DER_02.mov  
+    └── checksums-md5.txt  
   
 Naming:  
 Collection directory:       n/a  
-Package name:               SC0001_YYYYMMDD_LASTNAME2_VHS_01        = CODE_YYYYMMDD_LASTNAME_ORIGINALFORMATCODE_OBJECT#  
-Filename (master):          SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv    = PACKAGENAME.extension  
+Package name:               2017_55_40_1a\__Title  
+Preservation master filename: [DPX files]  
+Derivative subdirectory:    2017_55_40_1a\__Title\__Derivatives  
+Derivative filename:     2017_55_40_1a_DER_01.mov  
+  
+  
+*FILM / analog / digitized on-location*  
+  
+    Digitization_Location  
+    ├── Name_Of_Event  
+    │   ├── YYYYMMDD  
+    │   │   └── SC0001_YYYYMMDD_LASTNAME  
+    │   │     ├── S8_01_03  
+    │   │     │   ├── MP4_2048x1152  
+    │   │     │   │   └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
+    │   │     │   └── ProRes_2048x1536  
+    │   │     │       └── SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
+    │   │     └── SC0001_YYYYMMDD_LASTNAME.cdir  
+  
+Naming:  
+Collection directory:       SC0001_YYYYMMDD_LASTNAME  
+Package name:               S8_01_03  
+Preservation master filename: SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mov  
+Derivative subdirectory:    MP4_2048x1152  
+Derivative filename:        SC0001_YYYYMMDD_LASTNAME1_S8_01_03.mp4  
+  
+  
+*VIDEO / analog / digitized on-location*  
+  
+    Digitization_Location  
+    ├── Name_Of_Event  
+    │   ├── YYYYMMDD  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.framemd5  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv.qctools.xml.gz  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_QC_output_graphs.jpeg  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_01_capture_options.log  
+    │   │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_01_ffmpeg_decklink_input.log  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.framemd5  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mkv  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mkv.qctools.xml.gz  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05.mp4  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05_QC_output_graphs.jpeg  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME2_VHS_05_capture_options.log  
+    │   │   │   └── SC0001_YYYYMMDD_LASTNAME2_VHS_05_ffmpeg_decklink_input.log  
+  
+Naming:  
+Collection directory:       n/a  
+Package name:               SC0001_YYYYMMDD_LASTNAME2_VHS_01  
+Preservation master filename:          SC0001_YYYYMMDD_LASTNAME2_VHS_01.mkv  
 Derivative subdirectory:    n/a  
+Derivative filename:        SC0001_YYYYMMDD_LASTNAME2_VHS_01.mp4  
   
   
-*** VIDEO / DV / transferred on-location ***  
+*VIDEO / DV / transferred on-location*  
   
-Digitization_Location  
-├── Name_Of_Event  
-│   ├── SC0001_YYYYMMDD_LASTNAME  
-│   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE.mov  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE_YYYYMMDD_checksums.md5  
-│   │   │   └── derivative  
-│   │   │       └── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE.mp4  
-│   ├── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE.mov  
-│   │   │   ├── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE_YYYYMMDD_checksums.md5  
-│   │   │   └── derivative  
-│   │   │       └── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE.mp4  
+    Digitization_Location  
+    ├── Name_Of_Event  
+    │   ├── SC0001_YYYYMMDD_LASTNAME3  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE.mov  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE_YYYYMMDD_checksums.md5  
+    │   │   │   └── derivative  
+    │   │   │       └── SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE.mp4  
+    │   │   ├── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE.mov  
+    │   │   │   ├── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE_YYYYMMDD_checksums.md5  
+    │   │   │   └── derivative  
+    │   │   │       └── SC0001_YYYYMMDD_LASTNAME_MiniDV_04_TITLEOFTAPE.mp4  
   
-Filenaming:  
-Collection directory:       SC0001_YYYYMMDD_LASTNAME                             = CODE_YYYYMMDD_LASTNAME  
-Package name:               SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE      = COLLECTIONNAME_ORIGINALFORMATCODE_OBJECT#_OBJECTTITLE  
-Master filename:            SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE.mov  = COLLECTIONNAME_PACKAGENAME.extension  
-Derivative subdirectory:    derivative                                           = derivative  
+Naming:  
+Collection directory:       SC0001_YYYYMMDD_LASTNAME  
+Package name:               SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE  
+Preservation master filename:            SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE.mov  
+Derivative subdirectory:    derivative  
+Derivative filename:        SC0001_YYYYMMDD_LASTNAME3_MiniDV_02_TITLEOFTAPE.mp4  
