@@ -136,10 +136,10 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
         * Your command will look like this: `restructureSIP -r /path/to/SIP`
     * There is also a set of options available that specify a package type. Choose a package type (required) from one of the following options:
         * -x Package type: Digitized Film (DPX package)
-        * -f Package type: Digitized Film (MOV files only)
+        * -f Package type: Digitized Film (MKV, MOV, or MP4 files only)
         * -v Package type: Digitized Analog Video (vrecord package)
-        * -d Package type: Transferred DV (MOV files only)
-        * -u Package type: Other/Unknown -> this package type assumes an MOV or MKV file as the master video object
+        * -d Package type: Transferred DV (MKV, MOV, or MP4 files only)
+        * -u Package type: Other/Unknown (MKV, MOV, or MP4 files only) -> this package type assumes an MOV or MKV file as the master video object
         * If you have a DPX package as your input, your command will look like this: `restructureSIP -x /path/to/SIP`
 * Your overall command will look like this: `restructureSIP [ -x | -f | -v | -d | -u | -r ] [ -m MEDIAID ] [ -o /path/to/output/directory ] /path/to/SIP`
   

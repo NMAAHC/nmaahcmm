@@ -72,7 +72,7 @@ PACKAGETYPE.option = Digitized Film (DPX package)
 PACKAGETYPE.option = Digitized Film (MOV, MKV, MP4 master files)
 PACKAGETYPE.option = Digitized Analog Video (vrecord package)
 PACKAGETYPE.option = Transferred DV (MOV, MKV, MP4 master files)
-PACKAGETYPE.option = Other/Unknown
+PACKAGETYPE.option = Other/Unknown (MKV, MOV, or MP4 files only)
 PACKAGETYPE.width = 400
 
 # mediaid
@@ -139,7 +139,7 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
     echo
     PS3="Selection: "
-    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV, MKV, MP4 master files)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV, MKV, MP4 master files)" "Other/Unknown" "quit"
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV, MKV, MP4 master files)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV, MKV, MP4 master files)" "Other/Unknown (MKV, MOV, or MP4 files only)" "quit"
     do
         if [[ "${PACKAGETYPE}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
@@ -256,7 +256,7 @@ elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV, MKV, MP4 master files)" ]] ; t
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
     _report -sb "Invoking restructureSIP..."
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -d "${INPUT}"
-elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
+elif [[ "${PACKAGETYPE}" == "Other/Unknown (MKV, MOV, or MP4 files only)" ]] ; then
     _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     _report -sb "Invoking makeH264..."
