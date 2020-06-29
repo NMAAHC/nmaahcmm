@@ -197,7 +197,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     # if working with a DPX package, check to see if it's a deprecated package structure; new packages should have directories called MEDIAID_DPX, MEDIAID_Audio, and MEDIAID_Derivatives
     if [[ -n $(find "${INPUT}" -iname "*MOV" -type d) ]] | [[ -n $(find "${INPUT}" -iname "*WAV" -type d) ]] ; then
         _report -r "Your DPX directory structure may be outdated! Do you want to run restructureDPX?"
-        _report -r "If you run restructureDPX, your DPX will be repackaged according to the updated structure, after which the ingestfile process will continue."
+        _report -r "If you run restructureDPX, your DPX will be repackaged according to the updated structure and moved to the destination you selected, after which the ingestfile process will continue."
         printf "Select an option:"
         echo
         PS3="Selection: "
@@ -207,7 +207,13 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
         done
         if [[ "${ACTION}" == "Run restructureDPX" ]] ; then
             # run restructureDPX microservice
-            "${SCRIPT_PATH}/restructureDPX" "${INPUT}"
+            echo
+            _report -sb "Invoking restructureDPX..."
+            if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
+                "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -c "${INPUT}"
+            else
+                "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" "${INPUT}"
+            fi
             _writelog "Invoked restructureDPX:" "$(date +%FT%T)"
         elif [[ "${ACTION}" == "Continue without running restructureDPX" ]] ; then
             :
@@ -259,16 +265,6 @@ elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -u "${INPUT}"
 fi
 
-# REDUNDANT - copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
-# if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
-#     rsync -avh --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
-#     _check_rsync_output
-#     if [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
-#         _report -rt  "ERROR: rsync process failed. Exiting..."
-#         _log -a "Process terminated by script (rsync failure)."
-#         exit 1
-#     fi
-# fi
 # clean up original files if requested - hardcoded OFF during testing. Need to make sure that this also notices rsync errors from other microservices invoked within this script, specifically restructureSIP and restructureDPX.
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
@@ -283,5 +279,5 @@ fi
 _log -e
 _writelog "END TIME" "$(date +%FT%T)"
 
-_report -gs "ingestfile process done...might have been successful...it's a WIP."
+_report -gs "ingestfile process done. Output package may be found at ${DESTINATION}/${MEDIAID}"
 echo
