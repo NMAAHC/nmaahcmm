@@ -63,7 +63,7 @@ while [ "${*}" != "" ] ; do
             _report -g "The OUTPUT directory is: ${OUTPUT_DIR}"
             _report -g "The OUTPUT file is: ${OUTPUT}"
             _report -gs "making .mp4 derivative of ${INPUT} ..."
-            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
+            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -map 0:v "-map 0:a?" -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
             if [[ -s "${OUTPUT}" ]] ; then
                 _report -gs "Success! Derivative ${OUTPUT} created."
             else
