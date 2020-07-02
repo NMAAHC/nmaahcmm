@@ -126,7 +126,7 @@ _pashua_run(){
             VALUE=$(echo ${LINE} | sed 's/^[^=]*=\(.*\)$/\1/' | sed 's/;;;/ /g')
             VARNAME="${KEY}"
             VARVALUE="${VALUE}"
-            eval "${VARNAME}"="${VARVALUE}"
+            eval $VARNAME='$VARVALUE'
         done
     fi
 }
@@ -232,7 +232,7 @@ _report(){
     done
     shift $(( ${OPTIND} - 1 ))
     MESSAGE="${1}"
-    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]}${MESSAGE}${NC}"
+    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]} ${MESSAGE}${NC}"
     [ "${LOG_MESSAGE}" = "Y" ] && _log -w "${MESSAGE}"
 }
 
@@ -249,6 +249,6 @@ _check_rsync_output(){
     if [[ "${RSYNC_ERR}" != 0 ]] ; then
         ((RSYNC_ERROR_COUNT++))
     else
-        continue
+        :
     fi
 }

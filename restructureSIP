@@ -28,10 +28,10 @@ _usage(){
     echo "Usage: $(basename ${0}) [ -x | -f | -v | -d | -u | -r ] [ -m MEDIAID ] [ -o /path/to/output/directory ] /path/to/SIP"
     echo "  "
     echo "  -x Package type: Digitized Film (DPX package)"
-    echo "  -f Package type: Digitized Film (MOV and/or MP4 files only)"
+    echo "  -f Package type: Digitized Film (MOV, MKV, MP4 master files)"
     echo "  -v Package type: Digitized Analog Video (vrecord package)"
-    echo "  -d Package type: Transferred DV (MOV and/or MP4 files)"
-    echo "  -u Package type: Other/Unknown"
+    echo "  -d Package type: Transferred DV (MOV, MKV, MP4 master files)"
+    echo "  -u Package type: Other/Unknown (MKV, MOV, or MP4 files only)"
     echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
     echo "  -o /path/to/output/directory (directory to deliver the resulting package to)"
     echo "  -r Remove source files after successful ingest"
@@ -44,10 +44,10 @@ OPTIND=1
 while getopts ":m:o:xfvdurh" OPT; do
     case "${OPT}" in
         x) PACKAGETYPE="Digitized Film (DPX package)" ;;
-        f) PACKAGETYPE="Digitized Film (MOV and/or MP4 files only)" ;;
+        f) PACKAGETYPE="Digitized Film (MOV, MKV, MP4 master files)" ;;
         v) PACKAGETYPE="Digitized Analog Video (vrecord package)" ;;
-        d) PACKAGETYPE="Transferred DV (MOV and/or MP4 files)" ;;
-        u) PACKAGETYPE="Other/Unknown" ;;
+        d) PACKAGETYPE="Transferred DV (MOV, MKV, MP4 master files)" ;;
+        u) PACKAGETYPE="Other/Unknown (MKV, MOV, or MP4 files only)" ;;
         m) MEDIAID="${OPTARG}" ;;
         o) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
         r) CLEANUPDECISION="Remove source files after successful ingest" ;;
@@ -62,7 +62,7 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     _report -b "Select a package type:"
     echo
     PS3="Selection: "
-    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV, MKV, MP4 master files)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown (MKV, MOV, or MP4 files only)"
     do
         break
     done
@@ -72,15 +72,15 @@ if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
-    [[ -z "${MEDIAID}" ]] && { _report -rt "ERROR: You must enter a valid MEDIA ID" ; exit ;};
-    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt "ERROR: The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
+    [[ -z "${MEDIAID}" ]] && { _report -rst "ERROR: You must enter a valid MEDIA ID" ; exit ;};
+    [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rst "ERROR: The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
 fi
 if [[ -z "${DELIVERDIR}" ]] ; then
-    _report -b "Drag in the DELIVERDIR directory or type 'q' to quit: "
+    _report -b "Drag in the destination directory or type 'q' to quit: "
     read -e DELIVERDIR
     [[ "${DELIVERDIR}" = "q" ]] && exit 0
     if [[ ! -d "${DELIVERDIR}" ]] ; then
-        _report -rt "ERROR: Destination ${DELIVERDIR} is not a directory. Exiting..."
+        _report -rst "ERROR: Destination ${DELIVERDIR} is not a directory. Exiting..."
         _log -a "Process terminated by script (input was not a directory)."
         exit 1
     fi
@@ -104,76 +104,78 @@ INPUT="${1}"
 OUTPUT_PACKAGE="${DELIVERDIR}/${MEDIAID}"
 
 # if package type is unknown, check whether it looks like a DPX package
-if [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
-    if [[ -n $(find "${INPUT}" -iname *.dpx) ]] ; then
-        _report -g "This SIP looks like a DPX package!"
+if [[ "${PACKAGETYPE}" == "Other/Unknown (MKV, MOV, or MP4 files only)" ]] ; then
+    if [[ -n "$(find "${INPUT}" -iname "*.dpx")" ]] ; then
+        _report -rs "This SIP looks like a DPX package!"
         PACKAGETYPE="Digitized Film (DPX package)"
     fi
 fi
 
 # if SIP is a DPX, direct the operator to use restructureDPX instead
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
-    _report -rt "If you are trying to restructure a DPX package, please run the 'restructureDPX' microservice instead!"
+    _report -rs "If you are trying to restructure a DPX package, please run the 'restructureDPX' microservice instead!"
     _report -b "You can also run the 'ingestfile' microservice, which invokes 'restructureDPX' as well."
     cowsay "Thanks!"
     _log -a "Process terminated by script (operator redirected to appropriate microservice)."
     exit 0
 else
-    echo "Making objects and metadata directories..."
+    _report -gs "Making objects and metadata directories..."
     mkdir -p "${OUTPUT_PACKAGE}" "${OUTPUT_PACKAGE}/objects" "${OUTPUT_PACKAGE}/metadata"
-    _report -g "Moving SIP to output package..."
+    _report -gs "Moving SIP to output package..."
 fi
 
 # perform restructuring actions on other SIPs
-if [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
+if [[ "${PACKAGETYPE}" == "Digitized Film (MOV, MKV, MP4 master files)" ]] ; then
+    if [[ -n "$(find "${INPUT}" -type f -iname "*.mov" -o -iname "*.mkv")" ]] ; then # if there are mov or mkv files in the package, treat them as preservation-level files
+        find "${INPUT}" -type f \( -iname "*.mov" -o -iname "*.mkv" \) -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+        find "${INPUT}" -type f -not \( -iname "*.mov" -o -iname "*.mkv" \) -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    elif [[ -n "$(find "${INPUT}" -type f -iname "*.mp4")" ]] ; then # if there are no mov or mkv iles in the package, but there are .mp4 files, treat the mp4 files as preservation-level files
+        find "${INPUT}" -type f -iname "*.mp4" -not -path "*/metadata/*" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \; # find and move preservation mp4 files to the "object" subdirectory
+        find "${INPUT}" -type f -not -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+        find "${INPUT}/metadata" -type f -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \; # find and move mp4 derivative files to the "metadata" subdirectory
+    else
+        _report -r "There are no MKV, MOV, or MP4 files in this package!"
+    fi
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mkv -o -iname *.mp4) ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mkv -not -iname *.mp4) ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
-elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mp4) ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mp4) ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
-elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
-    for VIDEOFILE in $(find "${INPUT}" -type f -iname *.mov -o -iname *.mkv -o -iname *.mp4) ; do
-        rsync -avh --progress "${VIDEOFILE}" "${OUTPUT_PACKAGE}/objects/"
-        _check_rsync_output
-    done
-    for METADATAFILE in $(find "${INPUT}" -type f -not -iname *.mov -not -iname *.mkv -not -iname *.mp4) ; do
-        rsync -avh --progress "${METADATAFILE}" "${OUTPUT_PACKAGE}/metadata/"
-        _check_rsync_output
-    done
+    find "${INPUT}" -type f -iname "*.mkv" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+    find "${INPUT}" -type f -not -iname "*.mkv" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV, MKV, MP4 master files)" ]] ; then
+    if [[ -n "$(find "${INPUT}" -type f -iname "*.mov" -o -iname "*.mkv")" ]] ; then # if there are mov or mkv files in the package, treat them as preservation-level files
+        find "${INPUT}" -type f \( -iname "*.mov" -o -iname "*.mkv" \) -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+        find "${INPUT}" -type f -not \( -iname "*.mov" -o -iname "*.mkv" \) -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    elif [[ -n "$(find "${INPUT}" -type f -iname "*.mp4")" ]] ; then # if there are no mov or mkv iles in the package, but there are .mp4 files, treat the mp4 files as preservation-level files
+        find "${INPUT}" -type f -iname "*.mp4" -not -path "*/metadata/*" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \; # find and move preservation mp4 files to the "object" subdirectory
+        find "${INPUT}" -type f -not -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+        find "${INPUT}/metadata" -type f -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \; # find and move mp4 derivative files to the "metadata" subdirectory
+    else
+        _report -r "There are no MKV, MOV, or MP4 files in this package!"
+    fi
+elif [[ "${PACKAGETYPE}" == "Other/Unknown (MKV, MOV, or MP4 files only)" ]] ; then
+    if [[ -n "$(find "${INPUT}" -type f -iname "*.mov" -o -iname "*.mkv")" ]] ; then # if there are mov or mkv files in the package, treat them as preservation-level files
+        find "${INPUT}" -type f \( -iname "*.mov" -o -iname "*.mkv" \) -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \;
+        find "${INPUT}" -type f -not \( -iname "*.mov" -o -iname "*.mkv" \) -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    elif [[ -n "$(find "${INPUT}" -type f -iname "*.mp4")" ]] ; then # if there are no mov or mkv iles in the package, but there are .mp4 files, treat the mp4 files as preservation-level files
+        find "${INPUT}" -not -path "*/metadata/*" -type f -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/objects/" \; # find and move preservation mp4 files to the "object" subdirectory
+        find "${INPUT}" -type f -not -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+        find "${INPUT}/metadata" -type f -iname "*.mp4" -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \; # find and move mp4 derivative files to the "metadata" subdirectory
+    else
+        _report -r "There are no MKV, MOV, or MP4 files in this package!"
+    fi
 fi
 
 # clean up original files if requested - hardcoded OFF during testing
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    if [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
 #        echo "There were ${RSYNC_ERROR_COUNT} errors during the rsync process!"
-#        _report -rt "Cancelling requested deletion of source file, not looking safe."
+#        _report -rst "Cancelling requested deletion of source file, not looking safe."
 #    else
-#        _report -g "Removing the source file from ${INPUT} as requested."
+#        _report -gs "Removing the source file from ${INPUT} as requested."
 #        _run rm -f "${INPUT}"
 #    fi
 #fi
 
 # log script ending
+_report -g "restructureSIP process complete."
+echo
 _log -e
 _writelog "END TIME" "$(date +%FT%T)"

@@ -49,45 +49,33 @@ shift $(( ${OPTIND} - 1 ))
 # log script beginning
 _log -b
 
+
 while [ "${*}" != "" ] ; do
-    if [[ -d "${1}" ]] ; then
-        PACKAGE_PATH="${1}"
-    else
-        _report -rt "ERROR: ${1} is not a directory. Moving to next package if present..."
-    fi
-    shopt -s nullglob
-    for FILE in $(find "${PACKAGE_PATH}" -iname "*.mov" -o -iname "*.mkv" ) ; do
-        _report -g "Making metadata reports for ${FILE}..."
-        BASENAMEFILE=$(basename "${FILE}")
-        FILEOUTPUT=$(dirname "${FILE}")
-        TREEXML="${FILEOUTPUT}/${BASENAMEFILE}.tree.xml"
-        FFPROBEXML="${FILEOUTPUT}/${BASENAMEFILE}.ffprobe.xml"
-        MEDIAINFOXML="${FILEOUTPUT}/${BASENAMEFILE}.mediainfo.xml"
-        MEDIATRACEXML="${FILEOUTPUT}/${BASENAMEFILE}.mediatrace.xml"
-        EXIFTOOLXML="${FILEOUTPUT}/${BASENAMEFILE}.exiftool.xml"
+    # process if INPUT is a file
+    if [[ -f "${1}" ]] ; then
+        FILE="${1}"
+        _report -gs "Making metadata reports for ${FILE}..."
+        BASENAME=$(basename "${FILE}")
+        OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
+        mkdir -p "${OUTPUT_DIR}"
+        TREEXML="${OUTPUT_DIR}/${BASENAME}.tree.xml"
+        FFPROBEXML="${OUTPUT_DIR}/${BASENAME}.ffprobe.xml"
+        MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}.mediainfo.xml"
+        MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}.mediatrace.xml"
+        EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}.exiftool.xml"
         # if requested: remove existing metadata files to be overwritten
         if [[ "${OVERWRITE}" == "Y" ]] ; then
             rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
         fi
         # if the metadata files don't already exist, create them; the command following "&&" will only execute if the test before it is successful
-        [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${PACKAGE_PATH}" > "${TREEXML}"
+        [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "$(dirname "${FILE}")" > "${TREEXML}"
         [[ ! -f "${FFPROBEXML}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBEXML}"
         [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
         [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"
         [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
-        # generate MD5 checksum if requested; overwrite if requested
-        if [[ "${MD5}" == "Y" ]] ; then
-            MD5FILE="${FILEOUTPUT}/${BASENAMEFILE}.md5"
-            if [[ "${OVERWRITE}" == "Y" ]] ; then
-                rm "${MD5FILE}"
-                md5deep -bre "${FILE}" >> "${MD5FILE}" # -b=strip leading directory info, -r=recursive, -e=display progress indicator
-            elif [[ ! -f "${MD5FILE}" ]] ; then
-                md5deep -bre "${FILE}" >> "${MD5FILE}"
-            fi
-        fi
         # generate QCTools XML if requested; overwrite if requested
         if [[ "${QCTOOLS}" == "Y" ]] ; then
-            QCTOOLSXML="${FILEOUTPUT}/${BASENAMEFILE}.qctools.xml.gz"
+            QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}.qctools.xml.gz"
             if [[ "${OVERWRITE}" == "Y" ]] ; then
                 rm "${QCTOOLSXML}"
                 qcli -i "${FILE}" -o "${QCTOOLSXML}"
@@ -102,21 +90,98 @@ while [ "${*}" != "" ] ; do
         # right now, the script will just add more and more attachments if it's run on the same file multiple times. MKV attachments are identified by numbers, so it can be complicated to delete/overwrite based on content.
         if [[ "${EMBED}" == "Y" ]] ; then
             if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
-                _report -g "Embedding metadata reports in MKV file ${FILE}..."
+                _report -gs "Embedding metadata reports in MKV file ${FILE}..."
                 mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
                 mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
                 mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
                 mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOLXML}"
-                if [[ "${MD5}" = "Y" ]] ; then
-                    mkvpropedit "${FILE}" --attachment-description "MD5 checksum $(date +%Y%m%d-%H%M%S)" --add-attachment "${MD5FILE}"
-                fi
                 if [[ "${QCTOOLS}" = "Y" ]] ; then
                     mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLSXML}"
                 fi
             fi
         fi
-        _report -g "Moving to next file if present..."
-    done
+        # generate MD5 checksum if requested; overwrite if requested
+        if [[ "${MD5}" == "Y" ]] ; then
+            MD5FILE="${OUTPUT_DIR}/${BASENAME}.md5"
+            if [[ "${OVERWRITE}" == "Y" ]] ; then
+                rm "${MD5FILE}"
+                md5deep -bre "${FILE}" >> "${MD5FILE}" # -b=strip leading directory info, -r=recursive, -e=display progress indicator
+            elif [[ ! -f "${MD5FILE}" ]] ; then
+                md5deep -bre "${FILE}" >> "${MD5FILE}"
+            fi
+        fi
+        _report "Moving to next file if present..."
+    elif [[ -d "${1}" ]] ; then
+        TEMPFILE="$(_maketemp)"
+        INPUT="${1}"
+        # look for mov or mkv files to treat as input; if there are only mp4 files, treat the mp4 files as input
+        if [[ -n "$(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv")" ]] ; then
+            find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
+        elif [[ -n "$(find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*")" ]] ; then
+            find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*" >> "${TEMPFILE}"
+        else
+            _report -r "There are no MOV or MP4 files in this package!"
+        fi
+        while read FILE ; do
+            _report -gs "Making metadata reports for ${FILE}..."
+            BASENAME=$(basename "${FILE}")
+            OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
+            mkdir -p "${OUTPUT_DIR}"
+            TREEXML="${OUTPUT_DIR}/${BASENAME}.tree.xml"
+            FFPROBEXML="${OUTPUT_DIR}/${BASENAME}.ffprobe.xml"
+            MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}.mediainfo.xml"
+            MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}.mediatrace.xml"
+            EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}.exiftool.xml"
+            # if requested: remove existing metadata files to be overwritten
+            if [[ "${OVERWRITE}" == "Y" ]] ; then
+                rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
+            fi
+            # if the metadata files don't already exist, create them; the command following "&&" will only execute if the test before it is successful
+            [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${INPUT}" > "${TREEXML}"
+            [[ ! -f "${FFPROBEXML}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBEXML}"
+            [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
+            [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"
+            [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
+            # generate QCTools XML if requested; overwrite if requested
+            if [[ "${QCTOOLS}" == "Y" ]] ; then
+                QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}.qctools.xml.gz"
+                if [[ "${OVERWRITE}" == "Y" ]] ; then
+                    rm "${QCTOOLSXML}"
+                    qcli -i "${FILE}" -o "${QCTOOLSXML}"
+                elif [[ ! -f "${QCTOOLSXML}" ]] ; then
+                    qcli -i "${FILE}" -o "${QCTOOLSXML}"
+                fi
+            fi
+            # embed metadata files in MKV file if requested
+            # to see what attachments are in your file and what ID #s they have, run: mkvmerge --identify ${filename}
+            # to extract those attachments, run: mkvextract ${filename}.mkv attachments ${ID#}:${extracted_output_filename.ext} ---> e.g. if you see that attachment 1 is a mediainfo xml and you want to extract it into a file on the Desktop called "mediainfo.xml," run: mkvextract file.mkv 1:~/Desktop/mediainfo.xml
+            # to delete attachments, run: mkvpropedit ${filename}.mkv --delete-attachment ${ID#}
+            # right now, the script will just add more and more attachments if it's run on the same file multiple times. MKV attachments are identified by numbers, so it can be complicated to delete/overwrite based on content.
+            if [[ "${EMBED}" == "Y" ]] ; then
+                if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
+                    _report -gs "Embedding metadata reports in MKV file ${FILE}..."
+                    mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
+                    mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
+                    mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
+                    mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOLXML}"
+                    if [[ "${QCTOOLS}" = "Y" ]] ; then
+                        mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLSXML}"
+                    fi
+                fi
+            fi
+            # generate MD5 checksum if requested; overwrite if requested
+            if [[ "${MD5}" == "Y" ]] ; then
+                MD5FILE="${OUTPUT_DIR}/${BASENAME}.md5"
+                if [[ "${OVERWRITE}" == "Y" ]] ; then
+                    rm "${MD5FILE}"
+                    md5deep -bre "${FILE}" >> "${MD5FILE}" # -b=strip leading directory info, -r=recursive, -e=display progress indicator
+                elif [[ ! -f "${MD5FILE}" ]] ; then
+                    md5deep -bre "${FILE}" >> "${MD5FILE}"
+                fi
+            fi
+            _report "Moving to next file if present..."
+        done < "${TEMPFILE}"
+    fi
     shift
 done
 

@@ -11,9 +11,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(ffmpeg) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 
-RELATIVEPATH="derivative"
-SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inlcusion in filename
-EXTENSION="mp4"
+SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
 CRFVALUE=18
 PRESETSPEED=medium
 MAXRATE=8000
@@ -25,8 +23,8 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes one or more video files or packages as input. You may pass both video files and packages in the same command."
-    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'derivative' located within the input file's parent directory."
-    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'derivative' located within the input directory."
+    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'metadata' located within the input file's parent directory."
+    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'metadata' located within the input directory."
     echo "Usage: $(basename ${0}) fileorpackage1 [ fileorpackage2 ...]"
     echo
     exit
@@ -52,57 +50,65 @@ while [ "${*}" != "" ] ; do
 
     # process if INPUT is a file
     if [[ -f "${INPUT}" ]] ; then
-        OUTPUT_DIR="$(dirname ${INPUT})/${RELATIVEPATH}" # set OUTPUT_DIR to INPUT name with extension stripped plus relativepath
+        OUTPUT_DIR="$(dirname ${INPUT})/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
         MEDIAID="${INPUT##*/}" #set $MEDIAID to basename of $INPUT
         MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
-        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
         [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
         if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
-            _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
-            _report -rt "Moving to next file if present..."
+            _report -rst "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
+            _report "Moving to next file if present..."
         else
             _report -g "The MEDIA ID is: ${MEDIAID}"
             _report -g "The OUTPUT directory is: ${OUTPUT_DIR}"
             _report -g "The OUTPUT file is: ${OUTPUT}"
-            _report -g "making .mp4 derivative of ${MEDIAID}"
+            _report -gs "making .mp4 derivative of ${INPUT} ..."
             ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
             if [[ -s "${OUTPUT}" ]] ; then
-                _report -g "Success! Derivative $(basename ${OUTPUT}) created."
+                _report -gs "Success! Derivative ${OUTPUT} created."
             else
-                _report -rt  "Hmm...derivative $(basename ${OUTPUT}) was not successfully created."
+                _report -rst  "Hmm...derivative ${OUTPUT} was not successfully created."
                 ((ERRORS++))
             fi
-            _report -g "Moving to next file if present..."
+            _report -s "Moving to next file if present..."
         fi
     # process if INPUT is a directory
     elif [[ -d "${INPUT}" ]] ; then
+        TEMPFILE="$(_maketemp)"
         INPUT="${INPUT%/}" # strip trailing / if any
-        OUTPUT_DIR="${INPUT}/${RELATIVEPATH}" # set OUTPUT_DIR to INPUT name plus relativepath
-        shopt -s nullglob # setting the nullglob option tells the for loop in the next line to skip the rest of the commands if it doesn't find any .mov and/or .mkv files (rather than try to execute on the literal string "*.mov" or "*.mkv")
-        for FILE in "${INPUT}"/*.{mov,mkv} ; do # find .mov and .mkv files within the directory and run the ffmpeg command on that file
-            [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
-            MEDIAID="${FILE##*/}" #set $MEDIAID to basename of $INPUT
-            MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
-            OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.${EXTENSION}" #set $OUTPUT
+        # look for mov or mkv files to treat as input; if there are only mp4 files, treat the mp4 files as input
+        if [[ -n "$(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv")" ]] ; then
+            find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
+        elif [[ -n "$(find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*")" ]] ; then
+            find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*" >> "${TEMPFILE}"
+        else
+            _report -r "There are no MOV or MP4 files in this package!"
+        fi
+        while read FILE ; do
+            OUTPUT_DIR="$(dirname "${FILE}")/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
+            [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT_DIR if it doesn't already exist
+            MEDIAID="${FILE##*/}" #strip directory from the filename used for MEDIAID
+            MEDIAID="${MEDIAID%.*}" #strip extension from the filename used for MEDIAID
+            OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
             if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
-                _report -rt "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
+                _report -rst "WARNING: ${OUTPUT} already exists, skipping transcode of ${FILE}"
             else
-                _report -g "The MEDIA ID is: ${MEDIAID}"
-                _report -g "The OUTPUT directory is: ${OUTPUT_DIR}"
-                _report -g "The OUTPUT file is: ${OUTPUT}"
-                _report -g "making .mp4 derivative of ${MEDIAID}"
+                _report -gs "The MEDIA ID is: ${MEDIAID}"
+                _report -gs "The OUTPUT directory is: ${OUTPUT_DIR}"
+                _report -gs "The OUTPUT file is: ${OUTPUT}"
+                _report -gs "making .mp4 derivative of ${FILE} ..."
                 ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${FILE}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
                 if [[ -s "${OUTPUT}" ]] ; then
-                    _report -g "Success! Derivative $(basename ${OUTPUT}) created."
+                    _report -gs "Success! Derivative ${OUTPUT} created."
                 else
-                    _report -rt  "Hmm...derivative $(basename ${OUTPUT}) not successfully created."
+                    _report -rst  "Hmm...derivative ${OUTPUT} not successfully created."
                     ((ERRORS++))
                 fi
             fi
-            _report -g "Moving to next file if present..."
-        done
+            _report -s "Moving to next file if present..."
+        done < "${TEMPFILE}"
     else
-        _report -rt  "ERROR: Input ${INPUT} is not a file or directory. Exiting..."
+        _report -rst  "ERROR: Input ${INPUT} is not a file or directory. Exiting..."
         _log -a "Process terminated by script (input was not a file or directory)."
         exit 1
     fi
@@ -113,8 +119,8 @@ done
 _log -e
 _report -g "makeH264 process complete."
 if [[ "${ERRORS}" -gt 0 ]] ; then
-    _report -r "Not all derivatives were successfully created. Please double-check the terminal output!"
-    _report -r "Total number of derivative errors found: ${ERRORS}"
+    _report -rs "Not all derivatives were successfully created. Please double-check the terminal output!"
+    _report -rs "Total number of derivative errors found: ${ERRORS}"
     _log -w "${ERRORS} error/s occurred during derivative creation."
 fi
 echo

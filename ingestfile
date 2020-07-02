@@ -43,71 +43,44 @@ CONF="
 
 # intro text
 intro.x = 20
-intro.y = 600
+intro.y = 420
 intro.width = 500
 intro.type = text
 intro.text = Ingest file options. Leave the option blank to be prompted.
 
 # ask operator
 OP.x = 20
-OP.y = 540
+OP.y = 360
 OP.type = textfield
 OP.label = Please enter your name:
 OP.width = 250
 
 # input directory
 INPUT.x = 20
-INPUT.y = 480
+INPUT.y = 300
 INPUT.type = openbrowser
 INPUT.label = Select your package:
 INPUT.width=400
 
 # package type
 PACKAGETYPE.x = 20
-PACKAGETYPE.y = 420
+PACKAGETYPE.y = 240
 PACKAGETYPE.type = combobox
-PACKAGETYPE.label = Please indicate the type of package being submitted.
+PACKAGETYPE.label = Please indicate the type of package being submitted [scroll for all options].
 PACKAGETYPE.option =
 PACKAGETYPE.option = Digitized Film (DPX package)
-PACKAGETYPE.option = Digitized Film (MOV and/or MP4 files only)
+PACKAGETYPE.option = Digitized Film (MOV, MKV, MP4 master files)
 PACKAGETYPE.option = Digitized Analog Video (vrecord package)
-PACKAGETYPE.option = Transferred DV (MOV and/or MP4 files)
-PACKAGETYPE.option = Other/Unknown
+PACKAGETYPE.option = Transferred DV (MOV, MKV, MP4 master files)
+PACKAGETYPE.option = Other/Unknown (MKV, MOV, or MP4 files only)
 PACKAGETYPE.width = 400
 
 # mediaid
 MEDIAID.x = 20
-MEDIAID.y = 360
+MEDIAID.y = 180
 MEDIAID.type = textfield
-MEDIAID.label = Enter a unique media ID/package name ([aA-zZ][0-9]-_ only). LEAVE BLANK for DPX packages.
+MEDIAID.label = Enter a unique media ID/package name ([aA-zZ][0-9]-_ only).
 MEDIAID.width = 250
-
-# DPX object ID
-DPXID.x = 20
-DPXID.y = 300
-DPXID.type = textfield
-DPXID.label = If your package is a DPX, enter a DPX object ID (ex. 2012_79_1_54).
-DPXID.option =
-DPXID.width=250
-
-# DPX title
-DPXTITLE.x = 20
-DPXTITLE.y = 240
-DPXTITLE.type = textfield
-DPXTITLE.label = If your package is a DPX, enter a DPX title (ex. Something_to_Build_On).
-DPXTITLE.option =
-DPXTITLE.width=250
-
-# DPX reel count
-REELS.x = 20
-REELS.y = 180
-REELS.type = combobox
-REELS.label = If your package is a DPX, select the number of reels (if not a DPX, leave blank).
-REELS.option =
-REELS.option = 1
-REELS.option = 2
-REELS.option = 3
-REELS.width=100
 
 # destination
 DESTINATION.x = 20
@@ -120,7 +93,7 @@ DESTINATION.width = 400
 CLEANUPDECISION.x = 20
 CLEANUPDECISION.y = 60
 CLEANUPDECISION.type = combobox
-CLEANUPDECISION.label = Select a cleanup strategy
+CLEANUPDECISION.label = Select a cleanup strategy.
 CLEANUPDECISION.default = Leave source files where they are
 CLEANUPDECISION.option =
 CLEANUPDECISION.option = Leave source files where they are
@@ -141,9 +114,6 @@ echo "  OPERATOR = ${OP}"
 echo "  INPUT = ${INPUT}"
 echo "  MEDIAID = ${MEDIAID}"
 echo "  PACKAGETYPE = ${PACKAGETYPE}"
-echo "  REELS = ${REELS}"
-echo "  DPXID = ${DPXID}"
-echo "  DPXTITLE = ${DPXTITLE}"
 echo "  DESTINATION = ${DESTINATION}"
 echo "  CLEANUPDECISION = ${CLEANUPDECISION}"
 echo ""
@@ -169,40 +139,19 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
     echo
     PS3="Selection: "
-    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV and/or MP4 files only)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV and/or MP4 files)" "Other/Unknown"
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV, MKV, MP4 master files)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV, MKV, MP4 master files)" "Other/Unknown (MKV, MOV, or MP4 files only)" "quit"
     do
+        if [[ "${PACKAGETYPE}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
     done
 fi
-if [[ -z "${MEDIAID}" ]] && [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
+if [[ -z "${MEDIAID}" ]] ; then
     printf "Enter a unique package name or 'q' to quit: "
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
     # validate id and perhaps fail with exit
     [[ -z "${MEDIAID}" ]] && { _report -rt  "ERROR: You must enter a valid MEDIA ID" ; exit ;};
     [[ ! -z $(echo "${MEDIAID}" | grep -v "^[A-Za-z0-9_-]*$") ]] && { _report -rt  "ERROR The MEDIA ID must only contain letters, numbers, hyphen and underscore" ; exit 1 ;};
-fi
-if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
-    if [[ -z "${REELS}" ]] ; then
-        printf "Select the number of reels in your DPX package:"
-        echo
-        PS3="Selection: "
-        select PACKAGETYPE in "1" "2" "3"
-        do
-            break
-        done
-    fi
-    if [[ -z "${DPXID}" ]] ; then
-        printf "Enter your DPX_Object_ID_Number with underscores:"
-        read -e DPXID
-        printf "ex. 2015_167_10_1"
-    fi
-    if [[ -z "${DPXTITLE}" ]] ; then
-        printf "Enter your DPX_Object_Title with underscores:"
-        printf "ex. Juke_Joint"
-        read -e DPXTITLE
-    fi
-    MEDIAID="${DPXID}__${DPXTITLE}"
 fi
 if [[ -z "${DESTINATION}" ]] ; then
     printf "Drag in the destination directory or type 'q' to quit: "
@@ -217,8 +166,9 @@ fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     printf "Select a cleanup strategy:"
     echo
-    select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest"
+    select CLEANUPDECISION in "Leave source files where they are" "Remove source files after successful ingest" "quit"
     do
+        if [[ "${CLEANUPDECISION}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
     done
 fi
@@ -233,9 +183,6 @@ _writelog "OPERATOR" "${OP}"
 _writelog "INPUT" "${INPUT}"
 _writelog "MEDIAID" "${MEDIAID}"
 _writelog "PACKAGETYPE" "${PACKAGETYPE}"
-_writelog "REELS" "${REELS}"
-_writelog "DPXID" "${DPXID}"
-_writelog "DPXTITLE" "${DPXTITLE}"
 _writelog "DESTINATION" "${DESTINATION}"
 _writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
 _writelog "START TIME" "$(date +%FT%T)"
@@ -247,43 +194,77 @@ mkdir -p "${DESTINATION}/${MEDIAID}"
 "${SCRIPTDIR}/removeDSStore" "${INPUT}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
 
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
-    # if working with a DPX package, run restructureDPX microservice
-    if [[ "${CLEANUPDECISION}" == "Leave source files where they are" ]] ; then
-        "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" "${INPUT}"
-    elif [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
-        "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -i "${DPXID}" -t "${DPXTITLE}" -r "${REELS}" -c "${INPUT}"
+    # if working with a DPX package, check to see if it's a deprecated package structure; new packages should have directories called MEDIAID_DPX, MEDIAID_Audio, and MEDIAID_Derivatives
+    if [[ -n $(find "${INPUT}" -iname "*MOV" -type d) ]] | [[ -n $(find "${INPUT}" -iname "*WAV" -type d) ]] ; then
+        _report -r "Your DPX directory structure may be outdated! Do you want to run restructureDPX?"
+        _report -r "If you run restructureDPX, your DPX will be repackaged according to the updated structure and moved to the destination you selected, after which the ingestfile process will continue."
+        printf "Select an option:"
+        echo
+        PS3="Selection: "
+        select ACTION in "Run restructureDPX" "Continue without running restructureDPX" "Cancel - don't do anything to my package and end ingestfile process"
+        do
+            break
+        done
+        if [[ "${ACTION}" == "Run restructureDPX" ]] ; then
+            # run restructureDPX microservice
+            echo
+            _report -sb "Invoking restructureDPX..."
+            if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
+                "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" -c "${INPUT}"
+            else
+                "${SCRIPT_PATH}/restructureDPX" -d "${DESTINATION}" "${INPUT}"
+            fi
+            _writelog "Invoked restructureDPX:" "$(date +%FT%T)"
+        elif [[ "${ACTION}" == "Continue without running restructureDPX" ]] ; then
+            :
+        elif [[ "${ACTION}" == "Cancel - don't do anything to my package and end ingestfile process" ]] ; then
+            exit
+        fi
+    else
+        _report -g "Moving DPX package as-is to specified destination..."
+        if [[ "$(basename ${INPUT})" == "${MEDIAID}" ]] ; then
+            rsync -avch --progress "${INPUT}" "${DESTINATION}"
+        else
+            rsync -avch --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
+        fi
+        # ADD restructureSIP STEP
     fi
-    _writelog "Invoked restructureDPX:" "$(date +%FT%T)"
-elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV and/or MP4 files only)" ]] ; then
+elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV, MKV, MP4 master files)" ]] ; then
+    _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -f "${INPUT}"
+    _report -sb "Invoking restructureSIP..."
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -f "${INPUT}"
 elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
-    rsync -avh --progress "${INPUT}/derivative/"*.mp4 "${INPUT}" # move derivative files up to main package level so that makeH264 can see there are derivatives already created
-    _check_rsync_output
+    # if [[ -d "${INPUT}/derivative/" ]] ; then
+    #     rsync -avh --progress "${INPUT}/derivative/"*.mp4 "${INPUT}" # if derivatives are in a "derivative" folder, move them up to main package level so that makeH264 can "see" the existing derivs
+    #     _check_rsync_output
+    # fi
+    mkdir -p "${DESTINATION}/${MEDIAID}/metadata/"
+    find "${INPUT}" -type f -iname "*.md5" -o -iname "*.log" -o -iname "*.xml" -exec rsync -ah {} "${INPUT}/metadata/" \; # move exsting metadata files to metadata folder so that makemetadata does not create a totally new set
+    _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -v "${INPUT}"
-elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV and/or MP4 files)" ]] ; then
+    _report -sb "Invoking restructureSIP..."
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -v "${INPUT}"
+elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV, MKV, MP4 master files)" ]] ; then
+    _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -mq "${INPUT}" # make metadata files, including MD5 and QCTools files  if not present
+    _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -d "${INPUT}"
-elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
+    _report -sb "Invoking restructureSIP..."
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -d "${INPUT}"
+elif [[ "${PACKAGETYPE}" == "Other/Unknown (MKV, MOV, or MP4 files only)" ]] ; then
+    _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
+    _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${INPUT}"
-    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}/${MEDIAID}" -u "${INPUT}"
+    _report -sb "Invoking restructureSIP..."
+    "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -u "${INPUT}"
 fi
 
-# REDUNDANT - copy original files to new directory - except for DPX (files are already there from invoking restructureDPX)
-# if [[ "${PACKAGETYPE}" != "Digitized Film (DPX package)" ]] ; then
-#     rsync -avh --progress "${INPUT}" "${DESTINATION}/${MEDIAID}"
-#     _check_rsync_output
-#     if [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
-#         _report -rt  "ERROR: rsync process failed. Exiting..."
-#         _log -a "Process terminated by script (rsync failure)."
-#         exit 1
-#     fi
-# fi
 # clean up original files if requested - hardcoded OFF during testing. Need to make sure that this also notices rsync errors from other microservices invoked within this script, specifically restructureSIP and restructureDPX.
 #if [[ "${CLEANUPDECISION}" == "Remove source files after successful ingest" ]] ; then
 #    [[ "${RSYNC_ERROR_COUNT}" -gt "0" ]] ; then
@@ -298,4 +279,5 @@ fi
 _log -e
 _writelog "END TIME" "$(date +%FT%T)"
 
-echo "Process done...might have been successful...it's a WIP."
+_report -gs "ingestfile process done. Output package may be found at ${DESTINATION}/${MEDIAID}"
+echo
