@@ -37,6 +37,36 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
 #### ingestfile
 * This script will run an interactive interview and then process an input file accordingly.
 * Your command will look like this: `ingestfile fileorpackage1 [ fileorpackage2 ...]`
+* When you run the script, a menu will pop up. Fill out the fields as follows:  
+
+    1. **Name**: Enter your name.  
+    2. **Input package (SIP)**: Click “Choose” to launch the file picker, and navigate to the location where your package is stored.  
+        * Select the directory that holds your preservation master file and any accompanying metadata files, not the file itself.  
+        * If your SIP has a nested directory structure, select the lowest-down subdirectory that still holds all the files.
+    3. **Type of package**: Select what type of package you’re ingesting; you may have to scroll to see all the options.
+        * <em>Digitized Film (DPX package)</em>: Select this for all DPX packages.
+            * If the script detects an outdated DPX directory structure, it will ask you if you want to run the microservice `restructureDPX`. You can select yes, no, or cancel.
+            * If you select yes, the `restructureDPX` microservice will launch, with the destination directory already supplied. You will have to re-input the media ID.
+            * If the script doesn’t detect an outdated DPX directory structure, it will simply move the full package to the destination directory.
+        * <em>Digitized Film (MOV, MKV, MP4 master files)</em>: Select this for non-DPX digitized film packages.
+            * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
+        * <em>Digitized Analog Video (vrecord package)</em>: Select this for all vrecord transfers.
+            * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
+        * <em>Transferred DV (MOV, MKV, MP4 master files)</em>: Select this for all DV transfers not performed with vrecord.
+            * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
+        * <em>Other/Unknown</em>: Select this for all other package types.
+            * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
+    4. **Media ID**: Enter the media ID. The script will only accept the letters a-z and A-Z, the numbers 0-9, hyphens -, and underscores _.
+    5. **Output package (AIP)**: Click “Choose” to launch the file picker, and navigate to the location where you would like your AIP to be stored. Select the parent directory for all AIPs, rather than creating a new directory for this specific package. The script will create a subdirectory named after the media ID.
+    6. **Cleanup strategy**: In theory this is where you would choose to delete the original SIP once the AIP has been created; in practice all file deletion is currently hardcoded off. Leave this option as the default “Leave source files where they are.”
+
+<em>Before (SIP) and after (AIP):</em>  
+    <img src="./Resources/film-dpx_beforeafter.png" alt="DPX Film SIP and AIP structures" width="600">
+    <img src="./Resources/film-dig_beforeafter.png" alt="Digitized Film SIP and AIP structures" width="600">
+    <img src="./Resources/vrecord_beforeafter.png" alt="vrecord SIP and AIP structures" width="600">
+    <img src="./Resources/dv_beforeafter.png" alt="DV SIP and AIP structures" width="600">
+    <img src="./Resources/unknown-other_beforeafter.png" alt="Other/Unknown SIP and AIP structures" width="600">
+  
   
 #### makechecksum
 * This application creates md5 checksums. If you pass a single file as input, the application will create a checksum for that file and save it in a .md5 file in the same directory as your input. If you pass a directory as input, the application will create a checksum for every file in the directory and save them in .md5 files (one .md5 file for each original file) in the same directory that you supplied.
