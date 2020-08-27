@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+# a script to turn raw camera cards into SIPs
+
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+DEPENDENCIES=(ffmpeg)
+
+## USAGE
+
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "This script will detect a Canon C100 or C300 camera card structure and transform the original camera card directory structure into a usable SIP. The script will concatenate video files into a single file, make a new directory structure, and create a log of these changes."
+    echo "Dependencies: ${DEPENDENCIES[@]}"
+    echo "Usage: $(basename ${0}) [ -o /path/to/output_directory ] /path/to/camera_card_directory"
+    echo "  -o /path/to/output/directory (directory to deliver the resulting package to)"
+    echo "  -h display this help"
+    echo
+    exit
+}
+# getopts loop
+OPTIND=1
+while getopts ":o:h" OPT; do
+    case "${OPT}" in
+        o) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+######### remove trailing slash if present
+CAMERA_CARD_DIR="${1}"
+
+# ask for camera card if it wasn't supplied
+if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
+    printf "Drag in the input directory or type 'q' to quit: "
+    read -e CAMERA_CARD_DIR
+    [[ "${CAMERA_CARD_DIR}" = "q" ]] && exit 0
+fi
+# check that camera card is a directory
+if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
+    _report -rt "ERROR: Input ${CAMERA_CARD_DIR} is not a directory. Exiting..."
+    _log -a "Process terminated by script (input was not a directory)."
+    exit 1
+fi
+
+# detect camera card structure
+if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "STREAM")" ]] ; then
+    CAMERA_CARD_TYPE="C100"
+elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
+    CAMERA_CARD_TYPE="C300"
+else
+    _report -r "Camera card type not identified! Exiting..."
+fi
+
+# create reports of the original files
+# tree
+TREE="${DELIVERDIR}/$(basename "${CAMERA_CARD_DIR}").tree.txt"
+tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
+# mediainfo
+MEDIAINFO_CONCATENATED="${DELIVERDIR}/$(basename "${CAMERA_CARD_DIR}").mediainfo.xml"
+if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
+    find "${CAMERA_CARD_DIR}/BDMV/STREAM/" -iname "*.MTS" | sort -z > "${TEMPFILE}"
+    for FILE in "${TEMPFILE}" ; do
+        mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
+    done
+elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
+    :
+    ######### fill in with C300
+fi
+
+# concatenate video files into a single file
+######### test if concat maps metadata properly
+TEMPFILE="$(_maketemp)"
+if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
+    find "${CAMERA_CARD_DIR}/BDMV/STREAM/" -iname "*.MTS" | sort -z > "${TEMPFILE}"
+    ffmpeg -f concat -safe 0 -i "${TEMPFILE}" -c copy -map_metadata 0 "${DELIVERDIR}/FULL_VIDEO_FILE.MTS"
+elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
+    :
+    ######### fill in with C300
+fi
+
+# make a new directory structure
+######### tk - need to determine and move other useful files to $DELIVERDIR
+
+# log script ending
+_log -e
+_report -g "camera_cards process complete."
+echo
