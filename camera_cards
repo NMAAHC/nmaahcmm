@@ -33,7 +33,6 @@ while getopts ":o:h" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
-######### remove trailing slash if present
 CAMERA_CARD_DIR="${1}"
 
 # ask for camera card if it wasn't supplied
@@ -48,15 +47,33 @@ if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
     _log -a "Process terminated by script (input was not a directory)."
     exit 1
 fi
+# ask for delivery directory if it wasn't supplied
+if [[ -z "${DELIVERDIR}" ]] ; then
+    printf "Drag in the input directory or type 'q' to quit: "
+    read -e DELIVERDIR
+    [[ "${DELIVERDIR}" = "q" ]] && exit 0
+fi
+# check that delivery directory is a directory
+if [[ ! -d "${DELIVERDIR}" ]] ; then
+    _report -rt "ERROR: Input ${DELIVERDIR} is not a directory. Exiting..."
+    _log -a "Process terminated by script (input was not a directory)."
+    exit 1
+fi
 
-# detect camera card structure
+# detect camera card structure based on directory name
 if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "STREAM")" ]] ; then
+    echo "Camera card type identified: Canon C100"
     CAMERA_CARD_TYPE="C100"
 elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
+    echo "Camera card type identified: Canon C300"
     CAMERA_CARD_TYPE="C300"
 else
     _report -r "Camera card type not identified! Exiting..."
 fi
+
+# make temp files
+TEMP_FILELIST="${DELIVERDIR}/temp_filelist.txt"
+TEMP_CONCATLIST="${DELIVERDIR}/temp_concatlist.txt"
 
 # create reports of the original files
 # tree
@@ -65,30 +82,41 @@ tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo
 MEDIAINFO_CONCATENATED="${DELIVERDIR}/$(basename "${CAMERA_CARD_DIR}").mediainfo.xml"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
-    find "${CAMERA_CARD_DIR}/BDMV/STREAM/" -iname "*.MTS" | sort -z > "${TEMPFILE}"
-    for FILE in "${TEMPFILE}" ; do
+    find "${CAMERA_CARD_DIR}/BDMV/STREAM/" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
+    for FILE in "${TEMP_FILELIST}" ; do
         mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
+        echo "" >> "${MEDIAINFO_CONCATENATED}"
     done
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
-    :
-    ######### fill in with C300
+    find "${CAMERA_CARD_DIR}/CONTENTS/" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
+    for FILE in "${TEMP_FILELIST}" ; do
+        mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
+        echo "" >> "${MEDIAINFO_CONCATENATED}"
+    done
 fi
 
 # concatenate video files into a single file
-######### test if concat maps metadata properly
-TEMPFILE="$(_maketemp)"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
-    find "${CAMERA_CARD_DIR}/BDMV/STREAM/" -iname "*.MTS" | sort -z > "${TEMPFILE}"
-    ffmpeg -f concat -safe 0 -i "${TEMPFILE}" -c copy -map_metadata 0 "${DELIVERDIR}/FULL_VIDEO_FILE.MTS"
+    FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
+    for FILENAME in "${TEMP_FILELIST}" ; do
+        echo "file '${FILENAME}'" >> "${TEMP_CONCATLIST}"
+    done
+    # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the final concatenated file
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${DELIVERDIR}/FULL_VIDEO_FILE.MTS"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
-    :
-    ######### fill in with C300
+    FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
+    for FILENAME in "${TEMP_FILELIST}" ; do
+        echo "file '${FILENAME}'" >> "${TEMP_CONCATLIST}"
+    done
+    # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${DELIVERDIR}/FULL_VIDEO_FILE.MXF"
 fi
 
 # make a new directory structure
 ######### tk - need to determine and move other useful files to $DELIVERDIR
 
 # log script ending
+rm "${TEMP_FILELIST}" "${TEMP_CONCATLIST}"
 _log -e
 _report -g "camera_cards process complete."
 echo
