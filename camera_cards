@@ -71,7 +71,7 @@ else
     _report -r "Camera card type not identified! Exiting..."
 fi
 
-# make temp files
+# assign temp files
 TEMP_FILELIST="${DELIVERDIR}/temp_filelist.txt"
 TEMP_CONCATLIST="${DELIVERDIR}/temp_concatlist.txt"
 
@@ -82,13 +82,13 @@ tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo
 MEDIAINFO_CONCATENATED="${DELIVERDIR}/$(basename "${CAMERA_CARD_DIR}").mediainfo.xml"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
-    find "${CAMERA_CARD_DIR}/BDMV/STREAM/" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}/BDMV/STREAM" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
     for FILE in "${TEMP_FILELIST}" ; do
         mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
         echo "" >> "${MEDIAINFO_CONCATENATED}"
     done
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
-    find "${CAMERA_CARD_DIR}/CONTENTS/" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}/CONTENTS" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
     for FILE in "${TEMP_FILELIST}" ; do
         mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
         echo "" >> "${MEDIAINFO_CONCATENATED}"
@@ -98,16 +98,16 @@ fi
 # concatenate video files into a single file
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
-    for FILENAME in "${TEMP_FILELIST}" ; do
-        echo "file '${FILENAME}'" >> "${TEMP_CONCATLIST}"
-    done
+    while read FILE ; do
+        echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
+    done <"${TEMP_FILELIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the final concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${DELIVERDIR}/FULL_VIDEO_FILE.MTS"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
-    for FILENAME in "${TEMP_FILELIST}" ; do
-        echo "file '${FILENAME}'" >> "${TEMP_CONCATLIST}"
-    done
+    while read FILE ; do
+        echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
+    done <"${TEMP_FILELIST}"
     # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${DELIVERDIR}/FULL_VIDEO_FILE.MXF"
 fi
