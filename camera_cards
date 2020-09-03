@@ -16,7 +16,8 @@ _usage(){
     echo "$(basename "${0}")"
     echo "This script will detect a Canon C100 or C300 camera card structure and transform the original camera card directory structure into a usable SIP. The script will concatenate video files into a single file, make a new directory structure, and create a log of these changes."
     echo "Dependencies: ${DEPENDENCIES[@]}"
-    echo "Usage: $(basename ${0}) [ -o /path/to/output_directory ] /path/to/camera_card_directory"
+    echo "Usage: $(basename ${0}) -m MEDIAID -o /path/to/output_directory /path/to/camera_card_directory"
+    echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
     echo "  -o /path/to/output/directory (directory to deliver the resulting package to)"
     echo "  -h display this help"
     echo
@@ -24,8 +25,9 @@ _usage(){
 }
 # getopts loop
 OPTIND=1
-while getopts ":o:h" OPT; do
+while getopts ":m:o:h" OPT; do
     case "${OPT}" in
+        m) MEDIAID="${OPTARG}" ;;
         o) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
@@ -37,7 +39,7 @@ CAMERA_CARD_DIR="${1}"
 
 # ask for camera card if it wasn't supplied
 if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
-    printf "Drag in the input directory or type 'q' to quit: "
+    _report -b "Drag in the input directory or type 'q' to quit: "
     read -e CAMERA_CARD_DIR
     [[ "${CAMERA_CARD_DIR}" = "q" ]] && exit 0
 fi
@@ -47,9 +49,15 @@ if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
     _log -a "Process terminated by script (input was not a directory)."
     exit 1
 fi
+# ask for MEDIAID if it wasn't supplied
+if [[ -z "${MEDIAID}" ]] ; then
+    _report -b "Enter a unique package name or 'q' to quit: "
+    read -e MEDIAID
+    [[ "${MEDIAID}" = "q" ]] && exit 0
+fi
 # ask for delivery directory if it wasn't supplied
 if [[ -z "${DELIVERDIR}" ]] ; then
-    printf "Drag in the input directory or type 'q' to quit: "
+    _report -b "Drag in the input directory or type 'q' to quit: "
     read -e DELIVERDIR
     [[ "${DELIVERDIR}" = "q" ]] && exit 0
 fi
@@ -71,24 +79,31 @@ else
     _report -r "Camera card type not identified! Exiting..."
 fi
 
-# assign temp files
-TEMP_FILELIST="${DELIVERDIR}/temp_filelist.txt"
-TEMP_CONCATLIST="${DELIVERDIR}/temp_concatlist.txt"
+# create temp files and directory structure
+AIPDIR="${DELIVERDIR}/${MEDIAID}"
+mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata"
+TEMP_FILELIST="${AIPDIR}/temp_filelist.txt"
+TEMP_CONCATLIST="${AIPDIR}/temp_concatlist.txt"
+TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
 
 # create reports of the original files
 # tree
-TREE="${DELIVERDIR}/$(basename "${CAMERA_CARD_DIR}").tree.txt"
+<<<<<<< HEAD
+TREE="${AIPDIR}/metadata/${MEDIAID}.tree.txt"
+=======
+TREE="${AIPDIR}/metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}").tree.txt"
+>>>>>>> 76520a0... camera_cards: adding mediaid, selecting metadata files, restructuring output
 tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo
-MEDIAINFO_CONCATENATED="${DELIVERDIR}/$(basename "${CAMERA_CARD_DIR}").mediainfo.xml"
+MEDIAINFO_CONCATENATED="${AIPDIR}/metadata/${MEDIAID}.mediainfo.xml"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
-    find "${CAMERA_CARD_DIR}/BDMV/STREAM" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
     for FILE in "${TEMP_FILELIST}" ; do
         mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
         echo "" >> "${MEDIAINFO_CONCATENATED}"
     done
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
-    find "${CAMERA_CARD_DIR}/CONTENTS" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
     for FILE in "${TEMP_FILELIST}" ; do
         mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
         echo "" >> "${MEDIAINFO_CONCATENATED}"
@@ -102,21 +117,31 @@ if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
     done <"${TEMP_FILELIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the final concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${DELIVERDIR}/FULL_VIDEO_FILE.MTS"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.MTS"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
     done <"${TEMP_FILELIST}"
     # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${DELIVERDIR}/FULL_VIDEO_FILE.MXF"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.MXF"
 fi
 
-# make a new directory structure
-######### tk - need to determine and move other useful files to $DELIVERDIR
+# move useful metadata files to a metadata folder
+if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
+    find "${CAMERA_CARD_DIR}" -iname "*.cpi" >> "${TEMP_METADATALIST}"
+    while read FILE ; do
+        cp "${FILE}" "${AIPDIR}/metadata/$(basename ${FILE})"
+    done <"${TEMP_METADATALIST}"
+elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
+    find "${CAMERA_CARD_DIR}" -iname "*.xml" >> "${TEMP_METADATALIST}"
+    while read FILE ; do
+        cp "${FILE}" "${AIPDIR}/metadata/$(basename ${FILE})"
+    done <"${TEMP_METADATALIST}"
+fi
 
 # log script ending
-rm "${TEMP_FILELIST}" "${TEMP_CONCATLIST}"
+rm "${TEMP_FILELIST}" "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}"
 _log -e
 _report -g "camera_cards process complete."
 echo
