@@ -88,24 +88,20 @@ TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
 
 # create reports of the original files
 # tree
-<<<<<<< HEAD
-TREE="${AIPDIR}/metadata/${MEDIAID}.tree.txt"
-=======
 TREE="${AIPDIR}/metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}").tree.txt"
->>>>>>> 76520a0... camera_cards: adding mediaid, selecting metadata files, restructuring output
-tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
+tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo
-MEDIAINFO_CONCATENATED="${AIPDIR}/metadata/${MEDIAID}.mediainfo.xml"
+MEDIAINFO_CONCATENATED="${AIPDIR}/metadata/${MEDIAID}.mediainfo.txt"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
     for FILE in "${TEMP_FILELIST}" ; do
-        mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
+        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_CONCATENATED}"
         echo "" >> "${MEDIAINFO_CONCATENATED}"
     done
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
     for FILE in "${TEMP_FILELIST}" ; do
-        mediaconch -mi -fx "${FILE}" | xml fo >> "${MEDIAINFO_CONCATENATED}"
+        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_CONCATENATED}"
         echo "" >> "${MEDIAINFO_CONCATENATED}"
     done
 fi
@@ -127,7 +123,7 @@ elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.MXF"
 fi
 
-# move useful metadata files to a metadata folder
+# move significant camera-generated metadata files to a metadata folder
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.cpi" >> "${TEMP_METADATALIST}"
     while read FILE ; do
