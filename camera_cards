@@ -94,17 +94,13 @@ tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 MEDIAINFO_CONCATENATED="${AIPDIR}/nmaahc_metadata/${MEDIAID}.mediainfo.txt"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
-    for FILE in "${TEMP_FILELIST}" ; do
-        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_CONCATENATED}"
-        echo "" >> "${MEDIAINFO_CONCATENATED}"
-    done
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
-    for FILE in "${TEMP_FILELIST}" ; do
-        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_CONCATENATED}"
-        echo "" >> "${MEDIAINFO_CONCATENATED}"
-    done
 fi
+for FILE in "${TEMP_FILELIST}" ; do
+    mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_CONCATENATED}"
+    echo "" >> "${MEDIAINFO_CONCATENATED}"
+done
 
 # concatenate video files into a single file
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
