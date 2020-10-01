@@ -88,10 +88,10 @@ TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
 
 # create reports of the original files
 # tree
-TREE="${AIPDIR}/metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}").tree.txt"
+TREE="${AIPDIR}/nmaahc_metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}").tree.txt"
 tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo
-MEDIAINFO_CONCATENATED="${AIPDIR}/metadata/${MEDIAID}.mediainfo.txt"
+MEDIAINFO_CONCATENATED="${AIPDIR}/nmaahc_metadata/${MEDIAID}.mediainfo.txt"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
     for FILE in "${TEMP_FILELIST}" ; do
@@ -127,12 +127,12 @@ fi
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.cpi" >> "${TEMP_METADATALIST}"
     while read FILE ; do
-        cp "${FILE}" "${AIPDIR}/metadata/$(basename ${FILE})"
+        cp "${FILE}" "${AIPDIR}/camera_metadata/$(basename ${FILE})"
     done <"${TEMP_METADATALIST}"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.xml" >> "${TEMP_METADATALIST}"
     while read FILE ; do
-        cp "${FILE}" "${AIPDIR}/metadata/$(basename ${FILE})"
+        cp "${FILE}" "${AIPDIR}/camera_metadata/$(basename ${FILE})"
     done <"${TEMP_METADATALIST}"
 fi
 
