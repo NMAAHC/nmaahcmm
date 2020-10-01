@@ -81,7 +81,7 @@ fi
 
 # create temp files and directory structure
 AIPDIR="${DELIVERDIR}/${MEDIAID}"
-mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata"
+mkdir -p "${AIPDIR}/objects" "${AIPDIR}/nmaahc_metadata" "${AIPDIR}/camera_metadata"
 TEMP_FILELIST="${AIPDIR}/temp_filelist.txt"
 TEMP_CONCATLIST="${AIPDIR}/temp_concatlist.txt"
 TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
@@ -91,7 +91,7 @@ TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
 TREE="${AIPDIR}/nmaahc_metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}").tree.txt"
 tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo
-MEDIAINFO_CONCATENATED="${AIPDIR}/nmaahc_metadata/${MEDIAID}.mediainfo.txt"
+MEDIAINFO_CONCATENATED="${AIPDIR}/nmaahc_metadata/${MEDIAID}_mediainfo.txt"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
