@@ -92,6 +92,8 @@ TREE="${AIPDIR}/nmaahc_metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}").tree
 tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo
 MEDIAINFO_CONCATENATED="${AIPDIR}/nmaahc_metadata/${MEDIAID}_mediainfo.txt"
+EXIFTOOL_CONCATENATED="${AIPDIR}/nmaahc_metadata/${MEDIAID}_exiftool.txt"
+FFPROBE_CONCATENATED="${AIPDIR}/nmaahc_metadata/${MEDIAID}_ffprobe.xml"
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
@@ -100,6 +102,10 @@ fi
 for FILE in "${TEMP_FILELIST}" ; do
     mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_CONCATENATED}"
     echo "" >> "${MEDIAINFO_CONCATENATED}"
+    exiftool "${FILE}" >> "${EXIFTOOL_CONCATENATED}"
+    echo "" >> "${EXIFTOOL_CONCATENATED}"
+    ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_CONCATENATED}"
+    echo "" >> "${FFPROBE_CONCATENATED}"
 done
 
 # concatenate video files into a single file
