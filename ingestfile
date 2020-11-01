@@ -43,28 +43,28 @@ CONF="
 
 # intro text
 intro.x = 20
-intro.y = 420
+intro.y = 480
 intro.width = 500
 intro.type = text
 intro.text = Ingest file options. Leave the option blank to be prompted.
 
 # ask operator
 OP.x = 20
-OP.y = 360
+OP.y = 420
 OP.type = textfield
 OP.label = Please enter your name:
 OP.width = 250
 
 # input directory
 INPUT.x = 20
-INPUT.y = 300
+INPUT.y = 360
 INPUT.type = openbrowser
 INPUT.label = Select your package:
 INPUT.width=400
 
 # package type
 PACKAGETYPE.x = 20
-PACKAGETYPE.y = 240
+PACKAGETYPE.y = 300
 PACKAGETYPE.type = combobox
 PACKAGETYPE.label = Please indicate the type of package being submitted [scroll for all options].
 PACKAGETYPE.option =
@@ -77,17 +77,28 @@ PACKAGETYPE.width = 400
 
 # mediaid
 MEDIAID.x = 20
-MEDIAID.y = 180
+MEDIAID.y = 240
 MEDIAID.type = textfield
 MEDIAID.label = Enter a unique media ID/package name ([aA-zZ][0-9]-_ only).
 MEDIAID.width = 250
 
 # destination
 DESTINATION.x = 20
-DESTINATION.y = 120
+DESTINATION.y = 180
 DESTINATION.type = openbrowser
 DESTINATION.label = Select where the package will go.
 DESTINATION.width = 400
+
+# verifySIP
+VERIFYSIP.x = 20
+VERIFYSIP.y = 120
+VERIFYSIP.type = combobox
+VERIFYSIP.label = Select whether to run verifySIP prior to ingest, to check for package conformance.
+VERIFYSIP.default = Run verifySIP
+VERIFYSIP.option =
+VERIFYSIP.option = Run verifySIP
+VERIFYSIP.option = Don't run verifySIP
+VERIFYSIP.width = 400
 
 # cleanup decision
 CLEANUPDECISION.x = 20
@@ -115,6 +126,7 @@ echo "  INPUT = ${INPUT}"
 echo "  MEDIAID = ${MEDIAID}"
 echo "  PACKAGETYPE = ${PACKAGETYPE}"
 echo "  DESTINATION = ${DESTINATION}"
+echo "  VERIFYSIP = ${VERIFYSIP}"
 echo "  CLEANUPDECISION = ${CLEANUPDECISION}"
 echo ""
 
@@ -163,6 +175,15 @@ if [[ -z "${DESTINATION}" ]] ; then
         exit 1
     fi
 fi
+if [[ -z "${VERIFYSIP}" ]] ; then
+    printf "Select whether to run verifySIP prior to ingest, to check for package conformance:"
+    echo
+    select VERIFYSIP in "Run verifySIP" "Don't run verifySIP" "quit"
+    do
+        if [[ "${VERIFYSIP}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
+        break
+    done
+fi
 if [[ -z "${CLEANUPDECISION}" ]] ; then
     printf "Select a cleanup strategy:"
     echo
@@ -184,6 +205,7 @@ _writelog "INPUT" "${INPUT}"
 _writelog "MEDIAID" "${MEDIAID}"
 _writelog "PACKAGETYPE" "${PACKAGETYPE}"
 _writelog "DESTINATION" "${DESTINATION}"
+_writelog "VERIFYSIP" "${VERIFYSIP}"
 _writelog "CLEANUPDECISION" "${CLEANUPDECISION}"
 _writelog "START TIME" "$(date +%FT%T)"
 _writelog " " " "
@@ -192,6 +214,36 @@ _writelog " " " "
 mkdir -p "${DESTINATION}/${MEDIAID}"
 # remove .DS_Store files and log action if successful
 "${SCRIPTDIR}/removeDSStore" "${INPUT}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
+
+if [[ "${VERIFYSIP}" == "Run verifySIP" ]] ; then
+    _report -g "Running verifySIP..."
+    if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
+        "${SCRIPT_PATH}/verifySIP" -x "${INPUT}"
+    elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV, MKV, MP4 master files)" ]] ; then
+        "${SCRIPT_PATH}/verifySIP" -f "${INPUT}"
+    elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
+        "${SCRIPT_PATH}/verifySIP" -v "${INPUT}"
+    elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV, MKV, MP4 master files)" ]] ; then
+        "${SCRIPT_PATH}/verifySIP" -d "${INPUT}"
+    elif [[ "${PACKAGETYPE}" == "Other/Unknown (MKV, MOV, or MP4 files only)" ]] ; then
+        "${SCRIPT_PATH}/verifySIP" -u "${INPUT}"
+    fi
+    _report -r "Based on the output of verifySIP, do you want to continue with the ingestfile process?"
+    printf "Select an option:"
+    echo
+    PS3="Selection: "
+    select ACTION in "Continue" "Cancel - don't do anything to my package and end ingestfile process"
+    do
+        break
+    done
+    if [[ "${ACTION}" == "Continue" ]] ; then
+        :
+    elif [[ "${ACTION}" == "Cancel - don't do anything to my package and end ingestfile process" ]] ; then
+        exit
+    fi
+else
+    :
+fi
 
 if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
     # if working with a DPX package, check to see if it's a deprecated package structure; new packages should have directories called MEDIAID_DPX, MEDIAID_Audio, and MEDIAID_Derivatives
