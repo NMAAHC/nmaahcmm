@@ -36,7 +36,7 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
   
 #### ingestfile
 * This script will run an interactive interview and then process an input file accordingly.
-* Your command will look like this: `ingestfile fileorpackage1 [ fileorpackage2 ...]`
+* Your command will look like this: `ingestfile`
 * When you run the script, a menu will pop up. Fill out the fields as follows:  
 
     1. **Name**: Enter your name.  
@@ -56,9 +56,10 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
             * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
         * <em>Other/Unknown</em>: Select this for all other package types.
             * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
-    4. **Media ID**: Enter the media ID. The script will only accept the letters a-z and A-Z, the numbers 0-9, hyphens -, and underscores _.
-    5. **Output package (AIP)**: Click “Choose” to launch the file picker, and navigate to the location where you would like your AIP to be stored. Select the parent directory for all AIPs, rather than creating a new directory for this specific package. The script will create a subdirectory named after the media ID.
-    6. **Cleanup strategy**: In theory this is where you would choose to delete the original SIP once the AIP has been created; in practice all file deletion is currently hardcoded off. Leave this option as the default “Leave source files where they are.”
+    4. **Media ID/package name**: Enter the media ID. The script will only accept the letters a-z and A-Z, the numbers 0-9, hyphens -, and underscores _.
+    5. **Output package (AIP) destination**: Click “Choose” to launch the file picker, and navigate to the location where you would like your AIP to be stored. Select the parent directory for all AIPs, rather than creating a new directory for this specific package. The script will create a subdirectory named after the media ID.
+    6. **Running verifySIP**: Select whether to run the verifySIP microservice prior to beginning the ingestfile process proper. verifySIP compares your package against an expected package structure; it will output mismatches and unexpected items into the terminal window. The script will then pause and you will have an opportunity to cancel the ingestfile process before it continues.
+    7. **Cleanup strategy**: In theory this is where you would choose to delete the original SIP once the AIP has been created; in practice all file deletion is currently hardcoded off. Leave this option as the default “Leave source files where they are.”
 
 <em>Before (SIP) and after (AIP):</em>  
     <img src="./Resources/film-dpx_beforeafter.png" alt="DPX Film SIP and AIP structures" width="600">

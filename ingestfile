@@ -59,7 +59,7 @@ OP.width = 250
 INPUT.x = 20
 INPUT.y = 360
 INPUT.type = openbrowser
-INPUT.label = Select your package:
+INPUT.label = Select your input package (SIP):
 INPUT.width=400
 
 # package type
@@ -86,7 +86,7 @@ MEDIAID.width = 250
 DESTINATION.x = 20
 DESTINATION.y = 180
 DESTINATION.type = openbrowser
-DESTINATION.label = Select where the package will go.
+DESTINATION.label = Select where the package will go (AIP destination).
 DESTINATION.width = 400
 
 # verifySIP
