@@ -24,7 +24,7 @@ _usage(){
     echo "  -f Package type: Digitized Film (MOV, MKV, MP4 master files)"
     echo "  -v Package type: Digitized Analog Video (vrecord package)"
     echo "  -d Package type: Transferred DV (MOV, MKV, MP4 master files)"
-    echo "  -u Package type: Other/Unknown (MKV, MOV, or MP4 files only)"
+    echo "  -u Package type: Other/Unknown"
     echo "  -h display this help"
     echo
     echo

@@ -15,13 +15,13 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo
-    echo "This application will generate metadata sidecar files for all video files in a package. It takes one or more packages as input."
+    echo "This application will generate metadata sidecar files for all video files in a package. It takes one or more files or packages as input."
     echo "The application generates all of the following files: a tree XML, a MediaInfo XML, a MediaTrace XML, an FFprobe XML, and an Exiftool XML."
     echo "The option -m will generate an MD5 sidecar file. The option -q will generate a QCTools XML as well; this option is recommended for digitized video only. Both of these files may take a while to generate, depending on the size of your video file."
     echo "The application will check for existing sidecar files before creating them again. To overwrite any existing metadata files, use option -o."
     echo "If the video file is an MKV file, the script can embed a copy of the metadata files it generates into the MKV wrapper using option -e."
     echo
-    echo "Usage: $(basename ${0}) [ -e | -m | -o | -q | -h ] package1 [ package2 ...]"
+    echo "Usage: $(basename ${0}) [ -e | -m | -o | -q | -h ] fileorpackage1 [ fileorpackage2 ...]"
     echo "      -e embed metadata files in MKV files"
     echo "      -m generate MD5 file"
     echo "      -o overwrite existing metadata files"
@@ -58,11 +58,11 @@ while [ "${*}" != "" ] ; do
         BASENAME=$(basename "${FILE}")
         OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
         mkdir -p "${OUTPUT_DIR}"
-        TREEXML="${OUTPUT_DIR}/${BASENAME}.tree.xml"
-        FFPROBEXML="${OUTPUT_DIR}/${BASENAME}.ffprobe.xml"
-        MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}.mediainfo.xml"
-        MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}.mediatrace.xml"
-        EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}.exiftool.xml"
+        TREEXML="${OUTPUT_DIR}/${BASENAME}_tree.xml"
+        FFPROBEXML="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
+        MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}_mediainfo.xml"
+        MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}_mediatrace.xml"
+        EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}_exiftool.xml"
         # if requested: remove existing metadata files to be overwritten
         if [[ "${OVERWRITE}" == "Y" ]] ; then
             rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
@@ -75,7 +75,7 @@ while [ "${*}" != "" ] ; do
         [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
         # generate QCTools XML if requested; overwrite if requested
         if [[ "${QCTOOLS}" == "Y" ]] ; then
-            QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}.qctools.xml.gz"
+            QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}_qctools.xml.gz"
             if [[ "${OVERWRITE}" == "Y" ]] ; then
                 rm "${QCTOOLSXML}"
                 qcli -i "${FILE}" -o "${QCTOOLSXML}"
@@ -112,26 +112,37 @@ while [ "${*}" != "" ] ; do
         fi
         _report "Moving to next file if present..."
     elif [[ -d "${1}" ]] ; then
-        TEMPFILE="$(_maketemp)"
+    # process if INPUT is a directory/package
+        TEMPFILE1="$(_maketemp)"
+        TEMPFILE2="$(_maketemp)"
         INPUT="${1}"
-        # look for mov or mkv files to treat as input; if there are only mp4 files, treat the mp4 files as input
-        if [[ -n "$(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv")" ]] ; then
-            find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
-        elif [[ -n "$(find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*")" ]] ; then
-            find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*" >> "${TEMPFILE}"
-        else
-            _report -r "There are no MOV or MP4 files in this package!"
+        # Gather a list of potential video files in the directory/package (TEMPFILE1). Ignore common image, audio, and text files; ignore all files in a "metadata" folder.
+        _report "Checking for video files in the package..."
+        find "${INPUT}" -type f -not -iname "*.dpx" -not -iname "*.wav" -not -iname "*.mp3" -not -iname "*.txt" -not -iname "*.xml" -not -path "*/metadata/*" >> "${TEMPFILE1}"
+        # Check whether there is a video stream in each file; if there is, add it to a list of confirmed video files (TEMPFILE2). This approach is intended to catch all video files regardless of type or extension.
+        while read FILE ; do
+            if [[ -n "$(mediainfo --Inform="General;%VideoCount%" "${FILE}")" ]] ; then
+                echo "Found video file ${FILE}"
+                echo "${FILE}" >> "${TEMPFILE2}"
+            else
+                :
+            fi
+        done < "${TEMPFILE1}"
+        # check whether any video files were found in this process, by checking whether $TEMPFILE2 is empty.
+        if [[ ! -s "${TEMPFILE2}" ]] ; then
+            _report -r "There are no video files in this package!"
         fi
+        # create metadata files
         while read FILE ; do
             _report -gs "Making metadata reports for ${FILE}..."
             BASENAME=$(basename "${FILE}")
             OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
             mkdir -p "${OUTPUT_DIR}"
-            TREEXML="${OUTPUT_DIR}/${BASENAME}.tree.xml"
-            FFPROBEXML="${OUTPUT_DIR}/${BASENAME}.ffprobe.xml"
-            MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}.mediainfo.xml"
-            MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}.mediatrace.xml"
-            EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}.exiftool.xml"
+            TREEXML="${OUTPUT_DIR}/${BASENAME}_tree.xml"
+            FFPROBEXML="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
+            MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}_mediainfo.xml"
+            MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}_mediatrace.xml"
+            EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}_exiftool.xml"
             # if requested: remove existing metadata files to be overwritten
             if [[ "${OVERWRITE}" == "Y" ]] ; then
                 rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
@@ -144,7 +155,7 @@ while [ "${*}" != "" ] ; do
             [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
             # generate QCTools XML if requested; overwrite if requested
             if [[ "${QCTOOLS}" == "Y" ]] ; then
-                QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}.qctools.xml.gz"
+                QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}_qctools.xml.gz"
                 if [[ "${OVERWRITE}" == "Y" ]] ; then
                     rm "${QCTOOLSXML}"
                     qcli -i "${FILE}" -o "${QCTOOLSXML}"
@@ -180,12 +191,13 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
             _report "Moving to next file if present..."
-        done < "${TEMPFILE}"
+        done < "${TEMPFILE2}"
     fi
     shift
 done
 
 # log script ending
+rm "${TEMPFILE1}" "${TEMPFILE2}"
 _log -e
 _report -g "makemetadata process complete."
 echo
