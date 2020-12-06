@@ -58,29 +58,29 @@ while [ "${*}" != "" ] ; do
         BASENAME=$(basename "${FILE}")
         OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
         mkdir -p "${OUTPUT_DIR}"
-        TREEXML="${OUTPUT_DIR}/${BASENAME}_tree.xml"
-        FFPROBEXML="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
-        MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}_mediainfo.xml"
-        MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}_mediatrace.xml"
-        EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}_exiftool.xml"
+        TREE_OUT="${OUTPUT_DIR}/${BASENAME}_tree.xml"
+        FFPROBE_OUT="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
+        MEDIAINFO_OUT="${OUTPUT_DIR}/${BASENAME}_mediainfo.xml"
+        MEDIATRACE_OUT="${OUTPUT_DIR}/${BASENAME}_mediatrace.xml"
+        EXIFTOOL_OUT="${OUTPUT_DIR}/${BASENAME}_exiftool.xml"
         # if requested: remove existing metadata files to be overwritten
         if [[ "${OVERWRITE}" == "Y" ]] ; then
-            rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
+            rm "${FFPROBE_OUT}" "${MEDIAINFO_OUT}" "${MEDIATRACE_OUT}" "${EXIFTOOL_OUT}"
         fi
         # if the metadata files don't already exist, create them; the command following "&&" will only execute if the test before it is successful
-        [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "$(dirname "${FILE}")" > "${TREEXML}"
-        [[ ! -f "${FFPROBEXML}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBEXML}"
-        [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
-        [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"
-        [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
+        [[ ! -f "${TREE_OUT}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "$(dirname "${FILE}")" > "${TREE_OUT}"
+        [[ ! -f "${FFPROBE_OUT}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUT}"
+        [[ ! -f "${MEDIAINFO_OUT}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFO_OUT}"
+        [[ ! -f "${MEDIATRACE_OUT}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACE_OUT}"
+        [[ ! -f "${EXIFTOOL_OUT}" ]] && exiftool -X "${FILE}" > "${EXIFTOOL_OUT}"
         # generate QCTools XML if requested; overwrite if requested
         if [[ "${QCTOOLS}" == "Y" ]] ; then
-            QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}_qctools.xml.gz"
+            QCTOOLS_OUT="${OUTPUT_DIR}/${BASENAME}_qctools.xml.gz"
             if [[ "${OVERWRITE}" == "Y" ]] ; then
-                rm "${QCTOOLSXML}"
-                qcli -i "${FILE}" -o "${QCTOOLSXML}"
-            elif [[ ! -f "${QCTOOLSXML}" ]] ; then
-                qcli -i "${FILE}" -o "${QCTOOLSXML}"
+                rm "${QCTOOLS_OUT}"
+                qcli -i "${FILE}" -o "${QCTOOLS_OUT}"
+            elif [[ ! -f "${QCTOOLS_OUT}" ]] ; then
+                qcli -i "${FILE}" -o "${QCTOOLS_OUT}"
             fi
         fi
         # embed metadata files in MKV file if requested
@@ -91,12 +91,12 @@ while [ "${*}" != "" ] ; do
         if [[ "${EMBED}" == "Y" ]] ; then
             if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
                 _report -gs "Embedding metadata reports in MKV file ${FILE}..."
-                mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
-                mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
-                mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
-                mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOLXML}"
+                mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBE_OUT}"
+                mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFO_OUT}"
+                mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACE_OUT}"
+                mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOL_OUT}"
                 if [[ "${QCTOOLS}" = "Y" ]] ; then
-                    mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLSXML}"
+                    mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLS_OUT}"
                 fi
             fi
         fi
@@ -138,29 +138,29 @@ while [ "${*}" != "" ] ; do
             BASENAME=$(basename "${FILE}")
             OUTPUT_DIR="${INPUT}/metadata/"
             mkdir -p "${OUTPUT_DIR}"
-            TREEXML="${OUTPUT_DIR}/${BASENAME}_tree.xml"
-            FFPROBEXML="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
-            MEDIAINFOXML="${OUTPUT_DIR}/${BASENAME}_mediainfo.xml"
-            MEDIATRACEXML="${OUTPUT_DIR}/${BASENAME}_mediatrace.xml"
-            EXIFTOOLXML="${OUTPUT_DIR}/${BASENAME}_exiftool.xml"
+            TREE_TXT="${OUTPUT_DIR}/${BASENAME}_tree.txt"
+            FFPROBE_OUT="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
+            MEDIAINFO_OUT="${OUTPUT_DIR}/${BASENAME}_mediainfo.txt"
+            MEDIATRACE_OUT="${OUTPUT_DIR}/${BASENAME}_mediatrace.xml"
+            EXIFTOOL_OUT="${OUTPUT_DIR}/${BASENAME}_exiftool.csv"
             # if requested: remove existing metadata files to be overwritten
             if [[ "${OVERWRITE}" == "Y" ]] ; then
-                rm "${FFPROBEXML}" "${MEDIAINFOXML}" "${MEDIATRACEXML}" "${EXIFTOOLXML}"
+                rm "${FFPROBE_OUT}" "${MEDIAINFO_OUT}" "${MEDIATRACE_OUT}" "${EXIFTOOL_OUT}"
             fi
-            # if the metadata files don't already exist, create them; the command following "&&" will only execute if the test before it is successful
-            [[ ! -f "${TREEXML}" ]] && tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${INPUT}" > "${TREEXML}"
-            [[ ! -f "${FFPROBEXML}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBEXML}"
-            [[ ! -f "${MEDIAINFOXML}" ]] && mediaconch -mi -fx "${FILE}" | xml fo > "${MEDIAINFOXML}"
-            [[ ! -f "${MEDIATRACEXML}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACEXML}"
-            [[ ! -f "${EXIFTOOLXML}" ]] && exiftool -X "${FILE}" > "${EXIFTOOLXML}"
+            # check if the metadata files exist with size > 0; if not, create them. The command following "&&" will only execute if the test before it is successful.
+            [[ ! -s "${TREE_OUT}" ]] && echo "Command: tree -DaNs --du --timefmt \"%Y-%m-%dT%H:%M:%SZ\" ${INPUT}" > "${TREE_OUT}" && tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${INPUT}" >> "${TREE_OUT}"
+            [[ ! -s "${FFPROBE_OUT}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUT}"
+            [[ ! -s "${MEDIAINFO_OUT}" ]] && mediainfo -f "${FILE}" | xml fo > "${MEDIAINFO_OUT}"
+            [[ ! -s "${MEDIATRACE_OUT}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACE_OUT}"
+            [[ ! -s "${EXIFTOOL_OUT}" ]] && exiftool -csv "${FILE}" > "${EXIFTOOL_OUT}"
             # generate QCTools XML if requested; overwrite if requested
             if [[ "${QCTOOLS}" == "Y" ]] ; then
-                QCTOOLSXML="${OUTPUT_DIR}/${BASENAME}_qctools.xml.gz"
+                QCTOOLS_OUT="${OUTPUT_DIR}/${BASENAME}_qctools.xml.gz"
                 if [[ "${OVERWRITE}" == "Y" ]] ; then
-                    rm "${QCTOOLSXML}"
-                    qcli -i "${FILE}" -o "${QCTOOLSXML}"
-                elif [[ ! -f "${QCTOOLSXML}" ]] ; then
-                    qcli -i "${FILE}" -o "${QCTOOLSXML}"
+                    rm "${QCTOOLS_OUT}"
+                    qcli -i "${FILE}" -o "${QCTOOLS_OUT}"
+                elif [[ ! -f "${QCTOOLS_OUT}" ]] ; then
+                    qcli -i "${FILE}" -o "${QCTOOLS_OUT}"
                 fi
             fi
             # embed metadata files in MKV file if requested
@@ -171,12 +171,12 @@ while [ "${*}" != "" ] ; do
             if [[ "${EMBED}" == "Y" ]] ; then
                 if [[ "${FILE}" == *.mkv ]] || [[ "${FILE}" == *.MKV ]] ; then
                     _report -gs "Embedding metadata reports in MKV file ${FILE}..."
-                    mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBEXML}"
-                    mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFOXML}"
-                    mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACEXML}"
-                    mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOLXML}"
+                    mkvpropedit "${FILE}" --attachment-description "FFprobe XML report" --add-attachment "${FFPROBE_OUT}"
+                    mkvpropedit "${FILE}" --attachment-description "MediaInfo XML report" --add-attachment "${MEDIAINFO_OUT}"
+                    mkvpropedit "${FILE}" --attachment-description "MediaTrace XML report" --add-attachment "${MEDIATRACE_OUT}"
+                    mkvpropedit "${FILE}" --attachment-description "ExifTool XML report" --add-attachment "${EXIFTOOL_OUT}"
                     if [[ "${QCTOOLS}" = "Y" ]] ; then
-                        mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLSXML}"
+                        mkvpropedit "${FILE}" --attachment-description "QCTools report from vrecord capture process (zipped XML)" --add-attachment "${QCTOOLS_OUT}"
                     fi
                 fi
             fi
