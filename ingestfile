@@ -282,10 +282,7 @@ if [[ "${PACKAGETYPE}" == "Digitized Film (DPX package)" ]] ; then
         fi
     fi
     _report -sb "Invoking makemetadata..."
-    "${SCRIPT_PATH}/makemetadata" -m "${DESTINATION}/${MEDIAID}" # make metadata files, including MD5 file if not present
-    mkdir -p "${DESTINATION}/${MEDIAID}/metadata"
-    find "${DESTINATION}/${MEDIAID}" -type f \( -iname "*.mp4" -o -iname "*.log" -o -iname "*.md5" -o -iname "*.xml" -o -iname "*.txt"\) -exec mv {} "${OUTPUT_PACKAGE}/metadata/" \;
-    find "${INPUT}" -type f -not \( -iname "*.mov" -o -iname "*.mkv" \) -exec rsync -avh --progress {} "${OUTPUT_PACKAGE}/metadata/" \;
+    "${SCRIPT_PATH}/makemetadata" -m "${DESTINATION}/${MEDIAID}"
 elif [[ "${PACKAGETYPE}" == "Digitized Film (MOV, MKV, MP4 master files)" ]] ; then
     _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
@@ -299,7 +296,7 @@ elif [[ "${PACKAGETYPE}" == "Digitized Analog Video (vrecord package)" ]] ; then
     #     _check_rsync_output
     # fi
     mkdir -p "${DESTINATION}/${MEDIAID}/metadata/"
-    find "${INPUT}" -type f -iname "*.md5" -o -iname "*.log" -o -iname "*.xml" -exec rsync -ah {} "${INPUT}/metadata/" \; # move exsting metadata files to metadata folder so that makemetadata does not create a totally new set
+    find "${INPUT}" -type f \( -iname "*.md5" -o -iname "*.log" -o -iname "*.xml"\) -exec rsync -ah {} "${INPUT}/metadata/" \; # move metadata files created by vrecord to metadata folder so that makemetadata does not create a totally new set
     _report -sb "Invoking makemetadata..."
     "${SCRIPT_PATH}/makemetadata" -m "${INPUT}" # make metadata files, including MD5 file if not present
     _report -sb "Invoking makeH264..."

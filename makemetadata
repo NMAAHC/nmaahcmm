@@ -136,7 +136,7 @@ while [ "${*}" != "" ] ; do
         while read FILE ; do
             _report -gs "Making metadata reports for ${FILE}..."
             BASENAME=$(basename "${FILE}")
-            OUTPUT_DIR="$(dirname "${FILE}")/metadata/"
+            OUTPUT_DIR="${INPUT}/metadata/"
             mkdir -p "${OUTPUT_DIR}"
             TREEXML="${OUTPUT_DIR}/${BASENAME}_tree.xml"
             FFPROBEXML="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
