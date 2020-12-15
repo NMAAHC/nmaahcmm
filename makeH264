@@ -95,7 +95,7 @@ while [ "${*}" != "" ] ; do
         fi
         # create h264 derivatives of all video files in package
         while read FILE ; do
-            OUTPUT_DIR="$(dirname "${FILE}")/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
+            OUTPUT_DIR="${INPUT}/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory passed as input
             [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT_DIR if it doesn't already exist
             MEDIAID="${FILE##*/}" #strip directory from the filename used for MEDIAID
             MEDIAID="${MEDIAID%.*}" #strip extension from the filename used for MEDIAID
