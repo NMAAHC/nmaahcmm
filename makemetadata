@@ -127,7 +127,7 @@ while [ "${*}" != "" ] ; do
             else
                 :
             fi
-        done < "${TEMPFILE1}"
+        done <"${TEMPFILE1}"
         # check whether any video files were found in this process, by checking whether $TEMPFILE2 is empty.
         if [[ ! -s "${TEMPFILE2}" ]] ; then
             _report -r "There are no video files in this package!"
@@ -138,7 +138,7 @@ while [ "${*}" != "" ] ; do
             BASENAME=$(basename "${FILE}")
             OUTPUT_DIR="${INPUT}/metadata/"
             mkdir -p "${OUTPUT_DIR}"
-            TREE_TXT="${OUTPUT_DIR}/${BASENAME}_tree.txt"
+            TREE_OUT="${OUTPUT_DIR}/${BASENAME}_tree.txt"
             FFPROBE_OUT="${OUTPUT_DIR}/${BASENAME}_ffprobe.xml"
             MEDIAINFO_OUT="${OUTPUT_DIR}/${BASENAME}_mediainfo.txt"
             MEDIATRACE_OUT="${OUTPUT_DIR}/${BASENAME}_mediatrace.xml"
@@ -148,7 +148,7 @@ while [ "${*}" != "" ] ; do
                 rm "${FFPROBE_OUT}" "${MEDIAINFO_OUT}" "${MEDIATRACE_OUT}" "${EXIFTOOL_OUT}"
             fi
             # check if the metadata files exist with size > 0; if not, create them. The command following "&&" will only execute if the test before it is successful.
-            [[ ! -s "${TREE_OUT}" ]] && echo "Command: tree -DaNs --du --timefmt \"%Y-%m-%dT%H:%M:%SZ\" ${INPUT}" > "${TREE_OUT}" && tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${INPUT}" >> "${TREE_OUT}"
+            [[ ! -s "${TREE_OUT}" ]] && echo "Command: tree -DaNs --du --timefmt \"%Y-%m-%dT%H:%M:%SZ\" ${INPUT}" >> "${TREE_OUT}" && tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${INPUT}" >> "${TREE_OUT}"
             [[ ! -s "${FFPROBE_OUT}" ]] && ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUT}"
             [[ ! -s "${MEDIAINFO_OUT}" ]] && mediainfo -f "${FILE}" | xml fo > "${MEDIAINFO_OUT}"
             [[ ! -s "${MEDIATRACE_OUT}" ]] && mediaconch -mt -fx "${FILE}" | xml fo > "${MEDIATRACE_OUT}"
@@ -191,7 +191,7 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
             _report "Moving to next file if present..."
-        done < "${TEMPFILE2}"
+        done <"${TEMPFILE2}"
     fi
     shift
 done

@@ -37,7 +37,7 @@ makegm ()
     #16mm
     if [ "${GM_FORMATS_16MM}" = "1" ] ; then
         mkdir -p "${CURRENT_GM_DIR}/16mm/ACCESS" "${CURRENT_GM_DIR}/16mm/PRESERVATION"
-        NOTES_16MM="${CURRENT_GM_DIR}/16mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_NOTES_16MM.txt"
+        NOTES_16MM="${CURRENT_GM_DIR}/16mm/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_16mm_Notes.txt"
         touch "${NOTES_16MM}"
         echo "These are notes concerning the 16mm films of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were scanned on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and scanning, not content of the films." >> "${NOTES_16MM}"
     fi
@@ -123,14 +123,14 @@ makegm ()
         mkdir -p "${CURRENT_GM_DIR}/OneInchVideo/ACCESS" "${CURRENT_GM_DIR}/OneInchVideo/PRESERVATION"
         ONEINCHVIDEO_NOTES="${CURRENT_GM_DIR}/OneInchVideo/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_OneInchVideo_Notes.txt"
         touch "${ONEINCHVIDEO_NOTES}"
-        echo "These are notes concerning the 1 Video tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${ONEINCHVIDEO_NOTES}"
+        echo "These are notes concerning the 1-inch Video tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${ONEINCHVIDEO_NOTES}"
     fi
     #1/2" Video
     if [ "${GM_FORMATS_HALFINCHVIDEO}" = "1" ] ; then
         mkdir -p "${CURRENT_GM_DIR}/HalfInchVideo/ACCESS" "${CURRENT_GM_DIR}/HalfInchVideo/PRESERVATION"
         HALFINCHVIDEO_NOTES="${CURRENT_GM_DIR}/HalfInchVideo/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_HalfInchVideo_Notes.txt"
         touch "${HALFINCHVIDEO_NOTES}"
-        echo "These are notes concerning the 1/2 Video tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${HALFINCHVIDEO_NOTES}"
+        echo "These are notes concerning the 1/2-inch Video tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${HALFINCHVIDEO_NOTES}"
     fi
     #Compact Audio Cassette
     if [ "${GM_FORMATS_COMPACTAUDIOCASSETTE}" = "1" ] ; then
@@ -144,7 +144,7 @@ makegm ()
         mkdir -p "${CURRENT_GM_DIR}/QuarterInchOpenReel/ACCESS" "${CURRENT_GM_DIR}/QuarterInchOpenReel/PRESERVATION"
         QUARTERINCHOPENREEL_NOTES="${CURRENT_GM_DIR}/QuarterInchOpenReel/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_QuarterInchOpenReel_Notes.txt"
         touch "${QUARTERINCHOPENREEL_NOTES}"
-        echo "These are notes concerning the 1/4 Open Reel tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${QUARTERINCHOPENREEL_NOTES}"
+        echo "These are notes concerning the 1/4-inch Open Reel tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${QUARTERINCHOPENREEL_NOTES}"
     fi
 }
 

@@ -88,7 +88,7 @@ while [ "${*}" != "" ] ; do
             else
                 :
             fi
-        done < "${TEMPFILE1}"
+        done <"${TEMPFILE1}"
         # check whether any video files were found in this process, by checking whether $TEMPFILE2 is empty.
         if [[ ! -s "${TEMPFILE2}" ]] ; then
             _report -r "There are no video files in this package!"
@@ -116,7 +116,7 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
             _report -s "Moving to next file if present..."
-        done < "${TEMPFILE2}"
+        done <"${TEMPFILE2}"
     else
         _report -rst  "ERROR: Input ${INPUT} is not a file or directory. Exiting..."
         _log -a "Process terminated by script (input was not a file or directory)."
