@@ -118,7 +118,7 @@ while [ "${*}" != "" ] ; do
         INPUT="${1}"
         # Gather a list of potential video files in the directory/package (TEMPFILE1). Ignore common image, audio, and text files; ignore all files in a "metadata" folder.
         _report "Checking for video files in the package..."
-        find "${INPUT}" -type f -not -iname "*.dpx" -not -iname "*.wav" -not -iname "*.mp3" -not -iname "*.txt" -not -iname "*.xml" -not -path "*/metadata/*" >> "${TEMPFILE1}"
+        find "${INPUT}" -type f -not -iname "*.dpx" -not -iname "*.wav" -not -iname "*.mp3" -not -iname "*.txt" -not -iname "*.xml" -not -path "*/metadata/*" -not -path "*/ACCESS/*" >> "${TEMPFILE1}"
         # Check whether there is a video stream in each file; if there is, add it to a list of confirmed video files (TEMPFILE2). This approach is intended to catch all video files regardless of type or extension.
         while read FILE ; do
             if [[ -n "$(mediainfo --Inform="General;%VideoCount%" "${FILE}")" ]] ; then

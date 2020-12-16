@@ -72,6 +72,7 @@ PACKAGETYPE.option = Digitized Film (DPX package)
 PACKAGETYPE.option = Digitized Film (MOV, MKV master files)
 PACKAGETYPE.option = Digitized Analog Video (vrecord package)
 PACKAGETYPE.option = Transferred DV (MOV, MKV master files)
+PACKAGETYPE.option = Great Migration (various formats)
 PACKAGETYPE.option = Other/Unknown
 PACKAGETYPE.width = 400
 
@@ -151,7 +152,7 @@ if [[ -z "${PACKAGETYPE}" ]] ; then
     printf "Select a package type:"
     echo
     PS3="Selection: "
-    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV, MKV master files)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV, MKV master files)" "Other/Unknown" "quit"
+    select PACKAGETYPE in "Digitized Film (DPX package)" "Digitized Film (MOV, MKV master files)" "Digitized Analog Video (vrecord package)" "Transferred DV (MOV, MKV master files)" "Great Migration (various formats)" "Other/Unknown" "quit"
     do
         if [[ "${PACKAGETYPE}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
@@ -225,6 +226,8 @@ if [[ "${VERIFYSIP}" == "Run verifySIP" ]] ; then
         "${SCRIPT_PATH}/verifySIP" -v "${INPUT}"
     elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV, MKV master files)" ]] ; then
         "${SCRIPT_PATH}/verifySIP" -d "${INPUT}"
+    elif [[ "${PACKAGETYPE}" == "Great Migration (various formats)" ]] ; then
+        _report -r "Currently verifySIP does not support Great Migration packages."
     elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
         "${SCRIPT_PATH}/verifySIP" -u "${INPUT}"
     fi
@@ -304,6 +307,10 @@ elif [[ "${PACKAGETYPE}" == "Transferred DV (MOV, MKV master files)" ]] ; then
     "${SCRIPT_PATH}/makemetadata" -mq "${DESTINATION}/${MEDIAID}" # make metadata files, including MD5 and QCTools files  if not present
     _report -sb "Invoking makeH264..."
     "${SCRIPT_PATH}/makeH264" "${DESTINATION}/${MEDIAID}"
+elif [[ "${PACKAGETYPE}" == "Great Migration (various formats)" ]] ; then
+    _report -g "Moving Great Migration package as-is to specified destination..."
+    rsync -avch --progress "${INPUT}" "${DESTINATION}/${MEDIAID}/objects"
+    "${SCRIPT_PATH}/makemetadata" -m "${DESTINATION}/${MEDIAID}" # make metadata files, including MD5 file if not present
 elif [[ "${PACKAGETYPE}" == "Other/Unknown" ]] ; then
     _report -sb "Invoking restructureSIP..."
     "${SCRIPT_PATH}/restructureSIP" -m "${MEDIAID}" -o "${DESTINATION}" -u "${INPUT}"
