@@ -5,7 +5,29 @@ table of contents
 -------------------
 
 1. [summary](https://github.com/aeschweik/nmaahcmm/mm#summary)
-	* [License](#license)
+2. [nmaahcmm functions and instructions for use](https://github.com/aeschweik/nmaahcmm#nmaahcmm-functions-and-instructions-for-use)
+    * [diffFrameMD5](https://github.com/aeschweik/nmaahcmm#diffframemd5)
+    * [ingestfile](https://github.com/aeschweik/nmaahcmm#ingestfile)
+    * [makechecksum](https://github.com/aeschweik/nmaahcmm#makechecksum)
+    * [makeconcat](https://github.com/aeschweik/nmaahcmm#makeconcat)
+    * [makeDer](https://github.com/aeschweik/nmaahcmm#makeDer)
+    * [makedrivetree](https://github.com/aeschweik/nmaahcmm#makedrivetree)
+    * [makeframemd5](https://github.com/aeschweik/nmaahcmm#makeframemd5)
+    * [makeH264](https://github.com/aeschweik/nmaahcmm#makeH264)
+    * [makemetadata](https://github.com/aeschweik/nmaahcmm#makemetadata)
+    * [moveDPX](https://github.com/aeschweik/nmaahcmm#moveDPX)
+    * [nmaahcmmfunctions](https://github.com/aeschweik/nmaahcmm#nmaahcmmfunctions)
+    * [removeDSStore](https://github.com/aeschweik/nmaahcmm#removeDSStore)
+    * [restructureDPX](https://github.com/aeschweik/nmaahcmm#restructureDPX)
+    * [restructureForVFCU](https://github.com/aeschweik/nmaahcmm#restructureForVFCU)
+    * [restructureSIP](https://github.com/aeschweik/nmaahcmm#restructureSIP)
+    * [verifySIP](https://github.com/aeschweik/nmaahcmm#verifySIP)
+3. [log creation](https://github.com/aeschweik/nmaahcmm#log-creation)
+4. [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions)
+    * [definitions](https://github.com/aeschweik/nmaahcmm#definitions)
+    * [AIP directory structure: outline](https://github.com/aeschweik/nmaahcmm#aip-directory-structure-outline)
+    * [AIP directory structures: examples](https://github.com/aeschweik/nmaahcmm#aip-directory-structures-examples)
+    * [current SIP structures](https://github.com/aeschweik/nmaahcmm#current-sip-structures)
 
 
 ***
