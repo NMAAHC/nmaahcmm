@@ -5,7 +5,29 @@ table of contents
 -------------------
 
 1. [summary](https://github.com/aeschweik/nmaahcmm/mm#summary)
-	* [License](#license)
+2. [nmaahcmm functions and instructions for use](https://github.com/aeschweik/nmaahcmm#nmaahcmm-functions-and-instructions-for-use)
+    * [diffFrameMD5](https://github.com/aeschweik/nmaahcmm#diffframemd5)
+    * [ingestfile](https://github.com/aeschweik/nmaahcmm#ingestfile)
+    * [makechecksum](https://github.com/aeschweik/nmaahcmm#makechecksum)
+    * [makeconcat](https://github.com/aeschweik/nmaahcmm#makeconcat)
+    * [makeDer](https://github.com/aeschweik/nmaahcmm#makeDer)
+    * [makedrivetree](https://github.com/aeschweik/nmaahcmm#makedrivetree)
+    * [makeframemd5](https://github.com/aeschweik/nmaahcmm#makeframemd5)
+    * [makeH264](https://github.com/aeschweik/nmaahcmm#makeH264)
+    * [makemetadata](https://github.com/aeschweik/nmaahcmm#makemetadata)
+    * [moveDPX](https://github.com/aeschweik/nmaahcmm#moveDPX)
+    * [nmaahcmmfunctions](https://github.com/aeschweik/nmaahcmm#nmaahcmmfunctions)
+    * [removeDSStore](https://github.com/aeschweik/nmaahcmm#removeDSStore)
+    * [restructureDPX](https://github.com/aeschweik/nmaahcmm#restructureDPX)
+    * [restructureForVFCU](https://github.com/aeschweik/nmaahcmm#restructureForVFCU)
+    * [restructureSIP](https://github.com/aeschweik/nmaahcmm#restructureSIP)
+    * [verifySIP](https://github.com/aeschweik/nmaahcmm#verifySIP)
+3. [log creation](https://github.com/aeschweik/nmaahcmm#log-creation)
+4. [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions)
+    * [definitions](https://github.com/aeschweik/nmaahcmm#definitions)
+    * [AIP directory structure: outline](https://github.com/aeschweik/nmaahcmm#aip-directory-structure-outline)
+    * [AIP directory structures: examples](https://github.com/aeschweik/nmaahcmm#aip-directory-structures-examples)
+    * [current SIP structures](https://github.com/aeschweik/nmaahcmm#current-sip-structures)
 
 
 ***
@@ -35,8 +57,13 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
 * Your command will look like this: `diffFrameMD5 file1.txt file2.txt`
   
 #### ingestfile
-* This script will run an interactive interview and then process an input file accordingly.
-* Your command will look like this: `ingestfile fileorpackage1 [ fileorpackage2 ...]`
+* This script will run an interactive interview and turn an input package (SIP) into an output package (AIP) accordingly. For more on SIPs and AIPs, see [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions).  
+* Depending on the options you select and the type of package you submit, the following processes will happen:  
+    * Your SIP will be restructured based on your package type (see [restructureSIP](https://github.com/aeschweik/nmaahcmm#restructureSIP)).  
+    * Metadata files will be created for preservation-level files (MOV and MKV files). If these file types aren't detected, metadata files will be created for all audio and video files in the package (see [makemetadata](https://github.com/aeschweik/nmaahcmm#makemetadata)).  
+    * An H264/MP4 derivative file will be created for all preservation-level files (MOV and MKV files). If these file types aren't detected, H264 files will be created for all audio and video files in the package (see [makeH264](https://github.com/aeschweik/nmaahcmm#makeH264)).  
+    * Your SIP will be moved to the output directory you select.  
+* Your command will look like this: `ingestfile`  
 * When you run the script, a menu will pop up. Fill out the fields as follows:  
 
     1. **Name**: Enter your name.  
@@ -56,9 +83,10 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
             * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
         * <em>Other/Unknown</em>: Select this for all other package types.
             * The script will run the following microservices: `makemetadata`, `makeH264`, `restructureSIP`
-    4. **Media ID**: Enter the media ID. The script will only accept the letters a-z and A-Z, the numbers 0-9, hyphens -, and underscores _.
-    5. **Output package (AIP)**: Click “Choose” to launch the file picker, and navigate to the location where you would like your AIP to be stored. Select the parent directory for all AIPs, rather than creating a new directory for this specific package. The script will create a subdirectory named after the media ID.
-    6. **Cleanup strategy**: In theory this is where you would choose to delete the original SIP once the AIP has been created; in practice all file deletion is currently hardcoded off. Leave this option as the default “Leave source files where they are.”
+    4. **Media ID/package name**: Enter the media ID. The script will only accept the letters a-z and A-Z, the numbers 0-9, hyphens -, and underscores _.
+    5. **Output package (AIP) destination**: Click “Choose” to launch the file picker, and navigate to the location where you would like your AIP to be stored. Select the parent directory for all AIPs, rather than creating a new directory for this specific package. The script will create a subdirectory named after the media ID.
+    6. **Running verifySIP**: Select whether to run the verifySIP microservice prior to beginning the ingestfile process proper. verifySIP compares your package against an expected package structure; it will output mismatches and unexpected items into the terminal window. The script will then pause and you will have an opportunity to cancel the ingestfile process before it continues.
+    7. **Cleanup strategy**: In theory this is where you would choose to delete the original SIP once the AIP has been created; in practice all file deletion is currently hardcoded off. Leave this option as the default “Leave source files where they are.”
 
 <em>Before (SIP) and after (AIP):</em>  
     <img src="./Resources/film-dpx_beforeafter.png" alt="DPX Film SIP and AIP structures" width="600">
@@ -169,7 +197,7 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
         * -f Package type: Digitized Film (MKV, MOV, or MP4 files only)
         * -v Package type: Digitized Analog Video (vrecord package)
         * -d Package type: Transferred DV (MKV, MOV, or MP4 files only)
-        * -u Package type: Other/Unknown (MKV, MOV, or MP4 files only) -> this package type assumes an MOV or MKV file as the master video object
+        * -u Package type: Other/Unknown -> this package type assumes an MOV or MKV file as the master video object
         * If you have a DPX package as your input, your command will look like this: `restructureSIP -x /path/to/SIP`
 * Your overall command will look like this: `restructureSIP [ -x | -f | -v | -d | -u | -r ] [ -m MEDIAID ] [ -o /path/to/output/directory ] /path/to/SIP`
   

@@ -23,8 +23,8 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes one or more video files or packages as input. You may pass both video files and packages in the same command."
-    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'metadata' located within the input file's parent directory."
-    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'metadata' located within the input directory."
+    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'access' located within the input file's parent directory."
+    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'access' located within the input directory."
     echo "Usage: $(basename ${0}) fileorpackage1 [ fileorpackage2 ...]"
     echo
     exit
@@ -50,7 +50,7 @@ while [ "${*}" != "" ] ; do
 
     # process if INPUT is a file
     if [[ -f "${INPUT}" ]] ; then
-        OUTPUT_DIR="$(dirname ${INPUT})/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
+        OUTPUT_DIR="$(dirname ${INPUT})/access" # set OUTPUT_DIR to a subdirectory called "access," nested under the directory where the input file is
         MEDIAID="${INPUT##*/}" #set $MEDIAID to basename of $INPUT
         MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
         OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
@@ -74,18 +74,28 @@ while [ "${*}" != "" ] ; do
         fi
     # process if INPUT is a directory
     elif [[ -d "${INPUT}" ]] ; then
-        TEMPFILE="$(_maketemp)"
-        INPUT="${INPUT%/}" # strip trailing / if any
-        # look for mov or mkv files to treat as input; if there are only mp4 files, treat the mp4 files as input
-        if [[ -n "$(find "${INPUT}" -iname "*.mov" -o -iname "*.mkv")" ]] ; then
-            find "${INPUT}" -iname "*.mov" -o -iname "*.mkv" >> "${TEMPFILE}"
-        elif [[ -n "$(find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*")" ]] ; then
-            find "${INPUT}" -iname "*.mp4" -not -path "*/metadata/*" >> "${TEMPFILE}"
-        else
-            _report -r "There are no MOV or MP4 files in this package!"
-        fi
+        TEMPFILE1="$(_maketemp)"
+        TEMPFILE2="$(_maketemp)"
+        INPUT="${1}"
+        # Gather a list of potential video files in the directory/package (TEMPFILE1). Ignore common image, audio, and text files; ignore all files in a "access" folder.
+        _report "Checking for video files in the package..."
+        find "${INPUT}" -type f -not -iname "*.dpx" -not -iname "*.wav" -not -iname "*.mp3" -not -iname "*.txt" -not -iname "*.xml" -not -path "*/access/*" >> "${TEMPFILE1}"
+        # Check whether there is a video stream in each file; if there is, add it to a list of confirmed video files (TEMPFILE2). This approach is intended to catch all video files regardless of type or extension.
         while read FILE ; do
-            OUTPUT_DIR="$(dirname "${FILE}")/metadata" # set OUTPUT_DIR to a subdirectory called "metadata," nested under the directory where the input file is
+            if [[ -n "$(mediainfo --Inform="General;%VideoCount%" "${FILE}")" ]] ; then
+                echo "Found video file ${FILE}"
+                echo "${FILE}" >> "${TEMPFILE2}"
+            else
+                :
+            fi
+        done <"${TEMPFILE1}"
+        # check whether any video files were found in this process, by checking whether $TEMPFILE2 is empty.
+        if [[ ! -s "${TEMPFILE2}" ]] ; then
+            _report -r "There are no video files in this package!"
+        fi
+        # create h264 derivatives of all video files in package
+        while read FILE ; do
+            OUTPUT_DIR="${INPUT}/access" # set OUTPUT_DIR to a subdirectory called "access," nested under the directory passed as input
             [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT_DIR if it doesn't already exist
             MEDIAID="${FILE##*/}" #strip directory from the filename used for MEDIAID
             MEDIAID="${MEDIAID%.*}" #strip extension from the filename used for MEDIAID
@@ -106,7 +116,7 @@ while [ "${*}" != "" ] ; do
                 fi
             fi
             _report -s "Moving to next file if present..."
-        done < "${TEMPFILE}"
+        done <"${TEMPFILE2}"
     else
         _report -rst  "ERROR: Input ${INPUT} is not a file or directory. Exiting..."
         _log -a "Process terminated by script (input was not a file or directory)."
@@ -116,6 +126,7 @@ while [ "${*}" != "" ] ; do
 done
 
 # log script ending
+rm "${TEMPFILE1}" "${TEMPFILE2}"
 _log -e
 _report -g "makeH264 process complete."
 if [[ "${ERRORS}" -gt 0 ]] ; then
