@@ -21,8 +21,6 @@ SCRIPT_PATH=${0%/*}
 
 makegm ()
 {
-    CURRENT_GM_DIR="${GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}"
-    mkdir -p "${CURRENT_GM_DIR}"
     GENERAL_NOTES="${CURRENT_GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_generalNotes.txt"
     touch "${GENERAL_NOTES}"
     echo "These are general notes concerning the appointment of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} on ${DATE_HYPHEN}. They were written by the operator, ${GM_OPERATOR}, and contain observations about the appointment and information relayed by ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST}." >> "${GENERAL_NOTES}"
@@ -63,7 +61,7 @@ makegm ()
         echo "These are notes concerning the VHS tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${VHS_NOTES}"
     fi
     #MiniDV
-    if [ "${GM_FORMATS_VHS}" = "1" ] ; then
+    if [ "${GM_FORMATS_MINIDV}" = "1" ] ; then
         mkdir -p "${CURRENT_GM_DIR}/MiniDV/ACCESS" "${CURRENT_GM_DIR}/MiniDV/PRESERVATION"
         MINIDV_NOTES="${CURRENT_GM_DIR}/MiniDV/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_MiniDV_Notes.txt"
         touch "${MINIDV_NOTES}"
@@ -77,7 +75,7 @@ makegm ()
         echo "These are notes concerning the Video8 tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${V8_NOTES}"
     fi
     #Hi8
-    if [ "${GM_FORMATS_V8}" = "1" ] ; then
+    if [ "${GM_FORMATS_HI8}" = "1" ] ; then
         mkdir -p "${CURRENT_GM_DIR}/Hi8/ACCESS" "${CURRENT_GM_DIR}/Hi8/PRESERVATION"
         HI8_NOTES="${CURRENT_GM_DIR}/Hi8/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_Hi8_Notes.txt"
         touch "${HI8_NOTES}"
@@ -144,12 +142,20 @@ makegm ()
         mkdir -p "${CURRENT_GM_DIR}/QuarterInchOpenReel/ACCESS" "${CURRENT_GM_DIR}/QuarterInchOpenReel/PRESERVATION"
         QUARTERINCHOPENREEL_NOTES="${CURRENT_GM_DIR}/QuarterInchOpenReel/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}_QuarterInchOpenReel_Notes.txt"
         touch "${QUARTERINCHOPENREEL_NOTES}"
-        echo "These are notes concerning the 1/4-inch Open Reel tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${QUARTERINCHOPENREEL_NOTES}"
+        echo "These are notes concerning the 1/4-inch open reel tapes of ${GM_PROFILE_FIRST} ${GM_PROFILE_LAST} which were digitized on ${DATE_HYPHEN} by the operator ${GM_OPERATOR}. They cover technical and preservation concerns of the tapes, noted by the operator at the time of initial inspection and digitization, not content of the tapes." >> "${QUARTERINCHOPENREEL_NOTES}"
     fi
 }
 
 #call the function(s)
 
-makegm "${@}"
+CURRENT_GM_DIR="${GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}"
+mkdir -p "${CURRENT_GM_DIR}"
+if [[ -d "${CURRENT_GM_DIR}" ]] ; then
+    makegm "${@}"
+elif [[ -d "${GM_DIR}" ]] ; then
+    _report -r "Failed to create ${CURRENT_GM_DIR}. Do you have write permission to your Great Migration directory?"
+    ls -ld "${GM_DIR}"
+    _report -r "Exiting..."
+fi
 
 exit "$?"
