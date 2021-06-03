@@ -6,6 +6,7 @@
 DATE_ISO="$(date +%Y%m%d)"
 DATE_HYPHEN="$(date +%Y-%m-%d)"
 
+CONFIG_TYPE="GM"
 SCRIPT_PATH=${0%/*}
 # script_path will be the directory path of {0} which is the script being called
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
@@ -151,11 +152,14 @@ makegm ()
 CURRENT_GM_DIR="${GM_DIR}/${DATE_ISO}_${GM_PROFILE_LAST}_${GM_PROFILE_FIRST}"
 mkdir -p "${CURRENT_GM_DIR}"
 if [[ -d "${CURRENT_GM_DIR}" ]] ; then
+    _report -g "Success! Created your Great Migration directories at ${CURRENT_GM_DIR}"
     makegm "${@}"
 elif [[ -d "${GM_DIR}" ]] ; then
     _report -r "Failed to create ${CURRENT_GM_DIR}. Do you have write permission to your Great Migration directory?"
     ls -ld "${GM_DIR}"
     _report -r "Exiting..."
+else
+    _report -r "Failed to create ${CURRENT_GM_DIR} because there is no Great Migration directory at ${GM_DIR}"
 fi
 
 exit "$?"
