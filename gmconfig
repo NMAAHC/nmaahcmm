@@ -313,7 +313,7 @@ fi
 if [[ ! -d "${GM_DIR}" ]] ; then
     _report -w "${GM_DIR} is not a valid directory. Exiting..."
     exit 1
-    _log -a "Process terminated by script (no valid directory at requested location)."
+    _log -a "Process terminated by script (no valid directory at requested Great Migration location)."
 fi
 
 if [[ "${MAKEGM}" = "Yes" ]]; then

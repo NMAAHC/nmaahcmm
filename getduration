@@ -9,6 +9,7 @@ SCRIPT_PATH="${0%/*}"
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(mediainfo) # list dependencies required by script
 TOTAL_DURATION_MILLISECONDS=0
+REQUIRECONFIG="N"
 
 ## USAGE
 echo "0 is $0"
