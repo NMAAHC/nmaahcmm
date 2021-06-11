@@ -148,7 +148,7 @@ GM_FORMATS_D8.default = ${GM_FORMATS_D8}
 GM_FORMATS_UMATIC.x = 60
 GM_FORMATS_UMATIC.y = 320
 GM_FORMATS_UMATIC.type = checkbox
-GM_FORMATS_UMATIC.label = U-matic
+GM_FORMATS_UMATIC.label = U-matic (Umatic)
 GM_FORMATS_UMATIC.tooltip = If activated this creates a Umatic directory with ACCESS and PRESERVATION folders.
 GM_FORMATS_UMATIC.default = ${GM_FORMATS_UMATIC}
 #GM_FORMATS_Betacam

@@ -5,7 +5,7 @@ table of contents
 -------------------
 
 1. [summary](https://github.com/aeschweik/nmaahcmm/mm#summary)
-2. [nmaahcmm functions and instructions for use](https://github.com/aeschweik/nmaahcmm#nmaahcmm-functions-and-instructions-for-use)
+2. [general NMAAHC microservices and instructions for use](https://github.com/aeschweik/nmaahcmm#nmaahcmm-functions-and-instructions-for-use)
     * [diffFrameMD5](https://github.com/aeschweik/nmaahcmm#diffframemd5)
     * [ingestfile](https://github.com/aeschweik/nmaahcmm#ingestfile)
     * [makechecksum](https://github.com/aeschweik/nmaahcmm#makechecksum)
@@ -22,9 +22,12 @@ table of contents
     * [restructureForVFCU](https://github.com/aeschweik/nmaahcmm#restructureForVFCU)
     * [restructureSIP](https://github.com/aeschweik/nmaahcmm#restructureSIP)
     * [verifySIP](https://github.com/aeschweik/nmaahcmm#verifySIP)
-3. [camera_cards functions and instructions for use](https://github.com/aeschweik/nmaahcmm#camera_cards-functions-and-instructions-for-use)
-4. [log creation](https://github.com/aeschweik/nmaahcmm#log-creation)
-5. [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions)
+3. [Great Migration microservices and instructions for use](https://github.com/aeschweik/nmaahcmm#great-migration-microservices-and-instructions-for-use)
+    * [gmconfig](https://github.com/aeschweik/nmaahcmm#gmconfig)
+    * [makegm](https://github.com/aeschweik/nmaahcmm#makegm)
+4. [camera_cards microservice and instructions for use](https://github.com/aeschweik/nmaahcmm#camera_cards-functions-and-instructions-for-use)
+5. [log creation](https://github.com/aeschweik/nmaahcmm#log-creation)
+6. [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions)
     * [definitions](https://github.com/aeschweik/nmaahcmm#definitions)
     * [AIP directory structure: outline](https://github.com/aeschweik/nmaahcmm#aip-directory-structure-outline)
     * [AIP directory structures: examples](https://github.com/aeschweik/nmaahcmm#aip-directory-structures-examples)
@@ -214,7 +217,62 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
 
 ***
 
-## camera\_cards functions and instructions for use
+## Great Migration microservices and instructions for use
+
+These scripts will configure and create the directory structure for a Great Migration appointment.
+
+#### gmconfig
+* This application will let the operator configure options for a Great Migration appointment. It should be run BEFORE `makegm` (described below).
+* Once it is run, a pop-up window with the following options will appear:
+    * "Please navigate to and select the Great Migration directory to save to:"
+        * Use the file picker to select the parent directory to save to.
+        * This directory should already exist.
+    * "Please choose the formats for this Great Migration appointment:"
+        * Select the checkboxes for all audiovisual formats in this appointment.
+    * "Enter last name of Great Migration appointment:"
+        * Enter the last name of the person at the appointment in this free-text field.
+    * "Enter first name of Great Migration appointment:"
+        * Enter the last name of the person at the appointment in this free-text field.
+    * "Enter the name of the technician running the appointment:"
+        * Enter your name in this free-text field.
+    * "Create ACCESS and PRESERVATION directories for each format selected?:"
+        * Answer should generally be "Yes."
+* Your command will look like this: `gmconfig`
+
+#### makegm
+* This application will create standardized directories and notes for a Great Migration appointment. It will create separate directories and notes for each audiovisual format selected in gmconfig. It should be run AFTER `gmconfig` (described above).
+    * The script will also name files and autofill information according to the date of the appointment (i.e., the date the script is run), the appointment holder's name, and the operator's name.
+* Your command will look like this: `makegm`
+
+Example Great Migration directory and notes files with the following parameters:  
+- Operator selected "16mm" and "U-matic"  
+- Script was run January 1, 2021  
+- Appointment holder's name is "Firstname Lastname"  
+- Operator's name is "Operator"  
+
+    Great_Migration_Directory
+    ├── 20210101_Lastname_Firstname_generalNotes.txt
+    ├── 16mm
+    │   ├── 20210101_Lastname_Firstname_16mm_Notes.txt
+    │   ├── ACCESS
+    │   └── PRESERVATION
+    └── Umatic
+        ├── 20210101_Lastname_Firstname_Umatic_Notes.txt
+        ├── ACCESS
+        └──  PRESERVATION
+
+20210101\_Lastname\_Firstname\_generalNotes.txt:  
+  
+`These are general notes concerning the appointment of Firstname Lastname on 2021-01-01. They were written by the operator, Operator, and contain observations about the appointment and information relayed by Firstname Lastname.`  
+
+20210101\_Lastname\_Firstname\_${FORMAT}\_Notes.txt:  
+
+`These are notes concerning the [16mm films/U-matic tapes] of Firstname Lastname which were [scanned/digitized] on 2021-01-01 by the operator Operator. They cover technical and preservation concerns of the films, noted by the operator at the time of initial inspection and [scanning/digitization], not content of the films.`
+
+
+***
+
+## camera\_cards microservice and instructions for use
 
 This script will detect a Canon C100 or C300 camera card structure and transform the original camera card directory structure into a usable SIP. The script will concatenate video files into a single file, make a new directory structure, and create a log of these changes.
 
