@@ -75,22 +75,22 @@ TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
 
 # create reports of the original files
 # tree
-TREE="${AIPDIR}/nmaahc_metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}").tree.txt"
+TREE="${AIPDIR}/nmaahc_metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}")_tree.txt"
 tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo, exiftool, ffprobe
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
-    find "${CAMERA_CARD_DIR}" -iname "*.MTS" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort -z > "${TEMP_FILELIST}"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
-    find "${CAMERA_CARD_DIR}" -iname "*.MXF" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_FILELIST}"
 fi
-for FILE in "${TEMP_FILELIST}" ; do
-    MEDIAINFO_OUTPUT="${AIPDIR}/nmaahc_metadata/${FILE}_mediainfo.txt"
-    EXIFTOOL_OUTPUT="${AIPDIR}/nmaahc_metadata/${FILE}_exiftool.txt"
-    FFPROBE_OUTPUT="${AIPDIR}/nmaahc_metadata/${FILE}_ffprobe.xml"
+while read FILE ; do
+    MEDIAINFO_OUTPUT="${AIPDIR}/nmaahc_metadata/$(basename ${FILE})_mediainfo.txt"
+    EXIFTOOL_OUTPUT="${AIPDIR}/nmaahc_metadata/$(basename ${FILE})_exiftool.txt"
+    FFPROBE_OUTPUT="${AIPDIR}/nmaahc_metadata/$(basename ${FILE})_ffprobe.xml"
     mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
     exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
-    ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE}"
-done
+    ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
+done <"${TEMP_FILELIST}"
 
 # concatenate video files into a single file
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
@@ -99,14 +99,14 @@ if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
     done <"${TEMP_FILELIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the final concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.MTS"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.mts"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
     done <"${TEMP_FILELIST}"
     # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.MXF"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.mxf"
 fi
 
 # move significant camera-generated metadata files to a metadata folder
