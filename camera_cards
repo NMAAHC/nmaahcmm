@@ -14,11 +14,11 @@ DEPENDENCIES=(ffmpeg)
 _usage(){
     echo
     echo "$(basename "${0}")"
-    echo "This script will detect a Canon C100 or C300 camera card structure and transform the original camera card directory structure into a usable SIP. The script will concatenate video files into a single file, make a new directory structure, and create a log of these changes."
+    echo "This script will detect a Canon C100 or C300 camera card structure and transform the original camera card directory structure into a usable AIP. The script will concatenate video files into a single file, make a new directory structure, and create a log of these changes."
+    echo "Your output package will be delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}"
     echo "Dependencies: ${DEPENDENCIES[@]}"
-    echo "Usage: $(basename ${0}) -m MEDIAID -o /path/to/output_directory /path/to/camera_card_directory"
+    echo "Usage: $(basename ${0}) -m MEDIAID"
     echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
-    echo "  -o /path/to/output/directory (directory to deliver the resulting package to)"
     echo "  -h display this help"
     echo
     exit
@@ -28,7 +28,6 @@ OPTIND=1
 while getopts ":m:o:h" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
-        o) DELIVERDIR="${OPTARG}" && _check_deliverdir ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
@@ -45,7 +44,7 @@ if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
 fi
 # check that camera card is a directory
 if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
-    _report -rt "ERROR: Input ${CAMERA_CARD_DIR} is not a directory. Exiting..."
+    _report -rt "ERROR: Input directory ${CAMERA_CARD_DIR} is not a directory. Exiting..."
     _log -a "Process terminated by script (input was not a directory)."
     exit 1
 fi
@@ -54,18 +53,6 @@ if [[ -z "${MEDIAID}" ]] ; then
     _report -b "Enter a unique package name or 'q' to quit: "
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
-fi
-# ask for delivery directory if it wasn't supplied
-if [[ -z "${DELIVERDIR}" ]] ; then
-    _report -b "Drag in the input directory or type 'q' to quit: "
-    read -e DELIVERDIR
-    [[ "${DELIVERDIR}" = "q" ]] && exit 0
-fi
-# check that delivery directory is a directory
-if [[ ! -d "${DELIVERDIR}" ]] ; then
-    _report -rt "ERROR: Input ${DELIVERDIR} is not a directory. Exiting..."
-    _log -a "Process terminated by script (input was not a directory)."
-    exit 1
 fi
 
 # detect camera card structure based on directory name
@@ -80,7 +67,7 @@ else
 fi
 
 # create temp files and directory structure
-AIPDIR="${DELIVERDIR}/${MEDIAID}"
+AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
 mkdir -p "${AIPDIR}/objects" "${AIPDIR}/nmaahc_metadata" "${AIPDIR}/camera_metadata"
 TEMP_FILELIST="${AIPDIR}/temp_filelist.txt"
 TEMP_CONCATLIST="${AIPDIR}/temp_concatlist.txt"
@@ -138,5 +125,5 @@ fi
 # log script ending
 rm "${TEMP_FILELIST}" "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}"
 _log -e
-_report -g "camera_cards process complete."
+_report -g "camera_cards process complete. Your AIP can be found at ${AIPDIR}"
 echo
