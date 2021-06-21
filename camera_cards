@@ -63,13 +63,16 @@ elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
     echo "Camera card type identified: Canon C300"
     CAMERA_CARD_TYPE="C300"
 else
-    _report -r "Camera card type not identified! Exiting..."
+    _report -b "Camera card type not identified. Applying generic package structure..."
+    CAMERA_CARD_TYPE="GENERAL"
 fi
 
 # create temp files and directory structure
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
 mkdir -p "${AIPDIR}/objects" "${AIPDIR}/nmaahc_metadata" "${AIPDIR}/camera_metadata"
-TEMP_FILELIST="${AIPDIR}/temp_filelist.txt"
+TEMP_ALLFILES="${AIPDIR}/temp_allfiles.txt"
+TEMP_VIDEOLIST="${AIPDIR}/temp_videolist.txt"
+TEMP_AUDIOLIST="${AIPDIR}/temp_audiolist.txt"
 TEMP_CONCATLIST="${AIPDIR}/temp_concatlist.txt"
 TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
 
@@ -79,9 +82,22 @@ TREE="${AIPDIR}/nmaahc_metadata/${MEDIAID}_$(basename "${CAMERA_CARD_DIR}")_tree
 tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
 # mediainfo, exiftool, ffprobe
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
-    find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort -z > "${TEMP_VIDEOLIST}"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
-    find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_FILELIST}"
+    find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
+elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+    find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
+    # identify all video and audio files; sort video and audio files into separate lists, and all other files into a list of metadata files
+    while read FILE ; do
+        if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
+            echo "${FILE}" >> "${TEMP_VIDEOLIST}"
+        elif [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
+            echo "${FILE}" >> "${TEMP_AUDIOLIST}"
+        elif [[ -f "${FILE}" ]] ; then
+            echo "${FILE}" >> "${TEMP_METADATALIST}"
+        fi
+    done <"${TEMP_ALLFILES}"
+    sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}"
 fi
 while read FILE ; do
     MEDIAINFO_OUTPUT="${AIPDIR}/nmaahc_metadata/$(basename ${FILE})_mediainfo.txt"
@@ -90,40 +106,62 @@ while read FILE ; do
     mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
     exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
     ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
-done <"${TEMP_FILELIST}"
+done <"${TEMP_VIDEOLIST}"
 
 # concatenate video files into a single file
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
-    FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
+    FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
-    done <"${TEMP_FILELIST}"
+    done <"${TEMP_VIDEOLIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the final concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.mts"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
-    FIRST_FILE="$(head -n 1 "${TEMP_FILELIST}")"
+    FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
-    done <"${TEMP_FILELIST}"
+    done <"${TEMP_VIDEOLIST}"
     # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}.mxf"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
+elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+    FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
+    while read FILE ; do
+        echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
+        # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
+        rsync -avh --progress "${FILE}" "${AIPDIR}/objects/"
+    done <"${TEMP_VIDEOLIST}"
+    # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
+    FIRST_FILE_BASENAME=$(basename "${FIRST_FILE}")
+    FIRST_FILE_EXTENSION="${FIRST_FILE_BASENAME##*.}"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE_EXTENSION}"
+    # general profile only: move all audio files to AIP as separate files
+    while read FILE ; do 
+        rsync -avh --progress "${FILE}" "${AIPDIR}/objects/"
+    done <"${TEMP_AUDIOLIST}"
 fi
 
 # move significant camera-generated metadata files to a metadata folder
 if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.cpi" >> "${TEMP_METADATALIST}"
     while read FILE ; do
-        cp "${FILE}" "${AIPDIR}/camera_metadata/$(basename ${FILE})"
+        rsync -avh "${FILE}" "${AIPDIR}/camera_metadata/$(basename ${FILE})"
     done <"${TEMP_METADATALIST}"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.xml" >> "${TEMP_METADATALIST}"
     while read FILE ; do
-        cp "${FILE}" "${AIPDIR}/camera_metadata/$(basename ${FILE})"
+        rsync -avh "${FILE}" "${AIPDIR}/camera_metadata/$(basename ${FILE})"
+    done <"${TEMP_METADATALIST}"
+elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+    while read FILE ; do
+        rsync -avh "${FILE}" "${AIPDIR}/camera_metadata/$(basename ${FILE})"
     done <"${TEMP_METADATALIST}"
 fi
 
+# remove .DS_Store files and log action if successful
+"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
+
 # log script ending
-rm "${TEMP_FILELIST}" "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}"
+rm "${TEMP_ALLFILES}" "${TEMP_VIDEOLIST}" ${TEMP_AUDIOLIST} "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}"
 _log -e
 _report -g "camera_cards process complete. Your AIP can be found at ${AIPDIR}"
 echo
