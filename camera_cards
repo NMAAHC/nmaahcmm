@@ -8,6 +8,7 @@ SCRIPT_PATH="${0%/*}"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(ffmpeg)
+OP="${USER}"
 
 ## USAGE
 
@@ -55,6 +56,11 @@ if [[ -z "${MEDIAID}" ]] ; then
     [[ "${MEDIAID}" = "q" ]] && exit 0
 fi
 
+## SCRIPT ACTIONS
+
+# log script beginning
+_log -b
+
 # detect camera card structure based on directory name
 if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "STREAM")" ]] ; then
     echo "Camera card type identified: Canon C100"
@@ -75,6 +81,12 @@ TEMP_VIDEOLIST="${AIPDIR}/temp_videolist.txt"
 TEMP_AUDIOLIST="${AIPDIR}/temp_audiolist.txt"
 TEMP_CONCATLIST="${AIPDIR}/temp_concatlist.txt"
 TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
+
+_writelog "OPERATOR" "${OP}"
+_writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
+_writelog "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
+_writelog "MEDIAID" "${MEDIAID}"
+_writelog "AIPDIR" "${AIPDIR}"
 
 # create reports of the original files
 # tree
@@ -116,6 +128,7 @@ if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
     done <"${TEMP_VIDEOLIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the final concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
+    _writelog "CONCATENATED VIDEO FILE" "${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
 elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     while read FILE ; do
@@ -123,6 +136,7 @@ elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     done <"${TEMP_VIDEOLIST}"
     # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
+    _writelog "CONCATENATED VIDEO FILE" "${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
 elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     while read FILE ; do
@@ -134,6 +148,7 @@ elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
     FIRST_FILE_BASENAME=$(basename "${FIRST_FILE}")
     FIRST_FILE_EXTENSION="${FIRST_FILE_BASENAME##*.}"
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE_EXTENSION}"
+    _writelog "CONCATENATED VIDEO FILE" "${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE_EXTENSION}"
     # general profile only: move all audio files to AIP as separate files
     while read FILE ; do 
         rsync -avh --progress "${FILE}" "${AIPDIR}/objects/"
@@ -163,5 +178,6 @@ fi
 # log script ending
 rm "${TEMP_ALLFILES}" "${TEMP_VIDEOLIST}" ${TEMP_AUDIOLIST} "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}"
 _log -e
-_report -g "camera_cards process complete. Your AIP can be found at ${AIPDIR}"
+_report -g "camera_cards process complete. Your AIP can be found at ${AIPDIR}. A log file can be found at ${LOGDIR%/}/${LOGNAME}"
+
 echo
