@@ -99,7 +99,7 @@ elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
 elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
     find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
-    # identify all video and audio files; sort video and audio files into separate lists, and all other files into a list of metadata files
+    # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
     while read FILE ; do
         if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
             echo "${FILE}" >> "${TEMP_VIDEOLIST}"
@@ -139,11 +139,17 @@ elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
     _writelog "CONCATENATED VIDEO FILE" "${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
 elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
-    while read FILE ; do
-        echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
-        # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
-        rsync -avh --progress "${FILE}" "${AIPDIR}/objects/"
-    done <"${TEMP_VIDEOLIST}"
+    # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
+    if [[ -n $(sort "${TEMP_VIDEOLIST}" | uniq -d) ]] ; then # check for duplicate filenames on camera card before beginning transfer process
+        _report -r "Duplicate filenames found on original camera card! Not completing automated packaging process in order to avoid overwriting files with the same name. Please take a closer look at your original camera card's file structure to create this AIP."
+        _report -r "Also note that metadata files (in the nmaahc_metadata folder of your AIP) may not have been properly generated for all files with the same filename."
+        exit 1
+    else
+        while read FILE ; do
+            echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
+            rsync -avh --progress "${FILE}" "${AIPDIR}/objects/"
+        done <"${TEMP_VIDEOLIST}"
+    fi
     # concatenate all the files in order, as they are printed in $TEMP_CONCATLIST; map the metadata from the first video file (in sequence) onto the concatenated file
     FIRST_FILE_BASENAME=$(basename "${FIRST_FILE}")
     FIRST_FILE_EXTENSION="${FIRST_FILE_BASENAME##*.}"
