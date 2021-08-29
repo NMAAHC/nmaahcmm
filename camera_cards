@@ -76,12 +76,16 @@ _log -b
 
 # detect camera card structure based on directory name
 if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
-    echo "Camera card type identified: Canon C100 (AVCHD)"
+    echo
+    _report -g "Camera card type identified: Canon C100 (AVCHD)"
+    echo
     CAMERA_CARD_TYPE="C100"
     # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
     CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
 elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
-    echo "Camera card type identified: Canon C300 (MXF)"
+    echo
+    _report -g "Camera card type identified: Canon C300 (MXF)"
+    echo
     CAMERA_CARD_TYPE="C300"
 else
     CAMERA_CARD_TYPE="GENERAL"
@@ -142,6 +146,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort list by filename; this is presumed to retain original file structure
     fi
     
+    _report -g "Generating metadata reports..."
     # create tree of all files in package
     TREE="${AIPDIR}/metadata/reports/${MEDIAID}_tree.txt"
     tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
@@ -156,6 +161,8 @@ if [[ "${AIP}" == "YES" ]] ; then
     done <"${TEMP_VIDEOLIST}"
     
     ## concatenate video files into a single file
+    echo
+    _report -g "Concatenating video files..."
     if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
         FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
         while read FILE ; do
@@ -173,6 +180,8 @@ if [[ "${AIP}" == "YES" ]] ; then
         ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
         _writelog "CONCATENATED VIDEO FILE" "${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+        echo
+        _report -g "Moving original audiovisual files to AIP..."
         # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
         if [[ -n $(sort "${TEMP_VIDEOLIST}" | uniq -d) ]] ; then # check for duplicate filenames on camera card before beginning transfer process
             _report -r "Duplicate filenames found on original camera card! Not completing automated packaging process in order to avoid overwriting files with the same name. Please take a closer look at your original camera card's file structure to create this AIP."
@@ -196,6 +205,9 @@ if [[ "${AIP}" == "YES" ]] ; then
         ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE_EXTENSION}"
         _writelog "CONCATENATED VIDEO FILE" "${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE_EXTENSION}"
     fi
+    
+    echo
+    _report -g "Moving significant camera-generated metadata files to AIP..."
     # move significant camera-generated metadata files to a metadata folder
     if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.cpi" >> "${TEMP_METADATALIST}"
@@ -234,6 +246,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     done <"${TEMP_ALLFILES}"
     
     echo
+    _report -g "Generating metadata reports..."
     # create tree of all files in package
     TREE="${AIPDIR}/metadata/${MEDIAID}_tree.txt"
     tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
@@ -247,6 +260,8 @@ if [[ "${TAR}" == "YES" ]] ; then
         ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
     done <"${TEMP_AVLIST}"
     
+    echo
+    _report -g "Creating tar archive..."
     ## tar supplied input directory
     tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" "${CAMERA_CARD_DIR}"
 fi
@@ -255,7 +270,9 @@ fi
 "${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
 
 # log script ending
-rm "${TEMP_ALLFILES}" "${TEMP_VIDEOLIST}" ${TEMP_AUDIOLIST} "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}"
+echo
+_report -b "Removing temp files...ignore any rm errors below"
+rm "${TEMP_ALLFILES}" "${TEMP_VIDEOLIST}" ${TEMP_AUDIOLIST} "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}" "${TEMP_AVLIST}"
 _log -e
 _report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOGDIR%/}/${LOGNAME}"
 
