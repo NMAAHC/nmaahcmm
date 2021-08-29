@@ -18,6 +18,7 @@ _usage(){
     echo "$(basename "${0}")"
     echo "1. By default, this script will detect a Canon C100 or C300 camera card structure and transform the original camera card directory structure into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
     echo "2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag."
+    echo "If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly."
     echo
     echo "Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory."
     echo "Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}"
@@ -84,11 +85,33 @@ elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
     CAMERA_CARD_TYPE="C300"
 else
     CAMERA_CARD_TYPE="GENERAL"
+    echo ""
+    _report -b "Camera card type not identified!"
+    echo ""
+    printf "Select a strategy:"
+    echo
+    PS3="Selection: "
+    select STRATEGY in "1. Create AIP: concatenate video files and restructure metadata directories" "2. Tar: Compress camera files and folders into a tarball" "3. Both: Create AIP and also tar original package (produces two packages)" "quit"
+    do
+        if [[ "${STRATEGY}" == "1. Create AIP: concatenate video files and restructure metadata directories" ]] ; then
+            TAR="NO"
+            AIP="YES"
+        elif [[ "${STRATEGY}" == "2. Tar: Compress camera files and folders into a tarball" ]] ; then
+            TAR="YES"
+            AIP="NO"
+        elif [[ "${STRATEGY}" == "3. Both: Create AIP and also tar original package (produces two packages)" ]] ; then
+            TAR="YES"
+            AIP="YES"
         fi
+        if [[ "${PACKAGETYPE}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
+        break
+    done
+    _writelog "STRATEGY" "${STRATEGY}"
 fi
 
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
+    if [[ "${TAR}" == "YES" ]] ; then AIPDIR="${AIP_DESTINATION}/${MEDIAID}_AIP" ; fi # if both AIP and TAR will be created, differentiate output packages
     
     mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata/reports" "${AIPDIR}/metadata/original_camera_files"
     # create temp filelists for use during script
@@ -193,6 +216,7 @@ fi
 
 ### procedure for packaging files into compressed tars
 if [[ "${TAR}" == "YES" ]] ; then
+    if [[ "${AIP}" == "YES" ]] ; then AIPDIR="${AIP_DESTINATION}/${MEDIAID}_TAR" ; fi # if both AIP and TAR will be created, differentiate output packages
     
     # create temp files and directory structure
     mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata"
