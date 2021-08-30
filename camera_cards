@@ -94,7 +94,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         CAMERA_CARD_TYPE="MXF"
     fi
 fi
-if [[ "${TAR}" == "NO" ]] ; then
+if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     CAMERA_CARD_TYPE="GENERAL"
     echo ""
     _report -b "Camera card type not identified!"
@@ -114,7 +114,7 @@ if [[ "${TAR}" == "NO" ]] ; then
             TAR="YES"
             AIP="YES"
         fi
-        if [[ "${PACKAGETYPE}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
+        if [[ "${STRATEGY}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
     done
     _writelog "STRATEGY" "${STRATEGY}"
