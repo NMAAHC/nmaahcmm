@@ -88,7 +88,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         CAMERA_CARD_TYPE="AVCHD"
         # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
         CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
-    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] && [[ "${AIP}" == "YES" ]] ; then
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
         echo
         _report -g "Camera card type identified: MXF (Canon C300)"
         CAMERA_CARD_TYPE="MXF"
