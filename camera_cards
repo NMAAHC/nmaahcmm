@@ -10,6 +10,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(ffmpeg)
 OP="${USER}"
 AIP="YES"
+TAR="NO"
 
 ## USAGE
 
@@ -81,19 +82,19 @@ _writelog "OUTPUT DIRECTORY" "${AIPDIR}"
 _log -b
 
 # detect camera card structure based on directory name
-if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
-    echo
-    _report -g "Camera card type identified: Canon C100 (AVCHD)"
-    echo
-    CAMERA_CARD_TYPE="C100"
-    # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
-    CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
-elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
-    echo
-    _report -g "Camera card type identified: Canon C300 (MXF)"
-    echo
-    CAMERA_CARD_TYPE="C300"
-else
+if [[ "${AIP}" == "YES" ]] ; then
+    if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
+        _report -g "Camera card type identified: Canon C100 (AVCHD)"
+        CAMERA_CARD_TYPE="C100"
+        # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
+        CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] && [[ "${AIP}" == "YES" ]] ; then
+        echo
+        _report -g "Camera card type identified: Canon C300 (MXF)"
+        CAMERA_CARD_TYPE="C300"
+    fi
+fi
+if [[ "${TAR}" == "NO" ]] ; then
     CAMERA_CARD_TYPE="GENERAL"
     echo ""
     _report -b "Camera card type not identified!"
