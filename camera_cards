@@ -84,14 +84,14 @@ _log -b
 # detect camera card structure based on directory name
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
-        _report -g "Camera card type identified: Canon C100 (AVCHD)"
-        CAMERA_CARD_TYPE="C100"
+        _report -g "Camera card type identified: AVCHD (Canon C100)"
+        CAMERA_CARD_TYPE="AVCHD"
         # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
         CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] && [[ "${AIP}" == "YES" ]] ; then
         echo
-        _report -g "Camera card type identified: Canon C300 (MXF)"
-        CAMERA_CARD_TYPE="C300"
+        _report -g "Camera card type identified: MXF (Canon C300)"
+        CAMERA_CARD_TYPE="MXF"
     fi
 fi
 if [[ "${TAR}" == "NO" ]] ; then
@@ -134,9 +134,9 @@ if [[ "${AIP}" == "YES" ]] ; then
     
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
-    if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
+    if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort -z > "${TEMP_VIDEOLIST}"
-    elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
+    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
@@ -170,7 +170,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     ## concatenate video files into a single file
     echo
     _report -g "Concatenating video files..."
-    if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
+    if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
         while read FILE ; do
             echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
@@ -178,7 +178,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the final concatenated file
         ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
         _writelog "CONCATENATED VIDEO FILE" "${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
-    elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
+    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] ; then
         FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
         while read FILE ; do
             echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
@@ -216,16 +216,16 @@ if [[ "${AIP}" == "YES" ]] ; then
     echo
     _report -g "Moving significant camera-generated metadata files to AIP..."
     # move significant camera-generated metadata files to a metadata folder
-    if [[ "${CAMERA_CARD_TYPE}" == "C100" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.cpi" >> "${TEMP_METADATALIST}"
         while read FILE ; do
             rsync -avh "${FILE}" "${AIPDIR}/metadata/original_camera_files/$(basename ${FILE})"
         done <"${TEMP_METADATALIST}"
-    elif [[ "${CAMERA_CARD_TYPE}" == "C300" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.xml" >> "${TEMP_METADATALIST}"
         while read FILE ; do
             rsync -avh "${FILE}" "${AIPDIR}/metadata/original_camera_files/$(basename ${FILE})"
         done <"${TEMP_METADATALIST}"
+    if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
+    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] ; then
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         while read FILE ; do
             rsync -avh "${FILE}" "${AIPDIR}/metadata/original_camera_files/$(basename ${FILE})"
