@@ -119,11 +119,11 @@ if [[ "${AIP}" == "YES" ]] ; then
     
     mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata/reports" "${AIPDIR}/metadata/original_camera_files"
     # create temp filelists for use during script
-    TEMP_VIDEOLIST="${AIPDIR}/temp_videolist.txt"
-    TEMP_AUDIOLIST="${AIPDIR}/temp_audiolist.txt"
-    TEMP_CONCATLIST="${AIPDIR}/temp_concatlist.txt"
-    TEMP_METADATALIST="${AIPDIR}/temp_metadatalist.txt"
-    TEMP_ALLFILES="${AIPDIR}/temp_allfiles.txt"
+    TEMP_VIDEOLIST="$(_maketemp)"
+    TEMP_AUDIOLIST="$(_maketemp)"
+    TEMP_CONCATLIST="$(_maketemp)"
+    TEMP_METADATALIST="$(_maketemp)"
+    TEMP_ALLFILES="$(_maketemp)"
     
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
@@ -233,8 +233,8 @@ if [[ "${TAR}" == "YES" ]] ; then
     # create temp files and directory structure
     mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata"
     # create temp filelists for use during script
-    TEMP_ALLFILES="${AIPDIR}/temp_allfiles.txt"
-    TEMP_AVLIST="${AIPDIR}/temp_avlist.txt"
+    TEMP_ALLFILES="$(_maketemp)"
+    TEMP_AVLIST="$(_maketemp)"
     
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -270,10 +270,6 @@ fi
 "${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
 
 # log script ending
-echo
-_report -b "Removing temp files...ignore any rm errors below"
-rm "${TEMP_ALLFILES}" "${TEMP_VIDEOLIST}" ${TEMP_AUDIOLIST} "${TEMP_CONCATLIST}" "${TEMP_METADATALIST}" "${TEMP_AVLIST}"
 _log -e
-_report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOGDIR%/}/${LOGNAME}"
-
 echo
+_report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOGDIR%/}/${LOGNAME}"
