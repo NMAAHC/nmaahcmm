@@ -63,6 +63,12 @@ if [[ -z "${MEDIAID}" ]] ; then
     [[ "${MEDIAID}" = "q" ]] && exit 0
 fi
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
+if [[ -d "${AIPDIR}" ]] ; then
+    _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
+    _log -a "Process terminated by script (output directory already exists)."
+    exit 1
+fi
+
 _writelog "OPERATOR" "${OP}"
 _writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
 _writelog "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
