@@ -264,7 +264,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     echo
     _report -g "Creating tar archive..."
     ## tar supplied input directory
-    tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" "${CAMERA_CARD_DIR}"
+    tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
 fi
 
 # remove .DS_Store files and log action if successful
