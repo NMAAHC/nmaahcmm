@@ -99,6 +99,9 @@ _writelog "OUTPUT DIRECTORY" "${AIPDIR}"
 # log script beginning
 _log -b
 
+# remove .DS_Store files and log action if successful
+"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
+
 # detect camera card structure based on directory name
 echo
 if [[ "${AIP}" == "YES" ]] ; then
@@ -260,9 +263,6 @@ if [[ "${TAR}" == "YES" ]] ; then
     tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
     _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
 fi
-
-# remove .DS_Store files and log action if successful
-"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
 
 # log script ending
 _log -e
