@@ -43,8 +43,25 @@ while getopts ":m:th" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
-CAMERA_CARD_DIR="${1}"
+# define functions
+_generate_metadata(){
+    _report -g "Generating metadata reports..."
+    # create tree of all files in package
+    TREE="${METADATA_OUTPUT_DIR}/${MEDIAID}_tree.txt"
+    tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
+    # create mediainfo, exiftool, ffprobe reports
+    while read FILE ; do
+        MEDIAINFO_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_mediainfo.txt"
+        EXIFTOOL_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_exiftool.txt"
+        FFPROBE_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_ffprobe.xml"
+        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
+        exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
+        ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
+    done <"${METADATA_FILELIST}"
+}
 
+# check for unassigned variables
+CAMERA_CARD_DIR="${1}"
 # ask for camera card if it wasn't supplied
 if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
     _report -b "Drag in the input directory or type 'q' to quit: "
@@ -70,6 +87,7 @@ if [[ -d "${AIPDIR}" ]] ; then
     exit 1
 fi
 
+# record variables in ingest log
 _writelog "OPERATOR" "${OP}"
 _writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
 _writelog "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
@@ -82,27 +100,25 @@ _writelog "OUTPUT DIRECTORY" "${AIPDIR}"
 _log -b
 
 # detect camera card structure based on directory name
+echo
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
-        _report -g "Camera card type identified: AVCHD (Canon C100)"
+        _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
         CAMERA_CARD_TYPE="AVCHD"
         # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
         CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
-        echo
-        _report -g "Camera card type identified: MXF (Canon C300)"
+        _report -g "Camera card type identified: MXF (e.g. Canon C300)"
         CAMERA_CARD_TYPE="MXF"
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "XDROOT")" ]] ; then
-        echo
         _report -g "Camera card type identified: XAVC"
         CAMERA_CARD_TYPE="XAVC"
     fi
 fi
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     CAMERA_CARD_TYPE="GENERAL"
-    echo ""
     _report -b "Camera card type not identified!"
-    echo ""
+    echo
     printf "Select a strategy:"
     echo
     PS3="Selection: "
@@ -124,17 +140,19 @@ if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     _writelog "STRATEGY" "${STRATEGY}"
 fi
 
+# create temp filelists for use during script
+TEMP_VIDEOLIST="$(_maketemp)"
+TEMP_AUDIOLIST="$(_maketemp)"
+TEMP_CONCATLIST="$(_maketemp)"
+TEMP_METADATALIST="$(_maketemp)"
+TEMP_AVLIST="$(_maketemp)"
+TEMP_ALLFILES="$(_maketemp)"
+
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ "${TAR}" == "YES" ]] ; then AIPDIR="${AIP_DESTINATION}/${MEDIAID}_AIP" ; fi # if both AIP and TAR will be created, differentiate output packages
     
     mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata/reports" "${AIPDIR}/metadata/original_camera_files"
-    # create temp filelists for use during script
-    TEMP_VIDEOLIST="$(_maketemp)"
-    TEMP_AUDIOLIST="$(_maketemp)"
-    TEMP_CONCATLIST="$(_maketemp)"
-    TEMP_METADATALIST="$(_maketemp)"
-    TEMP_ALLFILES="$(_maketemp)"
     
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
@@ -155,21 +173,11 @@ if [[ "${AIP}" == "YES" ]] ; then
             fi
         done <"${TEMP_ALLFILES}"
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
-    fi
-    
-    _report -g "Generating metadata reports..."
-    # create tree of all files in package
-    TREE="${AIPDIR}/metadata/reports/${MEDIAID}_tree.txt"
-    tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
-    # create mediainfo, exiftool, ffprobe reports
-    while read FILE ; do
-        MEDIAINFO_OUTPUT="${AIPDIR}/metadata/reports/$(basename ${FILE})_mediainfo.txt"
-        EXIFTOOL_OUTPUT="${AIPDIR}/metadata/reports/$(basename ${FILE})_exiftool.txt"
-        FFPROBE_OUTPUT="${AIPDIR}/metadata/reports/$(basename ${FILE})_ffprobe.xml"
-        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
-        exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
-        ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
-    done <"${TEMP_VIDEOLIST}"
+    fi    
+    # generate metadata reports
+    METADATA_OUTPUT_DIR="${AIPDIR}/metadata/reports"
+    METADATA_FILELIST="${TEMP_VIDEOLIST}"
+    _generate_metadata
     
     ## concatenate video files into a single file
     echo
@@ -231,11 +239,7 @@ fi
 if [[ "${TAR}" == "YES" ]] ; then
     if [[ "${AIP}" == "YES" ]] ; then AIPDIR="${AIP_DESTINATION}/${MEDIAID}_TAR" ; fi # if both AIP and TAR will be created, differentiate output packages
     
-    # create temp files and directory structure
     mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata"
-    # create temp filelists for use during script
-    TEMP_ALLFILES="$(_maketemp)"
-    TEMP_AVLIST="$(_maketemp)"
     
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -245,26 +249,16 @@ if [[ "${TAR}" == "YES" ]] ; then
             echo "${FILE}" >> "${TEMP_AVLIST}"
         fi
     done <"${TEMP_ALLFILES}"
+    # generate metadata reports
+    METADATA_OUTPUT_DIR="${AIPDIR}/metadata"
+    METADATA_FILELIST="${TEMP_AVLIST}"
+    _generate_metadata
     
-    echo
-    _report -g "Generating metadata reports..."
-    # create tree of all files in package
-    TREE="${AIPDIR}/metadata/${MEDIAID}_tree.txt"
-    tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
-    # create mediainfo, exiftool, ffprobe reports
-    while read FILE ; do
-        MEDIAINFO_OUTPUT="${AIPDIR}/metadata/$(basename ${FILE})_mediainfo.txt"
-        EXIFTOOL_OUTPUT="${AIPDIR}/metadata/$(basename ${FILE})_exiftool.txt"
-        FFPROBE_OUTPUT="${AIPDIR}/metadata/$(basename ${FILE})_ffprobe.xml"
-        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
-        exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
-        ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
-    done <"${TEMP_AVLIST}"
-    
+    ## tar supplied input directory
     echo
     _report -g "Creating tar archive..."
-    ## tar supplied input directory
     tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
+    _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
 fi
 
 # remove .DS_Store files and log action if successful
