@@ -17,7 +17,12 @@ TAR="NO"
 _usage(){
     echo
     echo "$(basename "${0}")"
-    echo "1. By default, this script will detect a Canon C100 or C300 camera card structure and transform the original camera card directory structure into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
+    echo "1. By default, this script will detect a camera card file/directory structure and transform the original camera card files into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
+    echo "  Current camera cards recognized:"
+    echo "      - AVCHD (e.g. Canon C100)"
+    echo "      - Canon XF (e.g. Canon C300)"
+    echo "      - XAVC (Sony)"
+    echo "      - P2 (Panasonic)"
     echo "2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag."
     echo "If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly."
     echo
@@ -111,11 +116,14 @@ if [[ "${AIP}" == "YES" ]] ; then
         # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
         CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
-        _report -g "Camera card type identified: MXF (e.g. Canon C300)"
+        _report -g "Camera card type identified: Canon XF (e.g. Canon C300)"
         CAMERA_CARD_TYPE="MXF"
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "XDROOT")" ]] ; then
-        _report -g "Camera card type identified: XAVC"
+        _report -g "Camera card type identified: XAVC (Sony brand)"
         CAMERA_CARD_TYPE="XAVC"
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type f -iname "LASTCLIP.TXT")" ]] ; then
+        _report -g "Camera card type identified: P2 (Panasonic brand)"
+        CAMERA_CARD_TYPE="P2"
     fi
 fi
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
@@ -163,6 +171,10 @@ if [[ "${AIP}" == "YES" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort -z > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
+    elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.mxf" | sort -z > "${TEMP_AUDIOLIST}"
+        cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
         # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -179,7 +191,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     fi    
     # generate metadata reports
     METADATA_OUTPUT_DIR="${AIPDIR}/metadata/reports"
-    METADATA_FILELIST="${TEMP_VIDEOLIST}"
+    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then METADATA_FILELIST="${TEMP_AVLIST}" ; else METADATA_FILELIST="${TEMP_VIDEOLIST}" ; fi
     _generate_metadata
     
     ## concatenate video files into a single file
@@ -259,8 +271,9 @@ if [[ "${AIP}" == "YES" ]] ; then
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] ; then
         find "${CAMERA_CARD_DIR}" -iname "*.xml" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.xml" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
-        find "${CAMERA_CARD_DIR}/Clip" -iname "*.bim" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+        find "${CAMERA_CARD_DIR}" \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+    elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+        find "${CAMERA_CARD_DIR}" \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         while read FILE ; do
             rsync -avh "${FILE}" "${AIPDIR}/metadata/original_camera_files/"
