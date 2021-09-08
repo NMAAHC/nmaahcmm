@@ -223,7 +223,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     # tests for video file existing
     FFMPEG_EXIT_CODE=$(echo $?)
     FFMPEG_ERRORS=0
-    if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then (FFMPEG_ERRORS++) ; fi
+    if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
     
     # if there are audio-only files, concatenate them and join with concatenated video file
     if [[ -s "${TEMP_AUDIOLIST}" ]] ; then
