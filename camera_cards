@@ -23,6 +23,7 @@ _usage(){
     echo "      - Canon XF (e.g. Canon C300)"
     echo "      - XAVC (Sony)"
     echo "      - P2 (Panasonic)"
+    echo "      - XDCAM EX (e.g. Canon XF100)"
     echo "2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag."
     echo "If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly."
     echo
@@ -124,6 +125,9 @@ if [[ "${AIP}" == "YES" ]] ; then
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type f -iname "LASTCLIP.TXT")" ]] ; then
         _report -g "Camera card type identified: P2 (Panasonic brand)"
         CAMERA_CARD_TYPE="P2"
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "BPAV")" ]] ; then
+        _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
+        CAMERA_CARD_TYPE="XDCAMEX"
     fi
 fi
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
@@ -175,6 +179,8 @@ if [[ "${AIP}" == "YES" ]] ; then
         find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
         find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.mxf" | sort -z > "${TEMP_AUDIOLIST}"
         cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
+    elif [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
+        find "${CAMERA_CARD_DIR}" -iname "*.mp4" | sort -z > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
         # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -202,6 +208,8 @@ if [[ "${AIP}" == "YES" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] || [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
+    elif [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
+        CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.mp4"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
     fi
@@ -268,7 +276,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     # move significant camera-generated metadata files to a metadata folder
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f -iname "*.cpi" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] ; then
+    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f -iname "*.xml" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
