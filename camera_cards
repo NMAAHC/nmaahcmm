@@ -200,7 +200,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
-    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
+    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] || [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.mxf"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
@@ -267,13 +267,14 @@ if [[ "${AIP}" == "YES" ]] ; then
     _report -g "Moving significant camera-generated metadata files to AIP..."
     # move significant camera-generated metadata files to a metadata folder
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.cpi" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+        find "${CAMERA_CARD_DIR}" -type f -iname "*.cpi" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.xml" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+        find "${CAMERA_CARD_DIR}" -type f -iname "*.xml" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
-        find "${CAMERA_CARD_DIR}" \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+        find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIR}" \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+        find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+        find "${CAMERA_CARD_DIR}" -type f -ipath "VOICE" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         while read FILE ; do
             rsync -avh "${FILE}" "${AIPDIR}/metadata/original_camera_files/"
