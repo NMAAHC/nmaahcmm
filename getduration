@@ -41,7 +41,7 @@ shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 TOTAL_DURATION=0
-CSV="$(basename "${0}")_$(date +%F).csv"
+CSV="$(basename "${0}")_$(date +%F-%H%M%S).csv"
 
 while [ "${*}" != "" ] ; do
     INPUT="${1}" #set $INPUT as the first argument sent to script

@@ -11,16 +11,13 @@ _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 RSYNC_ERROR_COUNT=0
 RSYNC_ERROR_FILES=""
 
-# (hardcoded) designated parent folder where the files will be moved
-DESTINATION_PARENT_DIR="/Volumes/nmaahc-borndigital/06_DPX_checksums"
-
 ## USAGE
 
 _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will copy .md5 checksum files and the first .dpx file in a stack to a designated directory. It takes one or more DPX directories as arguments."
-    echo "The files will be sent to a subdirectory of ${DESTINATION_PARENT_DIR}"
+    echo "The files will be sent to the directory set in nmaahcmmconfig ('directory where copies of your DPX packages will go'). This directory is currently set to: ${DPX_DESTINATION}"
     echo "Usage: $(basename ${0}) dpxdirectory1 [ dpxdirectory2 ...]"
     echo
     exit
@@ -43,37 +40,37 @@ _log -b
 
 while [[ "${*}" != "" ]] ; do
     DPX_SOURCE="${1}"
-    DPX_DESTINATION="${DESTINATION_PARENT_DIR}/${DPX_SOURCE##*/}"
-    if [[ ! -d "${DESTINATION_PARENT_DIR}" ]] ; then 
-        _report -rt "${DESTINATION_PARENT_DIR} does not exist. Exiting..." >&2 # tell operator if the hardcoded parent folder cannot be found - e.g. no longer exists or is moved
+    DPX_OUTPUT="${DPX_DESTINATION}/${DPX_SOURCE##*/}"
+    if [[ ! -d "${DPX_DESTINATION}" ]] ; then 
+        _report -rt "${DPX_DESTINATION} does not exist. Exiting..." >&2 # tell operator if the hardcoded parent folder cannot be found - e.g. no longer exists or is moved
         _log -a "Process terminated by script (no directory at requested location)."
         exit 1
     fi
-    if [[ ! -d "${DPX_DESTINATION}" ]] ; then
-        _report -g "Creating target folder: ${DPX_DESTINATION}"
-        mkdir -p "${DPX_DESTINATION}"
+    if [[ ! -d "${DPX_OUTPUT}" ]] ; then
+        _report -g "Creating target folder: ${DPX_OUTPUT}"
+        mkdir -p "${DPX_OUTPUT}"
     fi
 
     _report -g "Moving files to target folder..."
     for FILE in "${DPX_SOURCE}"/*DPX*/* ; do # for all files in a DPX subdirectory (expected to be named with the word "DPX" in it), do the following:
-        if [[ -f "${DPX_DESTINATION}"/*.dpx ]] ; then # if .dpx file is found in the destination folder, do:
+        if [[ -f "${DPX_OUTPUT}"/*.dpx ]] ; then # if .dpx file is found in the destination folder, do:
             _report -g "Verifying checksum for ${FILE##*/} ..."
-            rsync -avPhic "${FILE}" "${DPX_DESTINATION}" # move file securely to the target folder. -a="archive," -v=verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes, -c=with a built-in checksum check
+            rsync -avPhic "${FILE}" "${DPX_OUTPUT}" # move file securely to the target folder. -a="archive," -v=verbose, -P=keep partially transferred files+show progress during transfer, -h=human-readable, -i=itemize changes, -c=with a built-in checksum check
             _check_rsync_output
         else
-            rsync -avPhi "${FILE}" "${DPX_DESTINATION}" # move file securely to the destination folder (no checksum check)
+            rsync -avPhi "${FILE}" "${DPX_OUTPUT}" # move file securely to the destination folder (no checksum check)
             _check_rsync_output
         fi
         break 1
     done
 
     for MD5 in "${DPX_SOURCE}"/*.md5 ; do
-        if [[ -f "${DPX_DESTINATION}"/*.md5 ]] ; then # if .md5 checksum file is found as expected, do:
+        if [[ -f "${DPX_OUTPUT}"/*.md5 ]] ; then # if .md5 checksum file is found as expected, do:
             _report -g "Verifying checksum for ${MD5##*/}..." # move file securely to the target folder (with built-in checksum check)
-            rsync -avPhic "${MD5}" "${DPX_DESTINATION}"
+            rsync -avPhic "${MD5}" "${DPX_OUTPUT}"
             _check_rsync_output
         else
-            rsync -avPhi "${MD5}" "${DPX_DESTINATION}" # move file securely to the target folder (no checksum check)
+            rsync -avPhi "${MD5}" "${DPX_OUTPUT}" # move file securely to the target folder (no checksum check)
             _check_rsync_output
         fi
     done
@@ -82,10 +79,10 @@ while [[ "${*}" != "" ]] ; do
 done
 
 echo
-_report -g "Changing permissions to 777 on the following files in directory ${DESTINATION_PARENT_DIR}:"
-chmod -vR 777 "${DESTINATION_PARENT_DIR}" # set permissions on the target parent directory (set above) to read-write-execute for all users. -v=verbose, -R=recursive
+_report -g "Changing permissions to 777 on the following files in directory ${DPX_DESTINATION}:"
+chmod -vR 777 "${DPX_DESTINATION}" # set permissions on the target parent directory (set above) to read-write-execute for all users. -v=verbose, -R=recursive
 if [[ "${RSYNC_ERR_1}" -eq 0 ]] && [[ "${RSYNC_ERR_2}" -eq 0 ]] ; then
-    _report -g "All rsync processes were successful! DPX and MD5 files have been safely moved to directory ${DPX_DESTINATION}"
+    _report -g "All rsync processes were successful! DPX and MD5 files have been safely moved to directory ${DPX_OUTPUT}"
 else
     _report -rt "Some rsync processes experienced errors!"
     _report -rt "The following ${RSYNC_ERROR_COUNT} file/s experienced transfer issues: ${RSYNC_ERROR_FILES}"
