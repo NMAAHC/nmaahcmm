@@ -105,14 +105,6 @@ LOGDIR.label = Please select the directory where logs for these microservices wi
 LOGDIR.width = 470
 LOGDIR.default = ${LOGDIR}
 
-# TMPDIR
-TMPDIR.x = 20
-TMPDIR.y = 100
-TMPDIR.type = openbrowser
-TMPDIR.label = Please select a directory for your temp files:
-TMPDIR.width = 470
-TMPDIR.default = ${TMPDIR}
-
 # Add a cancel button with default label
 cb.type=cancelbutton
 
