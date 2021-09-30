@@ -11,6 +11,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(rsync) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 RSYNC_ERROR_COUNT=0
+LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 
 ## USAGE
 

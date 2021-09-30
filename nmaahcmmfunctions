@@ -161,19 +161,18 @@ _log(){
 }
 
 _writelog(){
-    LOGNAME="$(basename "${0}")_$(date +%F-%H%M%S).log"
-    if [[ -z "${LOGNAME}" ]] ; then
+    if [[ -z "${LOG}" ]] ; then
         echo "Error, can not write to log, ingest log not yet created"
         exit
     fi
-    if [[ ! -f "${LOGNAME}" ]] ; then
-        mkdir -p $(dirname "${LOGNAME}")
-        touch "${LOGNAME}"
+    if [[ ! -f "${LOG}" ]] ; then
+        mkdir -p "${LOGDIR}"
+        touch "${LOG}"
     fi
     KEY="${1}"
     VALUE="${2}"
     # need to add yaml style escaping
-    echo "${KEY}: ${VALUE}" >> "${LOGDIR}/${LOGNAME}"
+    echo "${KEY}: ${VALUE}" >> "${LOG}"
 }
 
 _maketemp(){

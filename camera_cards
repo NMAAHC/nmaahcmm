@@ -11,6 +11,7 @@ DEPENDENCIES=(ffmpeg)
 OP="${USER}"
 AIP="YES"
 TAR="NO"
+LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 
 ## USAGE
 
