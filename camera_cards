@@ -56,7 +56,6 @@ _generate_metadata(){
     TREE="${METADATA_OUTPUT_DIR}/${MEDIAID}_tree.txt"
     tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
     # create mediainfo, exiftool, ffprobe reports
-    while read FILE ; do
         MEDIAINFO_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_mediainfo.txt"
         EXIFTOOL_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_exiftool.txt"
         FFPROBE_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_ffprobe.xml"
@@ -213,12 +212,13 @@ if [[ "${AIP}" == "YES" ]] ; then
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
     fi
+    STREAM_MD5="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE})_bitstream_md5.txt"
     # create list of files to concatenate, formatted for ffmpeg
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
     done <"${TEMP_VIDEOLIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}" -f md5 -map 0:a? -map 0:v -c copy "${STREAM_MD5}"
     _writelog "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
     # tests for video file existing
     FFMPEG_EXIT_CODE=$(echo $?)
@@ -320,5 +320,16 @@ fi
 _log -e
 echo
 _report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOGDIR%/}/${LOGNAME}"
+
+# error reporting
 if [[ "${FFMPEG_EXIT_CODE}" -gt 0 ]] || [[ "${FFMPEG_ERRORS}" -gt 0 ]] ; then _report -r "FFmpeg may have encountered errors - review terminal output for more detail." ; fi
 if [[ "${VIDEO_DURATION}" -ne "${AUDIO_DURATION}" ]] ; then _report -r "Concatenated audio and video files were not the same length - review final merged file for sync at ${CONCATENATED_FILE} (video duration = ${VIDEO_DURATION}, audio duration = ${AUDIO_DURATION})" ; fi
+if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file
+    OUTPUT_STREAM_MD5="$(_maketemp)"
+    ffmpeg -y -report -i "${CONCATENATED_VIDEO_FILE}" -f md5 -map 0:a? -map 0:v -c copy "${OUTPUT_STREAM_MD5}"
+    if [[ $(cat "${STREAM_MD5}") == $(cat "${OUTPUT_STREAM_MD5}") ]] ; then
+        _report -g "Concatenation process appears to be lossless."
+    else
+        _report -r "Concatenation process was not lossless! Review final merged file at ${CONCATENATED_VIDEO_FILE}"
+    fi
+fi
