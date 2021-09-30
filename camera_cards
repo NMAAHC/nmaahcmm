@@ -327,11 +327,6 @@ if [[ "${TAR}" == "YES" ]] ; then
     _writelog "Tar archive process process finished" "$(date +%FT%T)"
 fi
 
-# log script ending
-_log -e
-echo
-_report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOG}"
-
 # error reporting
 _report -b "Checking for errors during the camera_cards process..."
 if [[ -z $(cat "${TREE}") ]] || [[ -z $(cat "${MEDIAINFO_OUTPUT}") ]] || [[ -z $(cat "${EXIFTOOL_OUTPUT}") ]] || [[ -z $(cat "${FFPROBE_OUTPUT}") ]] ; then
@@ -363,3 +358,8 @@ if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file 
         _report -g "Concatenated process looks lossless"
     fi
 fi
+
+# log script ending
+_log -e
+echo
+_report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOG}"
