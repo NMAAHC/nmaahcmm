@@ -216,13 +216,15 @@ if [[ "${AIP}" == "YES" ]] ; then
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
     fi
-    STREAM_MD5="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE})_bitstream_md5.txt"
     # create list of files to concatenate, formatted for ffmpeg
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
     done <"${TEMP_VIDEOLIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}" -f md5 -map 0:a? -map 0:v -c copy "${STREAM_MD5}"
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
+    # calculate md5 for each stream in the file
+    STREAMHASH="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE})_streamhash.md5"
+    ffmpeg -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${STREAMHASH}"
     # tests for video file existing
     FFMPEG_EXIT_CODE=$(echo $?)
     FFMPEG_ERRORS=0
@@ -328,6 +330,7 @@ if [[ "${TAR}" == "YES" ]] ; then
 fi
 
 # error reporting
+echo
 _report -b "Checking for errors during the camera_cards process..."
 if [[ ! -s "$TREE" ]] || [[ -z $(cat "${MEDIAINFO_OUTPUT}") ]] || [[ -z $(cat "${EXIFTOOL_OUTPUT}") ]] || [[ -z $(cat "${FFPROBE_OUTPUT}") ]] ; then
     _report -r "Metadata generation process created one or more blank files. Input files may be empty. Review metadata output at ${METADATA_OUTPUT_DIR}."
@@ -349,9 +352,9 @@ if [[ -s "${CONCATENATED_AUDIO_FILE}" ]] ; then
     fi
 fi
 if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file by comparing bitstream md5s
-    OUTPUT_STREAM_MD5="$(_maketemp)"
-    ffmpeg -y -loglevel quiet -report -i "${CONCATENATED_VIDEO_FILE}" -f md5 -map 0:a? -map 0:v -c copy "${OUTPUT_STREAM_MD5}"
-    if [[ $(cat "${STREAM_MD5}") != $(cat "${OUTPUT_STREAM_MD5}") ]] ; then
+    OUTPUT_STREAMHASH="$(_maketemp)"
+    ffmpeg -y -loglevel quiet -report -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${OUTPUT_STREAMHASH}"
+    if [[ $(cat "${STREAMHASH}") != $(cat "${OUTPUT_STREAMHASH}") ]] ; then
         _report -r "Concatenation process was not lossless! Review final merged file at ${CONCATENATED_VIDEO_FILE}"
         _writelog "POSSIBLE_ERROR_REVIEW" "Concatenation process was not lossless based on bitstream md5s"
     else
