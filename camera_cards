@@ -329,7 +329,7 @@ fi
 
 # error reporting
 _report -b "Checking for errors during the camera_cards process..."
-if [[ -z $(cat "${TREE}") ]] || [[ -z $(cat "${MEDIAINFO_OUTPUT}") ]] || [[ -z $(cat "${EXIFTOOL_OUTPUT}") ]] || [[ -z $(cat "${FFPROBE_OUTPUT}") ]] ; then
+if [[ ! -s "$TREE" ]] || [[ -z $(cat "${MEDIAINFO_OUTPUT}") ]] || [[ -z $(cat "${EXIFTOOL_OUTPUT}") ]] || [[ -z $(cat "${FFPROBE_OUTPUT}") ]] ; then
     _report -r "Metadata generation process created one or more blank files. Input files may be empty. Review metadata output at ${METADATA_OUTPUT_DIR}."
     _writelog "POSSIBLE_ERROR_REVIEW" "Metadata generation process created one or more blank files"
 else
