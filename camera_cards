@@ -174,15 +174,15 @@ if [[ "${AIP}" == "YES" ]] ; then
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort -z > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
-        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.mxf" | sort -z > "${TEMP_AUDIOLIST}"
+        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.mxf" | sort > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.mxf" | sort > "${TEMP_AUDIOLIST}"
         cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.mp4" | sort -z > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}" -iname "*.mp4" | sort > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
         # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
