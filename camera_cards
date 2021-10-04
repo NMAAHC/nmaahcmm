@@ -69,7 +69,7 @@ _generate_metadata(){
 }
 
 # check for unassigned variables
-CAMERA_CARD_DIR="${1%/}"
+CAMERA_CARD_DIR="${1}"
 # ask for camera card if it wasn't supplied
 if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
     _report -b "Drag in the input directory or type 'q' to quit: "
