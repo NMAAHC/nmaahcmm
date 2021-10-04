@@ -65,7 +65,7 @@ _generate_metadata(){
         exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
         ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
     done <"${METADATA_FILELIST}"
-    _writelog "Metadata reports generated" "$(date +%FT%T)"
+    _writelog -t "Metadata reports generated"
 }
 
 # check for unassigned variables
@@ -108,7 +108,7 @@ _writelog "OUTPUT DIRECTORY" "${AIPDIR}"
 _log -b
 
 # remove .DS_Store files and log action if successful
-"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
+"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog -t ".DS_Store files removed by invoking removeDSStore"
 
 # detect camera card structure based on directory name
 echo
@@ -205,7 +205,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     ## concatenate video files into a single file
     echo
     _report -g "Concatenating video files..."
-    _writelog "Video concatenation process started" "$(date +%FT%T)"
+    _writelog -t "Video concatenation process started"
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
@@ -230,12 +230,12 @@ if [[ "${AIP}" == "YES" ]] ; then
     FFMPEG_ERRORS=0
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
     _writelog "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
-    _writelog "Video concatenation process finished" "$(date +%FT%T)"
+    _writelog -t "Video concatenation process finished"
     
     # if there are audio-only files, concatenate them and join with concatenated video file
     if [[ -s "${TEMP_AUDIOLIST}" ]] ; then
         _report -g "Concatenating audio files..."
-        _writelog "Audio concatenation process started" "$(date +%FT%T)"
+        _writelog -t "Audio concatenation process started"
         FIRST_FILE="$(head -n 1 "${TEMP_AUDIOLIST}")"
         CONCATENATED_AUDIO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated_audio.${FIRST_FILE#*.}"
         > "${TEMP_CONCATLIST}" # clear concatlist from video concatenation
@@ -244,11 +244,11 @@ if [[ "${AIP}" == "YES" ]] ; then
         done <"${TEMP_AUDIOLIST}"
         ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_AUDIO_FILE}"
         _writelog "CONCATENATED AUDIO FILE" "${CONCATENATED_AUDIO_FILE}"
-        _writelog "Audio concatenation process finished" "$(date +%FT%T)"
+        _writelog -t "Audio concatenation process finished"
         
         # merge video and audio
         _report -g "Merging concatenated audio and video files..."
-        _writelog "Audio + video joining process started" "$(date +%FT%T)"
+        _writelog -t "Audio + video joining process started"
         # check that video and audio file durations match
         VIDEO_DURATION=$(mediainfo --Inform="Video;%Duration%" "${CONCATENATED_VIDEO_FILE}")
         AUDIO_DURATION=$(mediainfo --Inform="Audio;%Duration%" "${CONCATENATED_AUDIO_FILE}")
@@ -261,7 +261,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         CONCATENATED_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
         ffmpeg -i "${NEW_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE}"
         _writelog "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE}"
-        _writelog "Audio + video joining process ended" "$(date +%FT%T)"
+        _writelog -t "Audio + video joining process ended"
     fi
     
     if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
@@ -323,10 +323,10 @@ if [[ "${TAR}" == "YES" ]] ; then
     ## tar supplied input directory
     echo
     _report -g "Creating tar archive..."
-    _writelog "Tar archive process process started" "$(date +%FT%T)"
+    _writelog -t "Tar archive process process started"
     tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
     _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
-    _writelog "Tar archive process process finished" "$(date +%FT%T)"
+    _writelog -t "Tar archive process process finished"
 fi
 
 # error reporting

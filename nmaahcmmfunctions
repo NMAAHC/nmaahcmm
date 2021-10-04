@@ -169,8 +169,14 @@ _writelog(){
         mkdir -p "${LOGDIR}"
         touch "${LOG}"
     fi
-    KEY="${1}"
-    VALUE="${2}"
+    KEY="${1}"                              # key is first string passed to function
+    VALUE="${2}"                            # value is variable passed to function
+    OPTIND=1
+    while getopts ":t" OPT; do
+        case "${OPT}" in
+            t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
+        esac
+    done
     # need to add yaml style escaping
     echo "${KEY}: ${VALUE}" >> "${LOG}"
 }
