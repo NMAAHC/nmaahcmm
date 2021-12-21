@@ -11,6 +11,7 @@ DEPENDENCIES=(ffmpeg)
 OP="${USER}"
 AIP="YES"
 TAR="NO"
+LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 
 ## USAGE
 
@@ -56,7 +57,7 @@ _generate_metadata(){
     TREE="${METADATA_OUTPUT_DIR}/${MEDIAID}_tree.txt"
     tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
     # create mediainfo, exiftool, ffprobe reports
-    while read FILE ; do
+    while read -r FILE ; do
         MEDIAINFO_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_mediainfo.txt"
         EXIFTOOL_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_exiftool.txt"
         FFPROBE_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_ffprobe.xml"
@@ -64,6 +65,7 @@ _generate_metadata(){
         exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
         ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
     done <"${METADATA_FILELIST}"
+    _writelog -t "Metadata reports generated"
 }
 
 # check for unassigned variables
@@ -106,7 +108,7 @@ _writelog "OUTPUT DIRECTORY" "${AIPDIR}"
 _log -b
 
 # remove .DS_Store files and log action if successful
-"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog ".DS_Store files removed by invoking removeDSStore" "$(date +%FT%T)"
+"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog -t ".DS_Store files removed by invoking removeDSStore"
 
 # detect camera card structure based on directory name
 echo
@@ -172,15 +174,15 @@ if [[ "${AIP}" == "YES" ]] ; then
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort -z > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}" -iname "*.mts" | sort > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}" -iname "*.mxf" | sort > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.mxf" | sort -z > "${TEMP_VIDEOLIST}"
-        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.mxf" | sort -z > "${TEMP_AUDIOLIST}"
+        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.mxf" | sort > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.mxf" | sort > "${TEMP_AUDIOLIST}"
         cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.mp4" | sort -z > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}" -iname "*.mp4" | sort > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
         # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -203,6 +205,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     ## concatenate video files into a single file
     echo
     _report -g "Concatenating video files..."
+    _writelog -t "Video concatenation process started"
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.mts"
@@ -219,15 +222,20 @@ if [[ "${AIP}" == "YES" ]] ; then
     done <"${TEMP_VIDEOLIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
-    _writelog "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
+    # calculate md5 for each stream in the file
+    STREAMHASH="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE})_streamhash.md5"
+    ffmpeg -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${STREAMHASH}"
     # tests for video file existing
     FFMPEG_EXIT_CODE=$(echo $?)
     FFMPEG_ERRORS=0
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
+    _writelog "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
+    _writelog -t "Video concatenation process finished"
     
     # if there are audio-only files, concatenate them and join with concatenated video file
     if [[ -s "${TEMP_AUDIOLIST}" ]] ; then
         _report -g "Concatenating audio files..."
+        _writelog -t "Audio concatenation process started"
         FIRST_FILE="$(head -n 1 "${TEMP_AUDIOLIST}")"
         CONCATENATED_AUDIO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated_audio.${FIRST_FILE#*.}"
         > "${TEMP_CONCATLIST}" # clear concatlist from video concatenation
@@ -236,9 +244,11 @@ if [[ "${AIP}" == "YES" ]] ; then
         done <"${TEMP_AUDIOLIST}"
         ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_AUDIO_FILE}"
         _writelog "CONCATENATED AUDIO FILE" "${CONCATENATED_AUDIO_FILE}"
+        _writelog -t "Audio concatenation process finished"
         
         # merge video and audio
         _report -g "Merging concatenated audio and video files..."
+        _writelog -t "Audio + video joining process started"
         # check that video and audio file durations match
         VIDEO_DURATION=$(mediainfo --Inform="Video;%Duration%" "${CONCATENATED_VIDEO_FILE}")
         AUDIO_DURATION=$(mediainfo --Inform="Audio;%Duration%" "${CONCATENATED_AUDIO_FILE}")
@@ -250,7 +260,8 @@ if [[ "${AIP}" == "YES" ]] ; then
         mv "${CONCATENATED_VIDEO_FILE}" "${NEW_CONCATENATED_VIDEO_FILE}"
         CONCATENATED_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
         ffmpeg -i "${NEW_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE}"
-        _writelog "CONCATENATED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE}"
+        _writelog "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE}"
+        _writelog -t "Audio + video joining process ended"
     fi
     
     if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
@@ -312,13 +323,46 @@ if [[ "${TAR}" == "YES" ]] ; then
     ## tar supplied input directory
     echo
     _report -g "Creating tar archive..."
+    _writelog -t "Tar archive process process started"
     tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
     _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
+    _writelog -t "Tar archive process process finished"
+fi
+
+# error reporting
+echo
+_report -b "Checking for errors during the camera_cards process..."
+if [[ ! -s "$TREE" ]] || [[ -z $(cat "${MEDIAINFO_OUTPUT}") ]] || [[ -z $(cat "${EXIFTOOL_OUTPUT}") ]] || [[ -z $(cat "${FFPROBE_OUTPUT}") ]] ; then
+    _report -r "Metadata generation process created one or more blank files. Input files may be empty. Review metadata output at ${METADATA_OUTPUT_DIR}."
+    _writelog "POSSIBLE_ERROR_REVIEW" "Metadata generation process created one or more blank files"
+else
+    _report -g "Metadata generation process looks ok"
+fi
+if [[ "${FFMPEG_EXIT_CODE}" -gt 0 ]] || [[ "${FFMPEG_ERRORS}" -gt 0 ]] ; then
+    _report -r "FFmpeg may have encountered errors - review terminal output for more detail."
+else
+    _report -g "FFmpeg exit codes look ok"
+fi
+if [[ -s "${CONCATENATED_AUDIO_FILE}" ]] ; then
+    if [[ "${VIDEO_DURATION}" -ne "${AUDIO_DURATION}" ]] ; then
+    _report -r "Concatenated audio and video files were not the same length - review final merged file for sync at ${CONCATENATED_FILE} (video duration = ${VIDEO_DURATION}, audio duration = ${AUDIO_DURATION})"
+    _writelog "POSSIBLE_ERROR_REVIEW" "Concatenated audio and video files were not the same length"
+    else
+        _report -g "Concatenated audio and video process looks ok"
+    fi
+fi
+if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file by comparing bitstream md5s
+    OUTPUT_STREAMHASH="$(_maketemp)"
+    ffmpeg -y -loglevel quiet -report -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${OUTPUT_STREAMHASH}"
+    if [[ $(cat "${STREAMHASH}") != $(cat "${OUTPUT_STREAMHASH}") ]] ; then
+        _report -r "Concatenation process was not lossless! Review final merged file at ${CONCATENATED_VIDEO_FILE}"
+        _writelog "POSSIBLE_ERROR_REVIEW" "Concatenation process was not lossless based on bitstream md5s"
+    else
+        _report -g "Concatenated process looks lossless"
+    fi
 fi
 
 # log script ending
 _log -e
 echo
-_report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOGDIR%/}/${LOGNAME}"
-if [[ "${FFMPEG_EXIT_CODE}" -gt 0 ]] || [[ "${FFMPEG_ERRORS}" -gt 0 ]] ; then _report -r "FFmpeg may have encountered errors - review terminal output for more detail." ; fi
-if [[ "${VIDEO_DURATION}" -ne "${AUDIO_DURATION}" ]] ; then _report -r "Concatenated audio and video files were not the same length - review final merged file for sync at ${CONCATENATED_FILE} (video duration = ${VIDEO_DURATION}, audio duration = ${AUDIO_DURATION})" ; fi
+_report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOG}"
