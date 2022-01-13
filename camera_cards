@@ -98,7 +98,6 @@ fi
 # record variables in ingest log
 _writelog "OPERATOR" "${OP}"
 _writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
-_writelog "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
 _writelog "MEDIAID" "${MEDIAID}"
 _writelog "OUTPUT DIRECTORY" "${AIPDIR}"
 
@@ -106,9 +105,6 @@ _writelog "OUTPUT DIRECTORY" "${AIPDIR}"
 
 # log script beginning
 _log -b
-
-# remove .DS_Store files and log action if successful
-"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog -t ".DS_Store files removed by invoking removeDSStore"
 
 # detect camera card structure based on directory name
 echo
@@ -156,6 +152,10 @@ if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     done
     _writelog "STRATEGY" "${STRATEGY}"
 fi
+
+_writelog "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
+# remove .DS_Store files and log action if successful
+"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog -t ".DS_Store files removed by invoking removeDSStore"
 
 # create temp filelists for use during script
 TEMP_VIDEOLIST="$(_maketemp)"
