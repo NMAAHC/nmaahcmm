@@ -223,7 +223,8 @@ if [[ "${AIP}" == "YES" ]] ; then
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
-    STREAMHASH="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE})_streamhash.md5"
+    CONCATENATED_VIDEO_FILE_BASENAME="$(basename ${CONCATENATED_VIDEO_FILE})"
+    STREAMHASH="${METADATA_OUTPUT_DIR}/${CONCATENATED_VIDEO_FILE_BASENAME%.*}_streamhash.md5"
     ffmpeg -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${STREAMHASH}"
     # tests for video file existing
     FFMPEG_EXIT_CODE=$(echo $?)
@@ -262,6 +263,16 @@ if [[ "${AIP}" == "YES" ]] ; then
         ffmpeg -i "${NEW_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE}"
         _writelog "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE}"
         _writelog -t "Audio + video joining process ended"
+    fi
+    
+    # generate md5 of concatenated file
+    if [[ -f "${CONCATENATED_FILE}" ]] ; then
+        CONCATENATED_FILE_BASENAME="$(basename ${CONCATENATED_FILE})"
+        CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/${CONCATENATED_FILE_BASENAME%.*}.md5"
+        md5sum "${CONCATENATED_FILE}" | awk '{print $1}' > "${CONCATENATED_MD5_OUTPUT}"
+    else
+        CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/${CONCATENATED_VIDEO_FILE%.*}.md5"
+        md5sum "${CONCATENATED_VIDEO_FILE}" | awk '{print $1}' > "${CONCATENATED_MD5_OUTPUT}"
     fi
     
     if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
