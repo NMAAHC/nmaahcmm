@@ -338,6 +338,10 @@ if [[ "${TAR}" == "YES" ]] ; then
     tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
     _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
     _writelog -t "Tar archive process process finished"
+    
+    ## generate checksum for tar archive
+    TAR_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/${MEDIAID}.md5"
+    md5sum "${MEDIAID}.tar.gz" | awk '{print $1}' > "${TAR_MD5_OUTPUT}"
 fi
 
 # error reporting
