@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+# a script to batch create a mediainfo.txt file on a set of files. Each file will receive its own seperate mediainfo.txt file
+# named after the file it was created from. Make reports happen!
+
+REQUIRECONFIG="N" # mmfuncitons requires a config files to be set, this line says this script does not need to do that
+# load nmaahcmmfunctions library into this script
+SCRIPT_PATH="${0%/*}" # using regular espressions to get the direction name the script is located in
+# SCRIPT_PATH="$(dirname "${0}")" # doing the same thing as line 8 but with dirname tool
+source "${SCRIPT_PATH}/nmaahcmmfunctions" # sources (references) the nmaahcmmfucntions library
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions library
+DEPENDENCIES=(mediainfo cowsay) # list dependencies required by script
+_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions library
+
+DATE=$(date +%Y-%m-%d)
+SUFFIX="_mediainfo_$DATE.txt" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
+
+## USAGE
+
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo "WE NEED TO WRITER HERE"
+    ech
+    echo "Options:"
+    echo " -h         Show this help information"
+    exit
+}
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
+
+# getopts loop
+OPTIND=1
+while getopts ":h" OPT; do
+    case "${OPT}" in
+        h) _usage ;;  # if t he operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+_mediainfo_onefile(){
+    INPUT="${1}"
+    OUTPUT="${INPUT}${SUFFIX}" # set the name of the outoput file
+        mediainfo -f "${INPUT}" --LogFile="${OUTPUT}" > /dev/null
+        if [[ ! -s "${OUTPUT}" ]] ; then # if the output is not a file greater than zero size
+        echo
+            _report -r "error on $INPUT - file does not exist or file is zero size"
+            else
+            _report -g "$INPUT looks good!"
+        fi
+}
+
+while [ "${*}" != "" ] ; do # while the number of arguments is not zero keep running script, i.e. script will end when there are no more files to process
+    INPUT="${1}" # set $INPUT as the first argument sent to script
+    shift
+    if [[ -f "${INPUT}" ]] ; then # run process if input is a fil  
+        _mediainfo_onefile "${INPUT}"
+    
+    elif [[ -d "${INPUT}" ]] ; then # run process if input is a fil
+        TEMPFILE1="$(_maketemp)"
+        TEMPFILE2="$(_maketemp)"
+        # Gather a list of potential video files in the directory/package (TEMPFILE1). Ignore common image, audio, and text files; ignore all files in a "access" folder.
+        _report "Checking for video files in the package..."
+        find "${INPUT}" -type f -not -iname "*.dpx" -not -iname "*.wav" -not -iname "*.mp3" -not -iname "*.txt" -not -iname "*.xml" -not -path "*/access/*" >> "${TEMPFILE1}"
+        # Check whether there is a video stream in each file; if there is, add it to a list of confirmed video files (TEMPFILE2). This approach is intended to catch all video files regardless of type or extension.
+        while read FILE ; do
+            if [[ -n "$(mediainfo --Inform="General;%VideoCount%" "${FILE}")" ]] ; then
+                echo "Found video file ${FILE}"
+                echo "${FILE}" >> "${TEMPFILE2}"
+            else
+                :
+            fi
+        done <"${TEMPFILE1}"
+        # check whether any video files were found in this process, by checking whether $TEMPFILE2 is empty.
+        if [[ ! -s "${TEMPFILE2}" ]] ; then
+            _report -r "There are no video files in this package!"
+        fi
+        # make mediainfo file of all files in package
+        while read FILE ; do
+            _mediainfo_onefile "${FILE}"
+            _report -s "Moving to next file if present..."
+        done <"${TEMPFILE2}"
+    fi
+done
+
+
+cowsay "Your files have been mediainfo'd! Tootles! whoa."
+
+exit
