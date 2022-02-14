@@ -7,7 +7,7 @@ SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
-DEPENDENCIES=(ffmpeg)
+DEPENDENCIES=(ffmpeg md5sum)
 OP="${USER}"
 AIP="YES"
 TAR="NO"
