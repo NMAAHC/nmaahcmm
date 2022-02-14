@@ -299,7 +299,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f -iname "*.cpi" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
-        find "${CAMERA_CARD_DIR}" -type f -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
+        find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${AIPDIR}/metadata/original_camera_files/" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
