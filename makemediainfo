@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+for FILE in $1 ; do
+    FILENAME="${FILE##*/}" #set $FILENAME to basename of $FILE
+    FILENAME="${FILENAME%.*}" #set $FILENAME to $FILENAME with extension stripped
+    DATE=$(date '+%Y%m%d-%H:%M:%S')
+    OUTPUT="${1}/${FILENAME}_${DATE}_mediainfo.txt" #set $OUTPUT
+    mediainfo -f "$FILE" >> "$OUTPUT"
+done
+
+# a script to create run mediainfo -f files and write output to .txt files
+
+# load nmaahcmmfunctions into this script
+#SCRIPT_PATH="${0%/*}"
+#. "${SCRIPT_PATH}/nmaahcmmfunctions"
+#[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+#_initialize_make # safe script termination process defined in nmaahcmmfunctions
+#DEPENDENCIES=(ffmpeg) # list dependencies required by script
+#_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
+
+#_makemediainfo(){
+#while [ "${*}" != "" ] ; do
+    #for FILE in ${1} ; do # while the number of arguments is not zero do X
+    #FILENAME="${1##*/}" #set $FILENAME to basename of $1
+    #FILENAME="${FILENAME%.*}" #set $FILENAME to $FILENAME with extension stripped
+    #DATE=$(date '+%Y%m%d-%H:%M:%S')
+    #OUTPUT="${1}/${FILENAME}_${DATE}_mediainfo.txt" #set $OUTPUT
+  #  mediainfo -f $FILE #> $OUTPUT
+#done
+#done
+#}
+
+# log script ending
+#_log -e
+#_report -g "makemediainfo process complete."
+#exit $?
