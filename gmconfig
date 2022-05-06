@@ -27,9 +27,8 @@ _usage(){
 REQUIRED_VARIABLES=("${GM_DIR}" "${GM_PROFILE_LAST}" "${GM_PROFILE_FIRST}" "${GM_OPERATOR}" "${MAKEGM}")
 
 OPTIND=1
-while getopts ":F:ath" OPT ; do
+while getopts ":ath" OPT ; do
     case "${OPT}" in
-        F) FORMULA="${OPTARG}" ;;
         a) RUNPASHUA="Y" ;;
         t) RUNPASHUA="N" ;;
         h) _usage ;;

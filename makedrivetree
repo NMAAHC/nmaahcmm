@@ -14,6 +14,7 @@ _usage(){
     echo
     echo "$(basename "${0}")"
     echo "This application will write the contents of a drive directory in tree form and save it to a .txt file. It takes one or more drives as input."
+    echo "The output is sent to the directory set in nmaahcmmconfig ('directory where trees of your drives will be created'). This directory is currently set to: ${DRIVE_CONTENTS_DESTINATION}"
     echo "Usage: $(basename ${0}) /path/to/drive1 [ /path/to/drive2 ... ] "
     echo
     exit
@@ -31,7 +32,6 @@ shift $(( ${OPTIND} - 1 ))
 
 ### FUNCTIONS
 
-FOLDER="/Volumes/UtilitySAN/05_driveContents"
 # log script beginning
 _log -b
 
@@ -39,13 +39,12 @@ while [ "${*}" != "" ] ; do # loop over all the drives provided by the operator
     DRIVE="${1}"
     if [[ -d "${DRIVE}" ]] ; then # if the drive structure is recognized as a directory:
         DRIVE_BASENAME="$(basename "${DRIVE}")"
-        OUTPUT="${FOLDER}/${DRIVE_BASENAME}_contents_${date}.txt"
-        if [[ -d "${FOLDER}" ]] ; then # if the output's parent folder structure is recognized as a directory:
+        OUTPUT="${DRIVE_CONTENTS_DESTINATION}/${DRIVE_BASENAME}_contents_${date}.txt"
+        if [[ -d "${DRIVE_CONTENTS_DESTINATION}" ]] ; then # if the output's parent DRIVE_CONTENTS_DESTINATION structure is recognized as a directory:
             tree --filelimit 50 --si --du -U -Q -o "${OUTPUT}" "${DRIVE}" # create a tree of the drive's contents
             if grep "0 directories, 0 files" "${OUTPUT}" ; then # if the results of "tree," sent to the output text file, show that the drive was empty:
                 _report -g "${DRIVE} is empty. Adding EMPTY to file name."
-                OUTPUT_EMPTY="${FOLDER}/${DRIVE_BASENAME}_contents_${date}_EMPTY.txt" && mv -v "${OUTPUT}" "${OUTPUT_EMPTY}"
-                echo "OUTPUT_EMPTY is $OUTPUT_EMPTY"
+                OUTPUT_EMPTY="${DRIVE_CONTENTS_DESTINATION}/${DRIVE_BASENAME}_contents_${date}_EMPTY.txt" && mv -v "${OUTPUT}" "${OUTPUT_EMPTY}"
                 _report -g "Moving ${OUTPUT_EMPTY} to ${DRIVE}" # tell operator the tree file is being moved to the drive
                 cp -v "${OUTPUT_EMPTY}" "${DRIVE}" # copy the output text file to the drive: -v=verbose
             else
@@ -53,7 +52,7 @@ while [ "${*}" != "" ] ; do # loop over all the drives provided by the operator
                 cp -va "${OUTPUT}" "${DRIVE}" # copy the output text file to the drive: -v=verbose, -a="archive"
             fi
         else
-            _report -rt "ERROR: ${FOLDER} does not exist. Exiting..." >&2 # tell operator if the hardcoded "local folder" cannot be found - e.g. no longer exists or is moved
+            _report -rt "ERROR: ${DRIVE_CONTENTS_DESTINATION} does not exist. Exiting..." >&2 # tell operator if the hardcoded "local DRIVE_CONTENTS_DESTINATION" cannot be found - e.g. no longer exists or is moved
             _log -a "Process terminated by script (no directory at requested location)."
             exit 1
         fi
@@ -69,5 +68,5 @@ done
 
 # log script ending
 _log -e
-_report -g "makedrivetree process complete."
+_report -g "makedrivetree process complete. Output tree can be viewed at ${OUTPUT}"
 exit "$?"

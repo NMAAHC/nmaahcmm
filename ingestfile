@@ -8,13 +8,15 @@ SCRIPT_PATH="${0%/*}"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 RSYNC_ERROR_COUNT=0
+LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 
 ## USAGE
 
 _usage(){
     echo
     echo "$(basename "${0}")"
-    echo "This script will run an interactive interview and then process an input file accordingly."
+    echo "This script will run an interactive interview and turn an input package (SIP) into an output package (AIP) accordingly."
+    echo "Your output package (AIP) will be delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}"
     echo "Dependencies: ${DEPENDENCIES[@]}"
     echo "Usage: $(basename ${0}) [ -options ]"
     echo "  Local mode: presents a graphical user interface to specify file, media ID, and other options. Automatically creates an H264 access copy and generates metadata files if not already present."
@@ -334,5 +336,5 @@ fi
 _log -e
 _writelog "END TIME" "$(date +%FT%T)"
 
-_report -gs "ingestfile process done. Output package may be found at ${DESTINATION}/${MEDIAID}"
+_report -gs "ingestfile process done. Your AIP can be found at ${DESTINATION}/${MEDIAID}"
 echo

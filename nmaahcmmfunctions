@@ -5,10 +5,6 @@ NMAAHCMM_CONFIG_FILE="${SCRIPTDIR}/nmaahcmm.conf"
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
 WHAT_IS_THIS="NMAAHC mediamicroservices"
 
-# global variables
-LOGDIR="${SCRIPTDIR}/logs/" # temp - this should be changed in local instances to another folder outside of your script directory
-[[ ! -d "${SCRIPTDIR}/logs/" ]] && mkdir "${SCRIPTDIR}/logs/"
-
 # You can't directly call a function in another shell script. You can move your function definitions into a separate file and then load them into your script using the . command, like this:
 # . /path/to/functions.sh
 # The script will interpret functions.sh as if its content were actually present in your file at this point. It is a common mechanism for implementing shared libraries of shell functions, and is how each script in nmaahcmm can reference the shared functions in this file.
@@ -24,6 +20,9 @@ elif [ ! "${CONFIG}" = "Y" -a ! "${REQUIRECONFIG}" = "N" ] ; then
     echo "The NMAAHCmm configuration file is not set. You must first create ${NMAAHCMM_CONFIG_FILE} by running nmaahcmmconfig." 1>&2
     exit 1
 fi
+
+LOGDIR="${LOGDIR}"
+[[ ! -d "${LOGDIR}" ]] && mkdir "${LOGDIR}"
 
 # load configuration file
 if [ -f "${GM_CONFIG_FILE}" ] ; then
@@ -162,19 +161,24 @@ _log(){
 }
 
 _writelog(){
-    LOGNAME="$(basename "${0}")_$(date +%F).log"
-    if [[ -z "${LOGNAME}" ]] ; then
+    if [[ -z "${LOG}" ]] ; then
         echo "Error, can not write to log, ingest log not yet created"
         exit
     fi
-    if [[ ! -f "${LOGNAME}" ]] ; then
-        mkdir -p $(dirname "${LOGNAME}")
-        touch "${LOGNAME}"
+    if [[ ! -f "${LOG}" ]] ; then
+        mkdir -p "${LOGDIR}"
+        touch "${LOG}"
     fi
-    KEY="${1}"
-    VALUE="${2}"
+    KEY="${1}"                              # key is first string passed to function
+    VALUE="${2}"                            # value is variable passed to function
+    OPTIND=1
+    while getopts ":t" OPT; do
+        case "${OPT}" in
+            t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
+        esac
+    done
     # need to add yaml style escaping
-    echo "${KEY}: ${VALUE}" >> "${LOGDIR}/${LOGNAME}"
+    echo "${KEY}: ${VALUE}" >> "${LOG}"
 }
 
 _maketemp(){
