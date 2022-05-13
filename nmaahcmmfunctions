@@ -136,50 +136,50 @@ _check_deliverdir(){
 
 _log(){
     if [[ -n "$LOGDIR" ]] ; then
-    if [[ ! -d "${LOGDIR}" ]] ; then
-        mkdir "${LOGDIR}"
-        if [[ "${?}" -ne 0 ]] ; then
-            _report -rt "${0}: Can't create log directory at ${LOGDIR}, exiting..."
-            exit 1
+        if [[ ! -d "${LOGDIR}" ]] ; then
+            mkdir "${LOGDIR}"
+            if [[ "${?}" -ne 0 ]] ; then
+                _report -rt "${0}: Can't create log directory at ${LOGDIR}, exiting..."
+                exit 1
+            fi
         fi
-    fi
-    MMLOGNAME="nmaahcmm.log"
-    OPTIND=1
-    while getopts ":beacw" OPT; do
-        case "${OPT}" in
-            b) STATUS="start" ;;              # script is beginning
-            e) STATUS="end"   ;;              # script is ending
-            a) STATUS="abort" ;;              # script is aborted
-            c) STATUS="comment" ;;            # comment about what script is doing
-            w) STATUS="warning" ;;            # warning information
-        esac
-    done
-    shift $(( ${OPTIND} - 1 ))
-    NOTE="${1}"
-    echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${MMLOGNAME}"
+        MMLOGNAME="nmaahcmm.log"
+        OPTIND=1
+        while getopts ":beacw" OPT; do
+            case "${OPT}" in
+                b) STATUS="start" ;;              # script is beginning
+                e) STATUS="end"   ;;              # script is ending
+                a) STATUS="abort" ;;              # script is aborted
+                c) STATUS="comment" ;;            # comment about what script is doing
+                w) STATUS="warning" ;;            # warning information
+            esac
+        done
+        shift $(( ${OPTIND} - 1 ))
+        NOTE="${1}"
+        echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${MMLOGNAME}"
     fi
 }
 
 _writelog(){
     if [[ -n "$LOGDIR" ]] ; then
-    if [[ -z "${LOG}" ]] ; then
-        echo "Error, can not write to log, ingest log not yet created"
-        exit
-    fi
-    if [[ ! -f "${LOG}" ]] ; then
-        mkdir -p "${LOGDIR}"
-        touch "${LOG}"
-    fi
-    KEY="${1}"                              # key is first string passed to function
-    VALUE="${2}"                            # value is variable passed to function
-    OPTIND=1
-    while getopts ":t" OPT; do
-        case "${OPT}" in
-            t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
-        esac
-    done
-    # need to add yaml style escaping
-    echo "${KEY}: ${VALUE}" >> "${LOG}"
+        if [[ -z "${LOG}" ]] ; then
+            echo "Error, can not write to log, ingest log not yet created"
+            exit
+        fi
+        if [[ ! -f "${LOG}" ]] ; then
+            mkdir -p "${LOGDIR}"
+            touch "${LOG}"
+        fi
+        KEY="${1}"                              # key is first string passed to function
+        VALUE="${2}"                            # value is variable passed to function
+        OPTIND=1
+        while getopts ":t" OPT; do
+            case "${OPT}" in
+                t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
+            esac
+        done
+        # need to add yaml style escaping
+        echo "${KEY}: ${VALUE}" >> "${LOG}"
     fi
 }
 
