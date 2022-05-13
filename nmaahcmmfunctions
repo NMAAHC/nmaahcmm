@@ -1,5 +1,4 @@
 # assign variables
-SCRIPTNAME=$(basename "${0}")
 SCRIPTDIR=$(dirname "${0}")
 NMAAHCMM_CONFIG_FILE="${SCRIPTDIR}/nmaahcmm.conf"
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
@@ -21,7 +20,6 @@ elif [ ! "${CONFIG}" = "Y" -a ! "${REQUIRECONFIG}" = "N" ] ; then
     exit 1
 fi
 
-LOGDIR="${LOGDIR}"
 [[ ! -d "${LOGDIR}" ]] && mkdir "${LOGDIR}"
 
 # load configuration file
