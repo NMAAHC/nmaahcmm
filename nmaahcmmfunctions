@@ -20,7 +20,7 @@ elif [[ "${CONFIG}" != "Y" ]] && [[ "${REQUIRECONFIG}" != "N" ]] ; then
     exit 1
 fi
 
-[[ ! -d "${LOGDIR}" ]] && mkdir "${LOGDIR}"
+[[ -n "${LOGDIR}" ]] && [[ ! -d "${LOGDIR}" ]] && mkdir "${LOGDIR}"
 
 # load configuration file
 if [ -f "${GM_CONFIG_FILE}" ] ; then
@@ -135,6 +135,7 @@ _check_deliverdir(){
 }
 
 _log(){
+    if [[ -n "$LOGDIR" ]] ; then
     if [[ ! -d "${LOGDIR}" ]] ; then
         mkdir "${LOGDIR}"
         if [[ "${?}" -ne 0 ]] ; then
@@ -156,9 +157,11 @@ _log(){
     shift $(( ${OPTIND} - 1 ))
     NOTE="${1}"
     echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${MMLOGNAME}"
+    fi
 }
 
 _writelog(){
+    if [[ -n "$LOGDIR" ]] ; then
     if [[ -z "${LOG}" ]] ; then
         echo "Error, can not write to log, ingest log not yet created"
         exit
@@ -177,6 +180,7 @@ _writelog(){
     done
     # need to add yaml style escaping
     echo "${KEY}: ${VALUE}" >> "${LOG}"
+    fi
 }
 
 _maketemp(){
