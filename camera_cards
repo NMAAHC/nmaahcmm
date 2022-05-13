@@ -267,10 +267,10 @@ if [[ "${AIP}" == "YES" ]] ; then
     # generate md5 of concatenated file
     if [[ -f "${CONCATENATED_FILE_MERGED}" ]] ; then
         CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_FILE_MERGED%.*}).md5"
-        md5sum "${CONCATENATED_FILE_MERGED}" | awk '{print $1}' > "${CONCATENATED_MD5_OUTPUT}"
+        md5sum "${CONCATENATED_FILE_MERGED}" > "${CONCATENATED_MD5_OUTPUT}"
     else
         CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE%.*}).md5"
-        md5sum "${CONCATENATED_VIDEO_FILE}" | awk '{print $1}' > "${CONCATENATED_MD5_OUTPUT}"
+        md5sum "${CONCATENATED_VIDEO_FILE}" > "${CONCATENATED_MD5_OUTPUT}"
     fi
     
     if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
@@ -339,7 +339,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     
     ## generate checksum for tar archive
     TAR_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/${MEDIAID}.md5"
-    md5sum "${MEDIAID}.tar.gz" | awk '{print $1}' > "${TAR_MD5_OUTPUT}"
+    md5sum "${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
 fi
 
 # error reporting
