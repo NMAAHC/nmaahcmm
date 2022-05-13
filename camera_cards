@@ -58,9 +58,9 @@ _generate_metadata(){
     tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
     # create mediainfo, exiftool, ffprobe reports
     while read -r FILE ; do
-        MEDIAINFO_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_mediainfo.txt"
-        EXIFTOOL_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_exiftool.txt"
-        FFPROBE_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${FILE})_ffprobe.xml"
+        MEDIAINFO_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename "${FILE}")_mediainfo.txt"
+        EXIFTOOL_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename "${FILE}")_exiftool.txt"
+        FFPROBE_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename "${FILE}")_ffprobe.xml"
         mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
         exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
         ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
@@ -223,7 +223,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
-    STREAMHASH="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE%.*})_streamhash.md5"
+    STREAMHASH="${METADATA_OUTPUT_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
     ffmpeg -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${STREAMHASH}"
     # tests for video file existing
     FFMPEG_EXIT_CODE=$(echo $?)
@@ -266,10 +266,10 @@ if [[ "${AIP}" == "YES" ]] ; then
     
     # generate md5 of concatenated file
     if [[ -f "${CONCATENATED_FILE_MERGED}" ]] ; then
-        CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_FILE_MERGED%.*}).md5"
+        CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename "${CONCATENATED_FILE_MERGED%.*}").md5"
         md5sum "${CONCATENATED_FILE_MERGED}" > "${CONCATENATED_MD5_OUTPUT}"
     else
-        CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename ${CONCATENATED_VIDEO_FILE%.*}).md5"
+        CONCATENATED_MD5_OUTPUT="${METADATA_OUTPUT_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}").md5"
         md5sum "${CONCATENATED_VIDEO_FILE}" > "${CONCATENATED_MD5_OUTPUT}"
     fi
     
