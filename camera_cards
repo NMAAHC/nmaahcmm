@@ -312,9 +312,9 @@ fi
 
 ### procedure for packaging files into compressed tars
 if [[ "${TAR}" == "YES" ]] ; then
-    if [[ "${AIP}" == "YES" ]] ; then AIPDIR="${AIP_DESTINATION}/${MEDIAID}_TAR" ; fi # if both AIP and TAR will be created, differentiate output packages
+    if [[ "${AIP}" == "YES" ]] ; then AIPDIR_TAR="${AIP_DESTINATION}/${MEDIAID}_TAR" ; fi # if both AIP and TAR will be created, differentiate output packages
     
-    mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata"
+    mkdir -p "${AIPDIR_TAR}/objects" "${AIPDIR_TAR}/metadata"
     
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -325,7 +325,7 @@ if [[ "${TAR}" == "YES" ]] ; then
         fi
     done <"${TEMP_ALLFILES}"
     # generate metadata reports
-    METADATA_OUTPUT_DIR="${AIPDIR}/metadata"
+    METADATA_OUTPUT_DIR="${AIPDIR_TAR}/metadata/reports"
     METADATA_FILELIST="${TEMP_AVLIST}"
     _generate_metadata
     
@@ -333,7 +333,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     echo
     _report -g "Creating tar archive..."
     _writelog -t "Tar archive process process started"
-    tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
+    tar -czvf "${AIPDIR_TAR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
     _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
     _writelog -t "Tar archive process process finished"
     
