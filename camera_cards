@@ -25,12 +25,15 @@ $(basename "${0}")
 If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly.
 
 Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory.
-Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}
+Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig (AIP_DESTINATION).
+
+The AIP_DESTINATION can be set via nmaahcconfig, or via the -o options, or the script with request it.
 
 Dependencies: ${DEPENDENCIES[@]}
 
 Usage: $(basename ${0}) -m MEDIAID [-t] /path/to/input/camera_card_directory
   -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
+  -o AIP_DESTINATION (the output directory for the package)
   -t tar camera files and folders into a tarball, compressed with gzip
   -h display this help
 
@@ -39,9 +42,10 @@ EOF
 }
 # getopts loop
 OPTIND=1
-while getopts ":m:th" OPT; do
+while getopts ":m:o:th" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
+        o) AIP_DESTINATION="${OPTARG}" ;;
         t) TAR="YES" ; AIP="NO" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
@@ -91,6 +95,20 @@ if [[ -z "${MEDIAID}" ]] ; then
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
 fi
+# ask for AIP_DESTINATION if it wasn't supplied
+if [[ -z "${AIP_DESTINATION}" ]] ; then
+    _report -b -n "Provide the destination for the resulting package or 'q' to quit: "
+    read -e AIP_DESTINATION
+    echo
+    [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
+    # check that camera card is a directory
+    if [[ ! -d "${AIP_DESTINATION}" ]] ; then
+        _report -rt "ERROR: Input directory ${AIP_DESTINATION} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
+fi
+
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
 if [[ -d "${AIPDIR}" ]] ; then
     _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
