@@ -14,28 +14,30 @@ TAR="NO"
 LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 
 ## USAGE
-
 _usage(){
-    echo
-    echo "$(basename "${0}")"
-    echo "1. By default, this script will detect a camera card file/directory structure and transform the original camera card files into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
-    echo "  Current camera cards recognized:"
-    echo "      - AVCHD (e.g. Canon C100)"
-    echo "      - Canon XF (e.g. Canon C300)"
-    echo "      - P2 (Panasonic)"
-    echo "      - XAVC (Sony)"
-    echo "      - XDCAM EX (e.g. Canon XF100)"
-    echo "2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag."
-    echo "If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly."
-    echo
-    echo "Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory."
-    echo "Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}"
-    echo "Dependencies: ${DEPENDENCIES[@]}"
-    echo "Usage: $(basename ${0}) -m MEDIAID [-t] /path/to/input/camera_card_directory"
-    echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
-    echo "  -t tar camera files and folders into a tarball, compressed with gzip"
-    echo "  -h display this help"
-    echo
+cat <<EOF
+$(basename "${0}")
+ 1. By default, this script will detect a camera card file/directory structure and transform the original camera card files into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
+  Current camera cards recognized:
+      - AVCHD (e.g. Canon C100)
+      - Canon XF (e.g. Canon C300)
+      - P2 (Panasonic)
+      - XAVC (Sony)
+      - XDCAM EX (e.g. Canon XF100)
+2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag.
+If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly.
+
+Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory.
+Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}
+
+Dependencies: ${DEPENDENCIES[@]}
+
+Usage: $(basename ${0}) -m MEDIAID [-t] /path/to/input/camera_card_directory
+  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
+  -t tar camera files and folders into a tarball, compressed with gzip
+  -h display this help
+
+EOF
     exit
 }
 # getopts loop
