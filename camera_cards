@@ -91,7 +91,7 @@ if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
 fi
 # ask for MEDIAID if it wasn't supplied
 if [[ -z "${MEDIAID}" ]] ; then
-    _report -b "Enter a unique package name or 'q' to quit: "
+    _report -b -n "Enter a unique package name or 'q' to quit: "
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
 fi
