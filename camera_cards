@@ -4,51 +4,59 @@
 
 # load nmaahcmmfunctions into this script
 SCRIPT_PATH="${0%/*}"
-. "${SCRIPT_PATH}/nmaahcmmfunctions"
-[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-_initialize_make # safe script termination process defined in nmaahcmmfunctions
-DEPENDENCIES=(ffmpeg md5sum)
+DEPENDENCIES=(ffmpeg md5sum tree)
 OP="${USER}"
 AIP="YES"
 TAR="NO"
 LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
+REQUIRECONFIG="N"
 
 ## USAGE
-
 _usage(){
-    echo
-    echo "$(basename "${0}")"
-    echo "1. By default, this script will detect a camera card file/directory structure and transform the original camera card files into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
-    echo "  Current camera cards recognized:"
-    echo "      - AVCHD (e.g. Canon C100)"
-    echo "      - Canon XF (e.g. Canon C300)"
-    echo "      - P2 (Panasonic)"
-    echo "      - XAVC (Sony)"
-    echo "      - XDCAM EX (e.g. Canon XF100)"
-    echo "2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag."
-    echo "If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly."
-    echo
-    echo "Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory."
-    echo "Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}"
-    echo "Dependencies: ${DEPENDENCIES[@]}"
-    echo "Usage: $(basename ${0}) -m MEDIAID [-t] /path/to/input/camera_card_directory"
-    echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
-    echo "  -t tar camera files and folders into a tarball, compressed with gzip"
-    echo "  -h display this help"
-    echo
+cat <<EOF
+$(basename "${0}")
+ 1. By default, this script will detect a camera card file/directory structure and transform the original camera card files into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
+  Current camera cards recognized:
+      - AVCHD (e.g. Canon C100)
+      - Canon XF (e.g. Canon C300)
+      - P2 (Panasonic)
+      - XAVC (Sony)
+      - XDCAM EX (e.g. Canon XF100)
+2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag.
+If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly.
+
+Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory.
+Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig (AIP_DESTINATION).
+
+The AIP_DESTINATION can be set via nmaahcconfig, or via the -o options, or the script with request it.
+
+Dependencies: ${DEPENDENCIES[@]}
+
+Usage: $(basename ${0}) -m MEDIAID [-t] /path/to/input/camera_card_directory
+  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
+  -o AIP_DESTINATION (the output directory for the package)
+  -t tar camera files and folders into a tarball, compressed with gzip
+  -h display this help
+
+EOF
     exit
 }
 # getopts loop
 OPTIND=1
-while getopts ":m:th" OPT; do
+while getopts ":m:o:th" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
+        o) AIP_DESTINATION="${OPTARG}" ;;
         t) TAR="YES" ; AIP="NO" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
 done
 shift $(( ${OPTIND} - 1 ))
+
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
 
 # define functions
 _generate_metadata(){
@@ -84,10 +92,24 @@ if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
 fi
 # ask for MEDIAID if it wasn't supplied
 if [[ -z "${MEDIAID}" ]] ; then
-    _report -b "Enter a unique package name or 'q' to quit: "
+    _report -b -n "Enter a unique package name or 'q' to quit: "
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
 fi
+# ask for AIP_DESTINATION if it wasn't supplied
+if [[ -z "${AIP_DESTINATION}" ]] ; then
+    _report -b -n "Provide the destination for the resulting package or 'q' to quit: "
+    read -e AIP_DESTINATION
+    echo
+    [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
+    # check that camera card is a directory
+    if [[ ! -d "${AIP_DESTINATION}" ]] ; then
+        _report -rt "ERROR: Input directory ${AIP_DESTINATION} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
+fi
+
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
 if [[ -d "${AIPDIR}" ]] ; then
     _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
