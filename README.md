@@ -62,11 +62,11 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
 * Your command will look like this: `diffFrameMD5 file1.txt file2.txt`
   
 #### ingestfile
-* This script will run an interactive interview and turn an input package (SIP) into an output package (AIP) accordingly. For more on SIPs and AIPs, see [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions).  
+* This script will run an interactive interview and turn an input package (SIP) into an output package (AIP) accordingly. For more on SIPs and AIPs, see [nmaahcmm package definitions](#nmaahcmm-package-definitions).  
 * Depending on the options you select and the type of package you submit, the following processes will happen:  
-    * Your SIP will be restructured based on your package type (see [restructureSIP](https://github.com/aeschweik/nmaahcmm#restructureSIP)).  
-    * Metadata files will be created for preservation-level files (MOV and MKV files). If these file types aren't detected, metadata files will be created for all audio and video files in the package (see [makemetadata](https://github.com/aeschweik/nmaahcmm#makemetadata)).  
-    * An H264/MP4 derivative file will be created for all preservation-level files (MOV and MKV files). If these file types aren't detected, H264 files will be created for all audio and video files in the package (see [makeH264](https://github.com/aeschweik/nmaahcmm#makeH264)).  
+    * Your SIP will be restructured based on your package type (see [restructureSIP](#restructureSIP)).  
+    * Metadata files will be created for preservation-level files (MOV and MKV files). If these file types aren't detected, metadata files will be created for all audio and video files in the package (see [makemetadata](#makemetadata)).  
+    * An H264/MP4 derivative file will be created for all preservation-level files (MOV and MKV files). If these file types aren't detected, H264 files will be created for all audio and video files in the package (see [makeH264](#makeH264)).  
     * Your SIP will be moved to the output directory you select.  
 * Your command will look like this: `ingestfile`  
 * When you run the script, a menu will pop up. Fill out the fields as follows:  
