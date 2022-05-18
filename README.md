@@ -5,7 +5,8 @@ table of contents
 -------------------
 
 1. [summary](#summary)
-2. [general NMAAHC microservices and instructions for use](#nmaahcmm-functions-and-instructions-for-use)
+2. [install](#install)
+3. [general NMAAHC microservices and instructions for use](#nmaahcmm-functions-and-instructions-for-use)
     * [diffFrameMD5](#diffframemd5)
     * [ingestfile](#ingestfile)
     * [makechecksum](#makechecksum)
@@ -23,12 +24,12 @@ table of contents
     * [restructureForVFCU](#restructureForVFCU)
     * [restructureSIP](#restructureSIP)
     * [verifySIP](#verifySIP)
-3. [Great Migration microservices and instructions for use](#great-migration-microservices-and-instructions-for-use)
+4. [Great Migration microservices and instructions for use](#great-migration-microservices-and-instructions-for-use)
     * [gmconfig](#gmconfig)
     * [makegm](#makegm)
-4. [camera_cards microservice and instructions for use](#camera_cards-functions-and-instructions-for-use)
-5. [log creation](#log-creation)
-6. [nmaahcmm package definitions](#nmaahcmm-package-definitions)
+5. [camera_cards microservice and instructions for use](#camera_cards-functions-and-instructions-for-use)
+6. [log creation](#log-creation)
+7. [nmaahcmm package definitions](#nmaahcmm-package-definitions)
     * [definitions](#definitions)
     * [AIP directory structure: outline](#aip-directory-structure-outline)
     * [AIP directory structures: examples](#aip-directory-structures-examples)
@@ -42,6 +43,23 @@ table of contents
 This set of mediamicroservices (mm) have been developed for the purpose of processing digital audiovisual collections at the National Museum of African American History and Culture (NMAAHC). They are based on a set of microservices developed for use at CUNY Television. These microservices borrow both concepts and code from those scripts, which are available in [the mediamicroservices GitHub repository](https://github.com/mediamicroservices/mm/).
 
 Like CUNY TV's original mediamicroservices, these microservices are written in Bash, developed and tested for a macOS environment, and installed and run using the terminal application.
+
+***
+
+## install
+
+Install [homebrew](https://brew.sh) first.
+
+Then either
+
+`brew install NMAAHC/nmaahcmm/nmaahcmm`
+
+or
+
+```
+brew tap NMAAHC/nmaahcmm
+brew install nmaahcmm
+```
 
 ***
 
