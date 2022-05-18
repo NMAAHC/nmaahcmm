@@ -420,7 +420,7 @@ Logs are currently created within the same directory where the scripts are store
   
 The scripts in nmaahcmm take the principles of the Open Archival Information System as inspiration. The content in its form before ingest workflows is called the Submission Information Package (SIP). Once that content comes under archival management (i.e., once it has been normalized and restructured, and metadata has been generated), it becomes an Archival Information Package (AIP). Using automated processes with SIPs and AIPs requires that the packages be predictable; a script has to be able to expect certain files in order to categorize them and run the same processes every time.  
   
-The documentation below sets expectations for the types of files that are created and submitted in accession processes for different media formats. The following scripts rely explicitly on these structures and must be updated if the definitions change:  [restructureSIP](https://github.com/aeschweik/nmaahcmm/restructureSIP) and [verifySIP](https://github.com/aeschweik/nmaahcmm/verifySIP)  
+The documentation below sets expectations for the types of files that are created and submitted in accession processes for different media formats. The following scripts rely explicitly on these structures and must be updated if the definitions change:  [restructureSIP](https://github.com/NMAAHC/nmaahcmm/blob/main/restructureSIP) and [verifySIP](https://github.com/NMAAHC/nmaahcmm/blob/main/verifySIP)  
   
 #### definitions
 * Package (AIP) = finalized directory with structured/fleshed-out content information (in "objects" folder) and preservation description information (in "metadata" folder) for one media item (e.g. one tape or one film).  
