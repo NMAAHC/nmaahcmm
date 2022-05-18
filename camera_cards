@@ -32,19 +32,22 @@ _usage(){
     echo "Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory."
     echo "Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig, which is currently ${AIP_DESTINATION}"
     echo "Dependencies: ${DEPENDENCIES[@]}"
-    echo "Usage: $(basename ${0}) -m MEDIAID [-t] /path/to/input/camera_card_directory"
+    echo "Usage: $(basename ${0}) -m MEDIAID [-c] [-t] /path/to/input/camera_card_directory"
     echo "  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)"
+    echo "  -c combine multiple camera cards into one output package; script will ask you to drag in one at a time"
     echo "  -t tar camera files and folders into a tarball, compressed with gzip"
+    echo "  -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')"
     echo "  -h display this help"
     echo
     exit
 }
 # getopts loop
 OPTIND=1
-while getopts ":m:th" OPT; do
+while getopts ":m:tah" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         t) TAR="YES" ; AIP="NO" ;;
+        a) TAR="YES" ; AIP="YES" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
@@ -91,11 +94,7 @@ if [[ -z "${MEDIAID}" ]] ; then
     read -e MEDIAID
     [[ "${MEDIAID}" = "q" ]] && exit 0
 fi
-if [[ "${TAR}" == "YES" ]] ; then # if both AIP and TAR will be created, differentiate output packages
-    AIPDIR="${AIP_DESTINATION}/${MEDIAID}_AIP"
-else
-    AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
-fi
+AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
 if [[ -d "${AIPDIR}" ]] ; then
     _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
     _log -a "Process terminated by script (output directory already exists)."
@@ -106,7 +105,12 @@ fi
 _writelog "OPERATOR" "${OP}"
 _writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
 _writelog "MEDIAID" "${MEDIAID}"
-_writelog "OUTPUT DIRECTORY" "${AIPDIR}"
+if [[ "${TAR}" == "YES" ]] ; then
+    _writelog "OUTPUT DIRECTORY (TAR)" "${AIPDIR}/objects/TAR"
+fi
+if [[ "${AIP}" == "YES" ]] ; then
+    _writelog "OUTPUT DIRECTORY (AIP)" "${AIPDIR}/objects/AIP"
+fi
 
 ## SCRIPT ACTIONS
 
@@ -179,11 +183,12 @@ TEMP_ALLFILES="$(_maketemp)"
 # define output directories
 METADATA_REPORTS_DIR="${AIPDIR}/metadata/reports"
 METADATA_ORIGINAL_CAMERA_FILES_DIR="${AIPDIR}/metadata/original_camera_files"
+mkdir -p "${METADATA_REPORTS_DIR}"
 
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
-    
-    mkdir -p "${AIPDIR}/objects" "${METADATA_REPORTS_DIR}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
+    if [[ "${TAR}" == "YES" ]] ; then AIPDIR_AIP="${AIPDIR}/objects/AIP" ; else AIPDIR_AIP="${AIPDIR}/objects" ; fi
+    mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
     
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
@@ -217,9 +222,9 @@ if [[ "${AIP}" == "YES" ]] ; then
     _writelog -t "Video concatenation process started"
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
-        CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
+        CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
     else
-        CONCATENATED_VIDEO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated.${EXTENSION}"
+        CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${EXTENSION}"
     fi
     
     # create list of files to concatenate, formatted for ffmpeg
@@ -242,7 +247,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         _report -g "Concatenating audio files..."
         _writelog -t "Audio concatenation process started"
         FIRST_FILE="$(head -n 1 "${TEMP_AUDIOLIST}")"
-        CONCATENATED_AUDIO_FILE="${AIPDIR}/objects/${MEDIAID}_concatenated_audio.${FIRST_FILE#*.}"
+        CONCATENATED_AUDIO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated_audio.${FIRST_FILE#*.}"
         > "${TEMP_CONCATLIST}" # clear concatlist from video concatenation
         while read FILE ; do
             echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
@@ -263,7 +268,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         # rename concatenated video file to avoid collision with audio file
         RENAMED_CONCATENATED_VIDEO_FILE="$(echo "${CONCATENATED_VIDEO_FILE}" | sed s/concatenated/concatenated_video/)"
         mv "${CONCATENATED_VIDEO_FILE}" "${RENAMED_CONCATENATED_VIDEO_FILE}"
-        CONCATENATED_FILE_MERGED="${AIPDIR}/objects/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
+        CONCATENATED_FILE_MERGED="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
         ffmpeg -i "${RENAMED_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE_MERGED}"
         _writelog "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE_MERGED}"
         _writelog -t "Audio + video joining process ended"
@@ -288,10 +293,10 @@ if [[ "${AIP}" == "YES" ]] ; then
             exit 1
         else
             while read FILE ; do
-                rsync -avh --progress "${FILE}" "${AIPDIR}/objects/"
+                rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
             done <"${TEMP_VIDEOLIST}"
             while read FILE ; do
-                rsync -avh --progress "${FILE}" "${AIPDIR}/objects/"
+                rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
             done <"${TEMP_AUDIOLIST}"
         fi
     fi
@@ -317,8 +322,8 @@ fi
 
 ### procedure for packaging files into compressed tars
 if [[ "${TAR}" == "YES" ]] ; then
-    
-    mkdir -p "${AIPDIR}/objects" "${AIPDIR}/metadata"
+    AIPDIR_TAR="${AIPDIR}/objects/TAR"
+    mkdir -p "${AIPDIR_TAR}"
     
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -336,13 +341,13 @@ if [[ "${TAR}" == "YES" ]] ; then
     echo
     _report -g "Creating tar archive..."
     _writelog -t "Tar archive process process started"
-    tar -czvf "${AIPDIR}/objects/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
+    tar -czvf "${AIPDIR_TAR}/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
     _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
     _writelog -t "Tar archive process process finished"
     
     ## generate checksum for tar archive
     TAR_MD5_OUTPUT="${METADATA_REPORTS_DIR}/${MEDIAID}.md5"
-    md5sum "${AIPDIR}/objects/${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
+    md5sum "${AIPDIR_TAR}/${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
 fi
 
 # error reporting
