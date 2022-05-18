@@ -43,9 +43,10 @@ _usage(){
 }
 # getopts loop
 OPTIND=1
-while getopts ":m:tah" OPT; do
+while getopts ":m:ctah" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
+        c) COMBINE_CAMERA_CARDS="YES" ;;
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
@@ -76,15 +77,29 @@ _generate_metadata(){
 CAMERA_CARD_DIR="${1}"
 # ask for camera card if it wasn't supplied
 if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
-    _report -b "Drag in the input directory or type 'q' to quit: "
+    _report -b "Drag in your camera card directory or type 'q' to quit: "
     read -e CAMERA_CARD_DIR
-    [[ "${CAMERA_CARD_DIR}" = "q" ]] && exit 0
 fi
 # check that camera card is a directory
 if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
     _report -rt "ERROR: Input directory ${CAMERA_CARD_DIR} is not a directory. Exiting..."
     _log -a "Process terminated by script (input was not a directory)."
     exit 1
+fi
+if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+    CAMERA_CARD_DIR_2="${2}"
+    # ask for camera card if it wasn't supplied
+    if [[ -z "${CAMERA_CARD_DIR_2}" ]] ; then
+        _report -b "Drag in your second camera card in sequence, or type 'q' to quit: "
+        read -e CAMERA_CARD_DIR_2
+        [[ "${CAMERA_CARD_DIR_2}" = "q" ]] && exit 0
+    fi
+    # check that camera card is a directory
+    if [[ ! -d "${CAMERA_CARD_DIR}" ]] || [[ ! -d "${CAMERA_CARD_DIR_2}" ]]  ; then
+       _report -rt "ERROR: Input directories were not directories. Exiting..."
+       _log -a "Process terminated by script (input was not a directory)."
+       exit 1
+    fi
 fi
 
 # check for other unassigned variables
@@ -103,7 +118,12 @@ fi
 
 # record variables in ingest log
 _writelog "OPERATOR" "${OP}"
-_writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
+if [[ "${COMBINE_CAMERA_CARDS}" != "YES" ]] ; then
+    _writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
+else
+    _writelog "CAMERA CARD DIRECTORY 1" "${CAMERA_CARD_DIR}"
+    _writelog "CAMERA CARD DIRECTORY 2" "${CAMERA_CARD_DIR_2}"
+fi
 _writelog "MEDIAID" "${MEDIAID}"
 if [[ "${TAR}" == "YES" ]] ; then
     _writelog "OUTPUT DIRECTORY (TAR)" "${AIPDIR}/objects/TAR"
@@ -116,9 +136,20 @@ fi
 
 # log script beginning
 _log -b
+echo
+
+if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
+    find "${CAMERA_CARD_DIR}" -type f -iname "*.cpi" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
+    find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
+    find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+    find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+    find "${CAMERA_CARD_DIR}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+fi
 
 # detect camera card structure based on directory name
-echo
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
         _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
@@ -126,22 +157,27 @@ if [[ "${AIP}" == "YES" ]] ; then
         # set CAMERA_CARD_DIR path to the standard AVCHD directory structure (PRIVATE, AVCHD and BDMV packages)
         CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV"
         EXTENSION="mts"
+        RSYNC_OPTIONS=(-iname "*.cpi")
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
         _report -g "Camera card type identified: Canon XF (e.g. Canon C300)"
         CAMERA_CARD_TYPE="MXF"
         EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type f -iname "LASTCLIP.TXT")" ]] ; then
         _report -g "Camera card type identified: P2 (Panasonic brand)"
         CAMERA_CARD_TYPE="P2"
         EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "XDROOT")" ]] ; then
         _report -g "Camera card type identified: XAVC (Sony brand)"
         CAMERA_CARD_TYPE="XAVC"
         EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "BPAV")" ]] ; then
         _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
         CAMERA_CARD_TYPE="XDCAMEX"
         EXTENSION="mp4"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
     fi
 fi
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
@@ -180,6 +216,7 @@ TEMP_CONCATLIST="$(_maketemp)"
 TEMP_METADATALIST="$(_maketemp)"
 TEMP_AVLIST="$(_maketemp)"
 TEMP_ALLFILES="$(_maketemp)"
+echo "TEST TEMP_VIDEOLIST is $TEMP_VIDEOLIST, TEMP_AUDIOLIST is $TEMP_AUDIOLIST, TEMP_CONCATLIST is $TEMP_CONCATLIST, TEMP_METADATALIST is $TEMP_METADATALIST, TEMP_AVLIST is $TEMP_AVLIST, TEMP_ALLFILES is $TEMP_ALLFILES"
 # define output directories
 METADATA_REPORTS_DIR="${AIPDIR}/metadata/reports"
 METADATA_ORIGINAL_CAMERA_FILES_DIR="${AIPDIR}/metadata/original_camera_files"
@@ -196,8 +233,6 @@ if [[ "${AIP}" == "YES" ]] ; then
         find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
         find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort > "${TEMP_AUDIOLIST}"
         cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
-    elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
-        find "${CAMERA_CARD_DIR}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
         # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
@@ -211,7 +246,31 @@ if [[ "${AIP}" == "YES" ]] ; then
             fi
         done <"${TEMP_ALLFILES}"
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
-    fi    
+    elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
+        find "${CAMERA_CARD_DIR}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+    fi 
+    if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+        if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+            find "${CAMERA_CARD_DIR_2}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort >> "${TEMP_VIDEOLIST}"
+            find "${CAMERA_CARD_DIR_2}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort >> "${TEMP_AUDIOLIST}"
+            cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
+        elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
+            find "${CAMERA_CARD_DIR_2}" -iname "*.${EXTENSION}" | sort >> "${TEMP_VIDEOLIST}"
+        elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+            find "${CAMERA_CARD_DIR_2}" -type f > "${TEMP_ALLFILES}"
+            # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
+            while read FILE ; do
+                if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
+                    echo "${FILE}" >> "${TEMP_VIDEOLIST}"
+                elif [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
+                    echo "${FILE}" >> "${TEMP_AUDIOLIST}"
+                elif [[ -f "${FILE}" ]] ; then
+                    echo "${FILE}" >> "${TEMP_METADATALIST}"
+                fi
+            done <"${TEMP_ALLFILES}"
+            sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
+        fi 
+    fi
     # generate metadata reports
     if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then METADATA_FILELIST="${TEMP_AVLIST}" ; else METADATA_FILELIST="${TEMP_VIDEOLIST}" ; fi
     _generate_metadata
@@ -304,19 +363,22 @@ if [[ "${AIP}" == "YES" ]] ; then
     echo
     _report -g "Moving significant camera-generated metadata files to AIP..."
     # move significant camera-generated metadata files to a metadata folder
-    if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
-        find "${CAMERA_CARD_DIR}" -type f -iname "*.cpi" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
-        find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
-        find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
         find "${CAMERA_CARD_DIR}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
         find "${CAMERA_CARD_DIR}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+            find "${CAMERA_CARD_DIR_2}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+            find "${CAMERA_CARD_DIR_2}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        fi
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         while read FILE ; do
             rsync -avh "${FILE}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
         done <"${TEMP_METADATALIST}"
+    else
+        find "${CAMERA_CARD_DIR}" -type f "${RSYNC_OPTIONS[@]}" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+            find "${CAMERA_CARD_DIR_2}" -type f "${RSYNC_OPTIONS[@]}" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        fi
     fi
 fi
 
@@ -328,6 +390,9 @@ if [[ "${TAR}" == "YES" ]] ; then
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
     find "${CAMERA_CARD_DIR}" -type f > "${TEMP_ALLFILES}"
+    if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+        find "${CAMERA_CARD_DIR_2}" -type f >> "${TEMP_ALLFILES}"
+    fi
     while read FILE ; do
         if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] || [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
             echo "${FILE}" >> "${TEMP_AVLIST}"
