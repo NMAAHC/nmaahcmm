@@ -342,7 +342,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     
     ## generate checksum for tar archive
     TAR_MD5_OUTPUT="${METADATA_REPORTS_DIR}/${MEDIAID}.md5"
-    md5sum "${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
+    md5sum "${AIPDIR}/objects/${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
 fi
 
 # error reporting
