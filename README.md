@@ -4,35 +4,36 @@ nmaahc mediamicroservices
 table of contents
 -------------------
 
-1. [summary](https://github.com/aeschweik/nmaahcmm/mm#summary)
-2. [general NMAAHC microservices and instructions for use](https://github.com/aeschweik/nmaahcmm#nmaahcmm-functions-and-instructions-for-use)
-    * [diffFrameMD5](https://github.com/aeschweik/nmaahcmm#diffframemd5)
-    * [ingestfile](https://github.com/aeschweik/nmaahcmm#ingestfile)
-    * [makechecksum](https://github.com/aeschweik/nmaahcmm#makechecksum)
-    * [makeconcat](https://github.com/aeschweik/nmaahcmm#makeconcat)
-    * [makeDer](https://github.com/aeschweik/nmaahcmm#makeDer)
-    * [makedrivetree](https://github.com/aeschweik/nmaahcmm#makedrivetree)
-    * [makeframemd5](https://github.com/aeschweik/nmaahcmm#makeframemd5)
-    * [makeH264](https://github.com/aeschweik/nmaahcmm#makeH264)
-    * [makemetadata](https://github.com/aeschweik/nmaahcmm#makemetadata)
-    * [moveDPX](https://github.com/aeschweik/nmaahcmm#moveDPX)
-    * [nmaahcmmconfig](https://github.com/aeschweik/nmaahcmm#nmaahcmmconfig)
-    * [nmaahcmmfunctions](https://github.com/aeschweik/nmaahcmm#nmaahcmmfunctions)
-    * [removeDSStore](https://github.com/aeschweik/nmaahcmm#removeDSStore)
-    * [restructureDPX](https://github.com/aeschweik/nmaahcmm#restructureDPX)
-    * [restructureForVFCU](https://github.com/aeschweik/nmaahcmm#restructureForVFCU)
-    * [restructureSIP](https://github.com/aeschweik/nmaahcmm#restructureSIP)
-    * [verifySIP](https://github.com/aeschweik/nmaahcmm#verifySIP)
-3. [Great Migration microservices and instructions for use](https://github.com/aeschweik/nmaahcmm#great-migration-microservices-and-instructions-for-use)
-    * [gmconfig](https://github.com/aeschweik/nmaahcmm#gmconfig)
-    * [makegm](https://github.com/aeschweik/nmaahcmm#makegm)
-4. [camera_cards microservice and instructions for use](https://github.com/aeschweik/nmaahcmm#camera_cards-functions-and-instructions-for-use)
-5. [log creation](https://github.com/aeschweik/nmaahcmm#log-creation)
-6. [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions)
-    * [definitions](https://github.com/aeschweik/nmaahcmm#definitions)
-    * [AIP directory structure: outline](https://github.com/aeschweik/nmaahcmm#aip-directory-structure-outline)
-    * [AIP directory structures: examples](https://github.com/aeschweik/nmaahcmm#aip-directory-structures-examples)
-    * [current SIP structures](https://github.com/aeschweik/nmaahcmm#current-sip-structures)
+1. [summary](#summary)
+2. [install](#install)
+3. [general NMAAHC microservices and instructions for use](#nmaahcmm-functions-and-instructions-for-use)
+    * [diffFrameMD5](#diffframemd5)
+    * [ingestfile](#ingestfile)
+    * [makechecksum](#makechecksum)
+    * [makeconcat](#makeconcat)
+    * [makeDer](#makeDer)
+    * [makedrivetree](#makedrivetree)
+    * [makeframemd5](#makeframemd5)
+    * [makeH264](#makeH264)
+    * [makemetadata](#makemetadata)
+    * [moveDPX](#moveDPX)
+    * [nmaahcmmconfig](#nmaahcmmconfig)
+    * [nmaahcmmfunctions](#nmaahcmmfunctions)
+    * [removeDSStore](#removeDSStore)
+    * [restructureDPX](#restructureDPX)
+    * [restructureForVFCU](#restructureForVFCU)
+    * [restructureSIP](#restructureSIP)
+    * [verifySIP](#verifySIP)
+4. [Great Migration microservices and instructions for use](#great-migration-microservices-and-instructions-for-use)
+    * [gmconfig](#gmconfig)
+    * [makegm](#makegm)
+5. [camera_cards microservice and instructions for use](#camera_cards-functions-and-instructions-for-use)
+6. [log creation](#log-creation)
+7. [nmaahcmm package definitions](#nmaahcmm-package-definitions)
+    * [definitions](#definitions)
+    * [AIP directory structure: outline](#aip-directory-structure-outline)
+    * [AIP directory structures: examples](#aip-directory-structures-examples)
+    * [current SIP structures](#current-sip-structures)
 
 
 ***
@@ -42,6 +43,23 @@ table of contents
 This set of mediamicroservices (mm) have been developed for the purpose of processing digital audiovisual collections at the National Museum of African American History and Culture (NMAAHC). They are based on a set of microservices developed for use at CUNY Television. These microservices borrow both concepts and code from those scripts, which are available in [the mediamicroservices GitHub repository](https://github.com/mediamicroservices/mm/).
 
 Like CUNY TV's original mediamicroservices, these microservices are written in Bash, developed and tested for a macOS environment, and installed and run using the terminal application.
+
+***
+
+## install
+
+Install [homebrew](https://brew.sh) first.
+
+Then either
+
+`brew install NMAAHC/nmaahcmm/nmaahcmm`
+
+or
+
+```
+brew tap NMAAHC/nmaahcmm
+brew install nmaahcmm
+```
 
 ***
 
@@ -62,11 +80,11 @@ To view the specific ffmpeg encoding options for each file, view the sourcecode 
 * Your command will look like this: `diffFrameMD5 file1.txt file2.txt`
   
 #### ingestfile
-* This script will run an interactive interview and turn an input package (SIP) into an output package (AIP) accordingly. For more on SIPs and AIPs, see [nmaahcmm package definitions](https://github.com/aeschweik/nmaahcmm#nmaahcmm-package-definitions).  
+* This script will run an interactive interview and turn an input package (SIP) into an output package (AIP) accordingly. For more on SIPs and AIPs, see [nmaahcmm package definitions](#nmaahcmm-package-definitions).  
 * Depending on the options you select and the type of package you submit, the following processes will happen:  
-    * Your SIP will be restructured based on your package type (see [restructureSIP](https://github.com/aeschweik/nmaahcmm#restructureSIP)).  
-    * Metadata files will be created for preservation-level files (MOV and MKV files). If these file types aren't detected, metadata files will be created for all audio and video files in the package (see [makemetadata](https://github.com/aeschweik/nmaahcmm#makemetadata)).  
-    * An H264/MP4 derivative file will be created for all preservation-level files (MOV and MKV files). If these file types aren't detected, H264 files will be created for all audio and video files in the package (see [makeH264](https://github.com/aeschweik/nmaahcmm#makeH264)).  
+    * Your SIP will be restructured based on your package type (see [restructureSIP](#restructureSIP)).  
+    * Metadata files will be created for preservation-level files (MOV and MKV files). If these file types aren't detected, metadata files will be created for all audio and video files in the package (see [makemetadata](#makemetadata)).  
+    * An H264/MP4 derivative file will be created for all preservation-level files (MOV and MKV files). If these file types aren't detected, H264 files will be created for all audio and video files in the package (see [makeH264](#makeH264)).  
     * Your SIP will be moved to the output directory you select.  
 * Your command will look like this: `ingestfile`  
 * When you run the script, a menu will pop up. Fill out the fields as follows:  
@@ -420,7 +438,7 @@ Logs are currently created within the same directory where the scripts are store
   
 The scripts in nmaahcmm take the principles of the Open Archival Information System as inspiration. The content in its form before ingest workflows is called the Submission Information Package (SIP). Once that content comes under archival management (i.e., once it has been normalized and restructured, and metadata has been generated), it becomes an Archival Information Package (AIP). Using automated processes with SIPs and AIPs requires that the packages be predictable; a script has to be able to expect certain files in order to categorize them and run the same processes every time.  
   
-The documentation below sets expectations for the types of files that are created and submitted in accession processes for different media formats. The following scripts rely explicitly on these structures and must be updated if the definitions change:  [restructureSIP](https://github.com/aeschweik/nmaahcmm/restructureSIP) and [verifySIP](https://github.com/aeschweik/nmaahcmm/verifySIP)  
+The documentation below sets expectations for the types of files that are created and submitted in accession processes for different media formats. The following scripts rely explicitly on these structures and must be updated if the definitions change:  [restructureSIP](https://github.com/NMAAHC/nmaahcmm/blob/main/restructureSIP) and [verifySIP](https://github.com/NMAAHC/nmaahcmm/blob/main/verifySIP)  
   
 #### definitions
 * Package (AIP) = finalized directory with structured/fleshed-out content information (in "objects" folder) and preservation description information (in "metadata" folder) for one media item (e.g. one tape or one film).  
