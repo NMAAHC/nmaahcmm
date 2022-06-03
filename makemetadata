@@ -6,7 +6,7 @@ SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
-DEPENDENCIES=(tree ffprobe mediaconch exiftool qcli md5deep mkvpropedit) # list dependencies required by script
+DEPENDENCIES=(tree ffprobe mediaconch exiftool qcli md5deep mkvtoolnix) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
 
 ## USAGE
