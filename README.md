@@ -335,10 +335,19 @@ This script is still a work in progress. In all cases, it is highly recommended 
 * This script takes a set of options. Options can be combined, and the order of the options does not matter, as long as they are in between `camera_cards` and your input. Some options require an argument following immediately after the option flag (e.g., -d must be followed with the path of the directory you specify: `-d [directory/path]`); these arguments are detailed below. None of the options are required to run the command; the script will interview the operator if any of the options are left out.
     * -m: specify MEDIAID (type media id for final package, e.g. `SC0001_20190101_CAMERA_OUTPUT`)
         * Your command will look like this: `camera_cards SC0001_20190101_CAMERA_OUTPUT /path/to/camera_card_directory`
+    * -o: specify AIP_DESTINATION (the output directory for the package)
+        * If the AIP_DESTINATION is not supplied by the operator, the script will look for it in nmaahcconfig.
+        * Your command will look like this: `camera_cards -o /path/to/aip_destination /path/to/camera_card_directory`
+    * -c: combine multiple camera cards into one output package
+        * The script will ask you to drag in one at a time, or you can supply both on the command line, as below.
+        * Your command will look like this: `camera_cards -c /path/to/camera_card_directory_1 /path/to/camera_card_directory_2`
     * -t: tar camera files and folders into a tarball, compressed with gzip
         * Your command will look like this: `camera_cards -t /path/to/camera_card_directory`
+    * -a: create a packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
+        * Your command will look like this: `camera_cards -a /path/to/camera_card_directory`
     * -h: display help text in the terminal
         * Your command will look like this: `camera_cards -h`
+
 * Your overall command will look like this: `camera_cards [ -m MEDIAID ] [ -t ] /path/to/camera_card_directory`
 
 ### script logic
