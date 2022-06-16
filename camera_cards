@@ -2,15 +2,6 @@
 
 # a script to turn raw camera cards into SIPs
 
-# load nmaahcmmfunctions into this script
-SCRIPT_PATH="${0%/*}"
-DEPENDENCIES=(ffmpeg md5sum tree)
-OP="${USER}"
-AIP="YES"
-TAR="NO"
-LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
-REQUIRECONFIG="N"
-
 ## USAGE
 _usage(){
 cat <<EOF
@@ -57,9 +48,18 @@ while getopts ":m:o:tah" OPT; do
 done
 shift $(( ${OPTIND} - 1 ))
 
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
+# set script variables
+DEPENDENCIES=(ffmpeg md5sum tree)
+OP="${USER}"
+AIP="YES"
+TAR="NO"
+LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
+REQUIRECONFIG="N"
 
 # define functions
 _generate_metadata(){
