@@ -23,10 +23,10 @@ The AIP_DESTINATION can be set via nmaahcconfig, or via the -o options, or the s
 
 Dependencies: ${DEPENDENCIES[@]}
 
-Usage: $(basename ${0}) -m MEDIAID [-t] /path/to/input/camera_card_directory
+Usage: $(basename ${0}) -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2 ]
   -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
-  -o AIP_DESTINATION (the output directory for the package)
-  -c combine multiple camera cards into one output package; script will ask you to drag in one at a time
+  -o AIP_DESTINATION (the output directory for the package); if not supplied, script will look for it in nmaahcconfig
+  -c combine multiple camera cards into one output package; script will ask you to drag in one at a time, or you can supply both
   -t tar camera files and folders into a tarball, compressed with gzip
   -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
   -h display this help
@@ -36,10 +36,11 @@ EOF
 }
 # getopts loop
 OPTIND=1
-while getopts ":m:o:tah" OPT; do
+while getopts ":m:o:ctah" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         o) AIP_DESTINATION="${OPTARG}" ;;
+        c) COMBINE_CAMERA_CARDS="YES" ;;
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
