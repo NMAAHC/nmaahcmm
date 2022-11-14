@@ -1,0 +1,69 @@
+#!/bin/bash
+_report(){
+    local RED="$(tput setaf 1)"   # Red      - For Warnings
+    local GREEN="$(tput setaf 2)" # Green    - For Declarations
+    local BLUE="$(tput setaf 4)"  # Blue     - For Questions
+    local NC="$(tput sgr0)"       # No Color
+    local COLOR=""
+    local STARTMESSAGE=""
+    local ENDMESSAGE=""
+    local ECHOOPT=""
+    local LOG_MESSAGE=""
+    OPTIND=1
+    while getopts ":qdwstn" OPT; do
+        case "${OPT}" in
+            q) COLOR="${BLUE}" ;;                         # question mode, use color blue
+            d) COLOR="${GREEN}" ;;                        # declaration mode, use color green
+            w) COLOR="${RED}" ; LOG_MESSAGE="Y" ;;        # warning mode, use color red
+            s) STARTMESSAGE+=([$(basename "${0}")] ) ;;   # prepend scriptname to the message
+            t) STARTMESSAGE+=($(_get_iso8601) '- ' ) ;;   # prepend timestamp to the message
+            n) ECHOOPT="-n" ;;                            # to avoid line breaks after echo
+        esac
+    done
+    shift $(( ${OPTIND} - 1 ))
+    MESSAGE="${1}"
+    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]}${MESSAGE}${NC}"
+    [ "${LOG_MESSAGE}" = "Y" ] && _log -w "${MESSAGE}"
+}
+
+# chmod +x FILENAME
+
+_report -q -n "Enter Base File Name: "
+read BASE_FILE_NAME
+
+_report -q -n "Drag in a list of files: "
+read -e -a SO_MANY_FILES
+
+for A_FILE in "${SO_MANY_FILES[@]}" ; do
+    if [[ ! -f "${A_FILE}" ]] ; then
+        _report -w "Error: ${A_FILE} is not a file. Stopping."
+        exit 1
+    fi
+done
+
+for A_FILE in "${SO_MANY_FILES[@]}" ; do
+    if [[ ! -r "${A_FILE}" ]] ; then
+        _report -w "Error: ${A_FILE} is not readable. Stopping."
+        exit 1
+    fi
+done
+
+FILE_TEMPLATE="$(dirname "${SO_MANY_FILES[1]}")/${BASE_FILE_NAME}_ORIGINAL_FILE_NAME.csv"
+
+echo "# Model Info - Do not edit," > "${FILE_TEMPLATE}"
+echo "SI.CORE.VIDEO.MODEL," >> "${FILE_TEMPLATE}"
+echo "# Headers/Properties - Do not edit," >> "${FILE_TEMPLATE}"
+echo "Asset Name,Original File Name" >> "${FILE_TEMPLATE}"
+
+
+
+COUNTER=1
+for A_FILE in "${SO_MANY_FILES[@]}" ; do
+    A_EXTENSION="${A_FILE##*.}"
+    NEW_NAME="$(dirname "${A_FILE}")/${BASE_FILE_NAME}_${COUNTER}.${A_EXTENSION}"
+    echo "$(basename "${NEW_NAME}"),$(basename "${A_FILE}")" >> "${FILE_TEMPLATE}"
+    cp -v -n "${A_FILE}" "${NEW_NAME}"
+    COUNTER=$(( COUNTER + 1 ))
+done
+
+_report -d "Done! The template is at ${FILE_TEMPLATE}"
