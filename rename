@@ -28,12 +28,18 @@ _report(){
 
 # chmod +x FILENAME
 
-_report -q -n "Enter Base File Name: "
+_report -q -n "Please enter a Base File Name: "
 read BASE_FILE_NAME
 
-_report -q -n "Drag in a list of files: "
+_report -q -n "Plese drag in a list of files: "
 read -e -a SO_MANY_FILES
-
+echo
+_report -d -n "Thank you. You listed:"
+echo
+for A_FILE in "${SO_MANY_FILES[@]}" ; do
+    echo "   + ${A_FILE}"
+done
+echo
 for A_FILE in "${SO_MANY_FILES[@]}" ; do
     if [[ ! -f "${A_FILE}" ]] ; then
         _report -w "Error: ${A_FILE} is not a file. Stopping."
@@ -55,15 +61,29 @@ echo "SI.CORE.VIDEO.MODEL," >> "${FILE_TEMPLATE}"
 echo "# Headers/Properties - Do not edit," >> "${FILE_TEMPLATE}"
 echo "Asset Name,Original File Name" >> "${FILE_TEMPLATE}"
 
-
-
+echo
+_report -d -n "Below is how your files will be copied and renamed." 
+echo
+_report -d -n "The files will be copied to $(dirname "${A_FILE}")"
+echo
+COUNTER=1
+for A_FILE in "${SO_MANY_FILES[@]}" ; do
+    A_EXTENSION="${A_FILE##*.}"
+    NEW_NAME="$(dirname "${A_FILE}")/${BASE_FILE_NAME}_${COUNTER}.${A_EXTENSION}"
+    #echo "$(basename "${NEW_NAME}"),$(basename "${A_FILE}")" >> "${FILE_TEMPLATE}"
+    echo "  $(basename "${A_FILE}") >> >> $(basename "${NEW_NAME}")"
+    COUNTER=$(( COUNTER + 1 ))
+done
+echo
+read -p "If that looks good, please press Enter to copy and rename the files."
+echo
 COUNTER=1
 for A_FILE in "${SO_MANY_FILES[@]}" ; do
     A_EXTENSION="${A_FILE##*.}"
     NEW_NAME="$(dirname "${A_FILE}")/${BASE_FILE_NAME}_${COUNTER}.${A_EXTENSION}"
     echo "$(basename "${NEW_NAME}"),$(basename "${A_FILE}")" >> "${FILE_TEMPLATE}"
-    cp -v -n "${A_FILE}" "${NEW_NAME}"
+    cp -n "${A_FILE}" "${NEW_NAME}"
     COUNTER=$(( COUNTER + 1 ))
 done
 
-_report -d "Done! The template is at ${FILE_TEMPLATE}"
+cowsay "Done! The template is at ${FILE_TEMPLATE}. Beautiful renaming job! You are a superstar!"
