@@ -10,6 +10,7 @@ _initialize_make # safe script termination process defined in nmaahcmmfunctions
 unset DEPENDENCIES
 DEPENDENCIES=(md5deep cowsay) # list dependencies required by script
 _check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
+DATE=$(date '+%Y%m%d-%H:%M:%S')
 
 ### USAGE
 
@@ -40,7 +41,7 @@ while [ "${*}" != "" ] ; do
     if [[ -d "${INPUT}" ]] ; then # if argument is a directory, run md5deep
         "${SCRIPTDIR}/removeDSStore" "${INPUT}"
         TARGET="$(basename "${INPUT}")" # get basename of input, or ${INPUT##*/} - this command also strips the trailing slash, or ${INPUT%/}
-        OUTPUT="${INPUT}/${TARGET}_${date}_checksums.md5" # set .md5 file as $OUTPUT
+        OUTPUT="${INPUT}/${TARGET}_${DATE}_checksums.md5" # set .md5 file as $OUTPUT
         _report -g "Making checksums of all files in directory ${TARGET} and writing to ${OUTPUT}"
         md5deep -bre "${INPUT}" > "${OUTPUT}" # create md5 hash (hashes) of $INPUT and write results to $OUTPUT. -b=strip leading directory info, -r=recursive, -e=display progress indicator
     fi

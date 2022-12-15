@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # nmaahcmmconfig
 # set up variables for microservices, has option for a graphical user interface
-CONFIG=Y
+CONFIG="Y"
 SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
@@ -77,7 +77,7 @@ intro.text = Set up nmaahcmmconfig variables:
 AIP_DESTINATION.x = 20
 AIP_DESTINATION.y = 300
 AIP_DESTINATION.type = openbrowser
-AIP_DESTINATION.label = Please select the directory where your AIPs will be stored (see ingestfile):
+AIP_DESTINATION.label = Please select the directory where your AIPs will be stored (see ingestfile and camera_cards):
 AIP_DESTINATION.width = 470
 AIP_DESTINATION.default = ${AIP_DESTINATION}
 
@@ -104,14 +104,6 @@ LOGDIR.type = openbrowser
 LOGDIR.label = Please select the directory where logs for these microservices will be created:
 LOGDIR.width = 470
 LOGDIR.default = ${LOGDIR}
-
-# TMPDIR
-TMPDIR.x = 20
-TMPDIR.y = 100
-TMPDIR.type = openbrowser
-TMPDIR.label = Please select a directory for your temp files:
-TMPDIR.width = 470
-TMPDIR.default = ${TMPDIR}
 
 # Add a cancel button with default label
 cb.type=cancelbutton

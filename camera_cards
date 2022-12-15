@@ -1,0 +1,443 @@
+#!/usr/bin/env bash
+
+# a script to turn raw camera cards into SIPs
+
+## USAGE
+_usage(){
+cat <<EOF
+$(basename "${0}")
+ 1. By default, this script will detect a camera card file/directory structure and transform the original camera card files into a usable AIP. The script will concatenate video files into a single file, move important metadata files into a new directory structure, and create a log of these changes."
+  Current camera cards recognized:
+      - AVCHD (e.g. Canon C100)
+      - Canon XF (e.g. Canon C300)
+      - P2 (Panasonic)
+      - XAVC (Sony)
+      - XDCAM EX (e.g. Canon XF100)
+2. If you prefer to package files as-is to preserve your original camera directories, you can choose to compress your directory structure into a tarball. To select this option, use the '-t' flag.
+If your camera card structure is not recognized, the script will prompt you to choose one or both of these strategies. If you want to create an AIP with concatenated video files and restructured metadata directories, it is recommended that you review the output to make sure the script was able to process your camera files properly.
+
+Your input package is the top-level directory of your camera card, which should be mounted on your computer or provided as a directory.
+Your output package will be named after the MEDIAID you supply and delivered to the AIP destination set in nmaahcmmconfig (AIP_DESTINATION).
+
+The AIP_DESTINATION can be set via nmaahcconfig, or via the -o options, or the script with request it.
+
+Dependencies: ${DEPENDENCIES[@]}
+
+Usage: $(basename ${0}) -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2 ]
+  -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
+  -o AIP_DESTINATION (the output directory for the package); if not supplied, script will look for it in nmaahcconfig
+  -c combine multiple camera cards into one output package; script will ask you to drag in one at a time, or you can supply both
+  -t tar camera files and folders into a tarball, compressed with gzip
+  -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
+  -h display this help
+
+EOF
+    exit
+}
+# getopts loop
+OPTIND=1
+while getopts ":m:o:ctah" OPT; do
+    case "${OPT}" in
+        m) MEDIAID="${OPTARG}" ;;
+        o) AIP_DESTINATION="${OPTARG}" ;;
+        c) COMBINE_CAMERA_CARDS="YES" ;;
+        t) TAR="YES" ; AIP="NO" ;;
+        a) TAR="YES" ; AIP="YES" ;;
+        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
+        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+    esac
+done
+shift $(( ${OPTIND} - 1 ))
+
+# load nmaahcmmfunctions into this script
+SCRIPT_PATH="${0%/*}"
+. "${SCRIPT_PATH}/nmaahcmmfunctions"
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+_initialize_make # safe script termination process defined in nmaahcmmfunctions
+# set script variables
+DEPENDENCIES=(ffmpeg md5sum tree)
+OP="${USER}"
+AIP="YES"
+TAR="NO"
+LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
+REQUIRECONFIG="N"
+
+# define functions
+_generate_metadata(){
+    _report -g "Generating metadata reports..."
+    # create tree of all files in package
+    TREE="${METADATA_REPORTS_DIR}/${MEDIAID}_tree.txt"
+    tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
+    # create mediainfo, exiftool, ffprobe reports
+    while read -r FILE ; do
+        MEDIAINFO_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${FILE}")_mediainfo.txt"
+        EXIFTOOL_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${FILE}")_exiftool.txt"
+        FFPROBE_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${FILE}")_ffprobe.xml"
+        mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
+        exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
+        ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
+    done <"${METADATA_FILELIST}"
+    _writelog -t "Metadata reports generated"
+}
+
+# check for unassigned variables
+CAMERA_CARD_DIR="${1}"
+# ask for camera card if it wasn't supplied
+if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
+    _report -b "Drag in the input directory or type 'q' to quit: "
+    read -e CAMERA_CARD_DIR
+    [[ "${CAMERA_CARD_DIR}" = "q" ]] && exit 0
+fi
+# check that camera card is a directory
+if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
+    _report -rt "ERROR: Input directory ${CAMERA_CARD_DIR} is not a directory. Exiting..."
+    _log -a "Process terminated by script (input was not a directory)."
+    exit 1
+fi
+# repeat for combined camera cards
+if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+    CAMERA_CARD_DIR_2="${2}"
+    if [[ -z "${CAMERA_CARD_DIR_2}" ]] ; then
+        _report -b "Drag in the second input directory or type 'q' to quit: "
+        read -e CAMERA_CARD_DIR_2
+        [[ "${CAMERA_CARD_DIR_2}" = "q" ]] && exit 0
+    fi
+    # check that camera card is a directory
+    if [[ ! -d "${CAMERA_CARD_DIR_2}" ]] ; then
+        _report -rt "ERROR: Input directory ${CAMERA_CARD_DIR} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
+fi
+
+# ask for MEDIAID if it wasn't supplied
+if [[ -z "${MEDIAID}" ]] ; then
+    _report -b -n "Enter a unique package name or 'q' to quit: "
+    read -e MEDIAID
+    [[ "${MEDIAID}" = "q" ]] && exit 0
+fi
+# ask for AIP_DESTINATION if it wasn't supplied
+if [[ -z "${AIP_DESTINATION}" ]] ; then
+    _report -b -n "Provide the destination for the resulting package or 'q' to quit: "
+    read -e AIP_DESTINATION
+    echo
+    [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
+    # check that camera card is a directory
+    if [[ ! -d "${AIP_DESTINATION}" ]] ; then
+        _report -rt "ERROR: Input directory ${AIP_DESTINATION} is not a directory. Exiting..."
+        _log -a "Process terminated by script (input was not a directory)."
+        exit 1
+    fi
+fi
+
+AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
+if [[ -d "${AIPDIR}" ]] ; then
+    _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
+    _log -a "Process terminated by script (output directory already exists)."
+    exit 1
+fi
+
+# record variables in ingest log
+_writelog "OPERATOR" "${OP}"
+_writelog "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
+if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then _writelog "CAMERA CARD DIRECTORY 2" "${CAMERA_CARD_DIR_2}" ; fi
+_writelog "MEDIAID" "${MEDIAID}"
+_writelog "OUTPUT DIRECTORY" "${AIPDIR}"
+
+# log script beginning
+_log -b
+echo
+
+# detect camera card structure based on directory name and structure
+if [[ "${AIP}" == "YES" ]] ; then
+    if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
+        _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
+        CAMERA_CARD_TYPE="AVCHD"
+        CAMERA_CARD_DIR="${CAMERA_CARD_DIR}/PRIVATE/AVCHD/BDMV" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
+        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then CAMERA_CARD_DIR_2="${CAMERA_CARD_DIR_2}/PRIVATE/AVCHD/BDMV" ; fi
+        EXTENSION="mts"
+        RSYNC_OPTIONS=(-iname "*.cpi")
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
+        _report -g "Camera card type identified: Canon XF (e.g. Canon C300)"
+        CAMERA_CARD_TYPE="MXF"
+        EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type f -iname "LASTCLIP.TXT")" ]] ; then
+        _report -g "Camera card type identified: P2 (Panasonic brand)"
+        CAMERA_CARD_TYPE="P2"
+        EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "XDROOT")" ]] ; then
+        _report -g "Camera card type identified: XAVC (Sony brand)"
+        CAMERA_CARD_TYPE="XAVC"
+        EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
+    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "BPAV")" ]] ; then
+        _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
+        CAMERA_CARD_TYPE="XDCAMEX"
+        EXTENSION="mp4"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
+    fi
+fi
+if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
+    CAMERA_CARD_TYPE="GENERAL"
+    _report -b "Camera card type not identified!"
+    echo
+    printf "Select a strategy:"
+    echo
+    PS3="Selection: "
+    select STRATEGY in "1. Create AIP: concatenate video files and restructure metadata directories" "2. Tar: Compress camera files and folders into a tarball" "3. Both: Create AIP and also tar original package (produces two packages)" "quit"
+    do
+        if [[ "${STRATEGY}" == "1. Create AIP: concatenate video files and restructure metadata directories" ]] ; then
+            TAR="NO"
+            AIP="YES"
+        elif [[ "${STRATEGY}" == "2. Tar: Compress camera files and folders into a tarball" ]] ; then
+            TAR="YES"
+            AIP="NO"
+        elif [[ "${STRATEGY}" == "3. Both: Create AIP and also tar original package (produces two packages)" ]] ; then
+            TAR="YES"
+            AIP="YES"
+        fi
+        if [[ "${STRATEGY}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
+        break
+    done
+    _writelog "STRATEGY" "${STRATEGY}"
+fi
+
+_writelog "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
+# remove .DS_Store files and log action if successful
+"${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _writelog -t ".DS_Store files removed by invoking removeDSStore"
+
+# create temp filelists for use during script
+TEMP_VIDEOLIST="$(_maketemp)"
+TEMP_AUDIOLIST="$(_maketemp)"
+TEMP_CONCATLIST="$(_maketemp)"
+TEMP_METADATALIST="$(_maketemp)"
+TEMP_AVLIST="$(_maketemp)"
+TEMP_ALLFILES="$(_maketemp)"
+# define output directories
+METADATA_REPORTS_DIR="${AIPDIR}/metadata/reports"
+METADATA_ORIGINAL_CAMERA_FILES_DIR="${AIPDIR}/metadata/original_camera_files"
+mkdir -p "${METADATA_REPORTS_DIR}"
+# look in both camera card directories if supplied
+if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}" "${CAMERA_CARD_DIR_2}")
+else
+    CAMERA_CARD_DIRS_TO_SEARCH="${CAMERA_CARD_DIR}"
+fi
+
+### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
+if [[ "${AIP}" == "YES" ]] ; then
+    if [[ "${TAR}" == "YES" ]] ; then AIPDIR_AIP="${AIPDIR}/objects/AIP" ; else AIPDIR_AIP="${AIPDIR}/objects" ; fi
+    mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
+    
+    # copy selected original metadata files to AIP
+    if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f -iname "*.cpi" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+    elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+    elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+    fi
+    
+    ## create metadata reports for original package and audiovisual files
+    # generate lists of audiovisual files
+    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort > "${TEMP_AUDIOLIST}"
+        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+            find "${CAMERA_CARD_DIR_2}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort >> "${TEMP_VIDEOLIST}"
+            find "${CAMERA_CARD_DIR_2}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort >> "${TEMP_AUDIOLIST}"
+        fi
+        cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
+    elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f > "${TEMP_ALLFILES}"
+        # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
+        while read FILE ; do
+            if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
+                echo "${FILE}" >> "${TEMP_VIDEOLIST}"
+            elif [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
+                echo "${FILE}" >> "${TEMP_AUDIOLIST}"
+            elif [[ -f "${FILE}" ]] ; then
+                echo "${FILE}" >> "${TEMP_METADATALIST}"
+            fi
+        done <"${TEMP_ALLFILES}"
+        sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
+    elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+    fi 
+    
+    # generate metadata reports
+    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then METADATA_FILELIST="${TEMP_AVLIST}" ; else METADATA_FILELIST="${TEMP_VIDEOLIST}" ; fi
+    _generate_metadata
+    
+    ## concatenate video files into a single file
+    echo
+    _report -g "Concatenating video files..."
+    _writelog -t "Video concatenation process started"
+    FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
+    if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+        CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
+    else
+        CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${EXTENSION}"
+    fi
+    
+    # create list of files to concatenate, formatted for ffmpeg
+    while read FILE ; do
+        echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
+    done <"${TEMP_VIDEOLIST}"
+    # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
+    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
+    # calculate md5 for each stream in the file
+    STREAMHASH="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
+    ffmpeg -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${STREAMHASH}"
+    # tests for video file existing
+    FFMPEG_EXIT_CODE=$(echo $?)
+    if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
+    _writelog "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
+    _writelog -t "Video concatenation process finished"
+    
+    # if there are audio-only files, concatenate them and join with concatenated video file
+    if [[ -s "${TEMP_AUDIOLIST}" ]] ; then
+        _report -g "Concatenating audio files..."
+        _writelog -t "Audio concatenation process started"
+        FIRST_FILE="$(head -n 1 "${TEMP_AUDIOLIST}")"
+        CONCATENATED_AUDIO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated_audio.${FIRST_FILE#*.}"
+        > "${TEMP_CONCATLIST}" # clear concatlist from video concatenation
+        while read FILE ; do
+            echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
+        done <"${TEMP_AUDIOLIST}"
+        ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_AUDIO_FILE}"
+        _writelog "CONCATENATED AUDIO FILE" "${CONCATENATED_AUDIO_FILE}"
+        _writelog -t "Audio concatenation process finished"
+        
+        # merge video and audio
+        _report -g "Merging concatenated audio and video files..."
+        _writelog -t "Audio + video joining process started"
+        # check that video and audio file durations match
+        VIDEO_DURATION=$(mediainfo --Inform="Video;%Duration%" "${CONCATENATED_VIDEO_FILE}")
+        AUDIO_DURATION=$(mediainfo --Inform="Audio;%Duration%" "${CONCATENATED_AUDIO_FILE}")
+        if [[ "${VIDEO_DURATION}" -ne "${AUDIO_DURATION}" ]] ; then
+            _report -r "Audio and video files are not the same length! Review output for sync. (Video duration = ${VIDEO_DURATION}, audio duration = ${AUDIO_DURATION})"
+        fi
+        # rename concatenated video file to avoid collision with audio file
+        RENAMED_CONCATENATED_VIDEO_FILE="$(echo "${CONCATENATED_VIDEO_FILE}" | sed s/concatenated/concatenated_video/)"
+        mv "${CONCATENATED_VIDEO_FILE}" "${RENAMED_CONCATENATED_VIDEO_FILE}"
+        CONCATENATED_FILE_MERGED="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
+        ffmpeg -i "${RENAMED_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE_MERGED}"
+        _writelog "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE_MERGED}"
+        _writelog -t "Audio + video joining process ended"
+    fi
+    
+    # generate md5 of concatenated file
+    if [[ -f "${CONCATENATED_FILE_MERGED}" ]] ; then
+        CONCATENATED_MD5_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_FILE_MERGED%.*}").md5"
+        md5sum "${CONCATENATED_FILE_MERGED}" > "${CONCATENATED_MD5_OUTPUT}"
+    else
+        CONCATENATED_MD5_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}").md5"
+        md5sum "${CONCATENATED_VIDEO_FILE}" > "${CONCATENATED_MD5_OUTPUT}"
+    fi
+    
+    if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+        # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
+        echo
+        _report -g "Moving original audiovisual files to AIP..."
+        if [[ -n $(sort "${TEMP_ALLFILES}" | uniq -d) ]] ; then # check for duplicate filenames on camera card before beginning transfer process
+            _report -r "Duplicate filenames found on original camera card! Not completing automated packaging process in order to avoid overwriting files with the same name. Please take a closer look at your original camera card's file structure to create this AIP."
+            _report -r "Also note that metadata files (in the nmaahc_metadata folder of your AIP) may not have been properly generated for all files with the same filename."
+            exit 1
+        else
+            while read FILE ; do
+                rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
+            done <"${TEMP_VIDEOLIST}"
+            while read FILE ; do
+                rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
+            done <"${TEMP_AUDIOLIST}"
+        fi
+    fi
+    
+    echo
+    _report -g "Moving significant camera-generated metadata files to AIP..."
+    # move significant camera-generated metadata files to a metadata folder
+    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+    elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+        while read FILE ; do
+            rsync -avh "${FILE}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
+        done <"${TEMP_METADATALIST}"
+    else
+        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f "${RSYNC_OPTIONS[@]}" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+    fi
+fi
+
+### procedure for packaging files into compressed tars
+if [[ "${TAR}" == "YES" ]] ; then
+    AIPDIR_TAR="${AIPDIR}/objects/TAR"
+    mkdir -p "${AIPDIR_TAR}"
+    
+    ## create metadata reports for original package and audiovisual files
+    # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
+    find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f > "${TEMP_ALLFILES}"
+    while read FILE ; do
+        if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] || [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
+            echo "${FILE}" >> "${TEMP_AVLIST}"
+        fi
+    done <"${TEMP_ALLFILES}"
+    # generate metadata reports
+    METADATA_FILELIST="${TEMP_AVLIST}"
+    _generate_metadata
+    
+    ## tar supplied input directory
+    echo
+    _report -g "Creating tar archive..."
+    _writelog -t "Tar archive process process started"
+    tar -czvf "${AIPDIR_TAR}/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
+    _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
+    _writelog -t "Tar archive process process finished"
+    
+    ## generate checksum for tar archive
+    TAR_MD5_OUTPUT="${METADATA_REPORTS_DIR}/${MEDIAID}.md5"
+    md5sum "${AIPDIR_TAR}/${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
+fi
+
+# error reporting
+echo
+_report -b "Checking for errors during the camera_cards process..."
+if [[ ! -s "$TREE" ]] || [[ -z $(cat "${MEDIAINFO_OUTPUT}") ]] || [[ -z $(cat "${EXIFTOOL_OUTPUT}") ]] || [[ -z $(cat "${FFPROBE_OUTPUT}") ]] ; then
+    _report -r "Metadata generation process created one or more blank files. Input files may be empty. Review metadata output at ${METADATA_REPORTS_DIR}."
+    _writelog "POSSIBLE_ERROR_REVIEW" "Metadata generation process created one or more blank files"
+else
+    _report -g "Metadata generation process looks ok"
+fi
+if [[ "${FFMPEG_EXIT_CODE}" -gt 0 ]] || [[ "${FFMPEG_ERRORS}" -gt 0 ]] ; then
+    _report -r "FFmpeg may have encountered errors - review terminal output for more detail."
+else
+    _report -g "FFmpeg exit codes look ok"
+fi
+if [[ -s "${CONCATENATED_AUDIO_FILE}" ]] ; then
+    if [[ "${VIDEO_DURATION}" -ne "${AUDIO_DURATION}" ]] ; then
+    _report -r "Concatenated audio and video files were not the same length - review final merged file for sync at ${CONCATENATED_FILE_MERGED} (video duration = ${VIDEO_DURATION}, audio duration = ${AUDIO_DURATION})"
+    _writelog "POSSIBLE_ERROR_REVIEW" "Concatenated audio and video files were not the same length"
+    else
+        _report -g "Concatenated audio and video process looks ok"
+    fi
+fi
+if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file by comparing bitstream md5s
+    OUTPUT_STREAMHASH="$(_maketemp)"
+    ffmpeg -y -loglevel quiet -report -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${OUTPUT_STREAMHASH}"
+    if [[ $(cat "${STREAMHASH}") != $(cat "${OUTPUT_STREAMHASH}") ]] ; then
+        _report -r "Concatenation process was not lossless! Review final merged file at ${CONCATENATED_VIDEO_FILE}"
+        _writelog "POSSIBLE_ERROR_REVIEW" "Concatenation process was not lossless based on bitstream md5s"
+    else
+        _report -g "Concatenated process looks lossless"
+    fi
+fi
+
+# log script ending
+_log -e
+echo
+_report -g "camera_cards process complete. Your package can be found at ${AIPDIR}. A log file can be found at ${LOG}"

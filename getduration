@@ -9,6 +9,7 @@ SCRIPT_PATH="${0%/*}"
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 DEPENDENCIES=(mediainfo) # list dependencies required by script
 TOTAL_DURATION_MILLISECONDS=0
+REQUIRECONFIG="N"
 
 ## USAGE
 echo "0 is $0"
@@ -40,7 +41,7 @@ shift $(( ${OPTIND} - 1 ))
 
 ## SCRIPT ACTIONS
 TOTAL_DURATION=0
-CSV="$(basename "${0}")_$(date +%F).csv"
+CSV="$(basename "${0}")_$(date +%F-%H%M%S).csv"
 
 while [ "${*}" != "" ] ; do
     INPUT="${1}" #set $INPUT as the first argument sent to script

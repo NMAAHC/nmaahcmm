@@ -17,23 +17,38 @@ _usage(){
     echo "$(basename "${0}")"
     echo
     echo "This application will create a temporary tree of a SIP and compare it against an expected directory structure, using a series of xpath statements. It outputs mismatches and unexpected items found in AIPs into the terminal window."
-    echo "The script applies rules based on what kind of package it thinks it's looking at. The packages are defined as follows:"
-    echo "  film / analog / digitized in-house: script looks for .dpx files"
-    echo "  film / analog / digitized on-location: script looks for directories named after derivatives, specifically 'MP4_2048x1152' or 'ProRes_2048x1536'"
-    echo "  video / analog / digitized on-location: script looks for the capture_options.log and/or qctools.xml.gz files generated in the vrecord process"
-    echo "  video / DV / transferred on-location: script looks for the string 'DV' in filenames"
-    echo "If your package does not fall into one of the above categories, the script will apply a simpler baseline set of comparisons."
-    echo "See the nmaachmm README for more information on package definitions."
     echo
-    echo "Usage: $(basename ${0}) package"
+    echo "Usage: $(basename ${0}) [ -x | -f | -v | -d | -u ] /path/to/SIP"
+    echo "  "
+    echo "  -x Package type: Digitized Film (DPX package)"
+    echo "  -f Package type: Digitized Film (MOV, MKV, MP4 master files)"
+    echo "  -v Package type: Digitized Analog Video (vrecord package)"
+    echo "  -d Package type: Transferred DV (MOV, MKV, MP4 master files)"
+    echo "  -u Package type: Other/Unknown"
+    echo "  -h display this help"
+    echo
+    echo
+    echo "If you specify 'Other/Unknown', or do not supply a package type, the script will check for the following files or directories and apply rules based on their presence:"
+    echo "  *  .dpx files -> script assumes Digitized Film (DPX package)"
+    echo "  *  directories named after derivatives, specifically 'MP4_2048x1152' or 'ProRes_2048x1536 -> script assumes Digitized Film (MOV, MKV, MP4 master files)"
+    echo "  *  capture_options.log and/or qctools.xml.gz files -> script assumes Digitized Analog Video (vrecord package)"
+    echo "  *  string 'DV' in filenames -> script assumes Transferred DV (MOV, MKV, MP4 master files)"
+    echo "If your package does not fall into any of the above categories, the script will apply a simpler baseline set of comparisons."
+    echo
+    echo "See the nmaachmm README for more information on package definitions."
     echo
     exit
 }
 [ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 # getopts loop
 OPTIND=1
-while getopts ":h" OPT; do
+while getopts ":xfvduh" OPT; do
     case "${OPT}" in
+        x) PACKAGETYPE="FILM_DPX" ;;
+        f) PACKAGETYPE="FILM_FILES" ;;
+        v) PACKAGETYPE="VIDEO_VRECORD" ;;
+        d) PACKAGETYPE="VIDEO_DV" ;;
+        u) PACKAGETYPE="OTHER_UNKNOWN" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
@@ -63,7 +78,7 @@ _runtest(){
         echo "${XMLRESULT}"
     fi
     # if the xpath statement finds a file that the test is looking for (default test); || OR if the xpath statement does NOT find a file and the test is NOT looking for one (inverted test);
-    if [[ ! -z "${XMLRESULT}" && "${INVERT_TEST}" != "Y" ]] || [[ -z "${XMLRESULT}" && "${INVERT_TEST}" == "Y" ]] ; then
+    if [[ ! -z "${XMLRESULT}" && "${INVERT_TEST}" != "Y" ]] || [[ -z "${XMLRESULT}" && "${INVERT_TEST}"  ==  "Y" ]] ; then
         _report -r "${LABEL}" # print the message associated with each xpath query
         if [[ -n "${XMLRESULT}" ]] ; then
             echo "${XMLRESULT}"
@@ -73,6 +88,7 @@ _runtest(){
 
 # log script beginning
 _log -b
+echo
 
 # input the package
 while [[ "${*}" != "" ]] ; do
@@ -82,73 +98,75 @@ while [[ "${*}" != "" ]] ; do
         _report -rt "The package you supplied is not a directory! Moving to next package if present..."
 
     elif [[ -d "${PACKAGE}" ]] ; then
-        MEDIAID=$(basename "${PACKAGE}")
-        echo
-        echo "running verifySIP on ${PACKAGE}..." #the name of the package being verified
+        MEDIAID=$(basename "${PACKAGE}") # the name of the package being verified
+        echo "running verifySIP on ${PACKAGE}..."
+
+        # make a tree of the package files and directories
         "${SCRIPTDIR}/removeDSStore" "${PACKAGE}"
-        # make a new temp tree file
         TEMPTREE=$(_maketemp)
-        echo "TEMPTREE is $TEMPTREE"
         tree -DaNXs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" -I "tree.xml" "${PACKAGE}" > "${TEMPTREE}"
 
-        if [[ -n "$(grep -i \.dpx "${TEMPTREE}")" ]] ; then
-            # PACKAGE TYPE: film / analog / digitized in-house
-            # looks for DPX files
-            _report -g "Based on the presence of .dpx files, this SIP is a DPX package."
-            SIP="FILM_DPX"
-            echo "Checking for DPX package conformance..."
-            [[ -z $(find "${PACKAGE}" -iname "*DPX*" -mindepth 1 -type d) ]] && _report -r "This package is missing a DPX directory!"
-            [[ -z $(find "${PACKAGE}" -iname "*WAV*" -type d) ]] && _report -r "This package is missing a WAV directory!"
-            [[ -z "$(grep -i \.wav "${TEMPTREE}")" ]] && _report -r "This package is missing .WAV files!"
-            [[ -z $(find "${PACKAGE}" -iname "*MOV*" -type d) ]] && _report -r "This package is missing an MOV directory!"
-            [[ -z "$(grep -i \.mov "${TEMPTREE}")" ]] && _report -r "This package is missing .MOV files!"
+        # if no package type is assigned, look for telltale files and try to assign type
+        if [[ -z "${PACKAGETYPE}" ]] || [[ "${PACKAGETYPE}" == "OTHER_UNKNOWN" ]] ; then
+            echo "Package type unknown; trying to determine package type based on files."
+            if [[ -n "$(grep -i \.dpx "${TEMPTREE}")" ]] ; then # look for DPX files
+                echo "Based on the presence of .dpx files, this SIP is a DPX package."
+                PACKAGETYPE="FILM_DPX"
+            elif [[ -n "$(egrep -i "ProRes_2048x1536|MP4_2048x1152" "${TEMPTREE}")" ]] ; then # look for directories named after derivatives
+                echo "Based on directory names, this SIP is digitized film in non-DPX format."
+                PACKAGETYPE="FILM_FILES"
+            elif [[ -n $(egrep -i "capture_options\.log|qctools\.xml\.gz" "${TEMPTREE}") ]] ; then # look for sidecar files generated in the vrecord process
+                echo "Based on the presence of a vrecord log, this SIP is digitized video."
+                PACKAGETYPE="VIDEO_VRECORD"
+            elif [[ -n $(grep -i "dv" "${TEMPTREE}") ]] ; then # look for filenames incorporating the string 'DV'
+                echo "Based on the presence of a file with 'DV' in the filename, this SIP represents a transferred DV tape."
+                PACKAGETYPE="VIDEO_DV"
+            elif [[ -n $(grep "generalNotes.txt" "${TEMPTREE}") ]] ; then # look for the note file ending in "generalNotes.txt" generated by the makegm process
+                echo "Based on the presence of a filename ending in 'generalNotes.txt', this SIP represents a Great Migration appointment."
+                PACKAGETYPE="GM"
+            else # packages that don't fit into these categories
+                _report -r "Cannot identify SIP type! Running generic package tests."
+            fi
+        fi
 
-        elif [[ -n "$(egrep -i "ProRes_2048x1536|MP4_2048x1152" "${TEMPTREE}")" ]] ; then
-            # PACKAGE TYPE: film / analog / digitized on-location
-            # looks for directories named after derivatives; note presence of additional subdirectory above content
-            _report -g "Based on directory names, this SIP is digitized film in non-DPX format."
-            SIP="FILM_FILES"
+        # run package conformance tests
+        if [[ "${PACKAGETYPE}" == "FILM_DPX" ]] ; then
+            echo "Checking for DPX package conformance..."
+            [[ -z "$(grep -i \.wav "${TEMPTREE}")" ]] && _report -r "This package is missing one or more WAV files!"
+            [[ -z "$(grep -i \.mov "${TEMPTREE}")" ]] && _report -r "This package is missing one or more MOV files!"
+            [[ -z "$(grep -i \.md5 "${TEMPTREE}")" ]] && _report -r "This package is missing checksums!"
+        elif [[ "${PACKAGETYPE}" == "FILM_FILES" ]] ; then
             echo "Checking for non-DPX film package conformance..."
             _runtest -i "This package is missing a ProRes master file!" xmlstarlet sel -t -v "/tree/directory/directory/directory/directory/directory/directory[@name='ProRes_2048x1536']/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory/directory/directory/directory/directory[@name='MP4_2048x1152']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
-
-        elif [[ -n $(egrep -i "capture_options\.log|qctools\.xml\.gz" "${TEMPTREE}") ]] ; then
-            # PACKAGE TYPE: video / analog / digitized on-location
-            # looks for key files generated in the vrecord process
-            _report -g "Based on the presence of a vrecord log, this SIP is digitized video."
-            SIP="VIDEO_VRECORD"
+        elif [[ "${PACKAGETYPE}" == "VIDEO_VRECORD" ]] ; then
             echo "Checking for digitized video package conformance..."
             _runtest -i "This package is missing an MKV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mkv']/@name" -n "${TEMPTREE}"
             _runtest -i "No MP4 file in top directory, checking for MP4 file in subdirectory..." xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
             if [[ -n "${XMLRESULT}" ]] ; then _report -g "MP4 derivative file found. Disregard line above." ; fi
             _runtest -i "This package is missing a frameMD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-7)='framemd5']/@name" -n "${TEMPTREE}"
-
-        elif [[ -n $(grep -i "dv" "${TEMPTREE}") ]] ; then
-            # PACKAGE TYPE: video / DV / transferred on-location
-            # looks for filenames incorporating the string 'DV'
-            _report -g "Based on the presence of a file with 'DV' in the filename, this SIP represents a transferred DV tape."
-            SIP="VIDEO_DV"
+        elif [[ "${PACKAGETYPE}" == "VIDEO_DV" ]] ; then
             echo "Checking for DV package conformance..."
             _runtest -i "This package is missing an MOV master file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='mov']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MP4 derivative file!" xmlstarlet sel -t -v "/tree/directory/directory[@name='derivative']/file[substring(@name,string-length(@name)-2)='mp4']/@name" -n "${TEMPTREE}"
             _runtest -i "This package is missing an MD5 file!" xmlstarlet sel -t -v "/tree/directory/file[substring(@name,string-length(@name)-2)='md5']/@name" -n "${TEMPTREE}"
-
-        else
-            # packages that don't fit into these categories
-            _report -r "Cannot identify SIP type! Running generic package tests."
+        elif [[ "${PACKAGETYPE}" == "GM" ]] ; then
+            echo "Checking for Great Migration package conformance..."
+            _runtest -i "This package is missing one or more ACCESS directories!" xmlstarlet sel -t -v "/tree/directory/directory/directory/directory[@name='ACCESS']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing one or more PRESERVATION directories!" xmlstarlet sel -t -v "/tree/directory/directory/directory/directory[@name='PRESERVATION']/@name" -n "${TEMPTREE}"
+            _runtest -i "This package is missing a general notes file!" xmlstarlet sel -t -v "/tree/directory/directory/file[substring(@name,string-length(@name)-15)='generalNotes.txt']/@name" -n "${TEMPTREE}"
         fi
-
         # FOR ALL PACKAGES:
-        #looks for unexpected directories within the package
-        if [[ "${SIP}" != "FILM_FILES" ]] ; then # the non-DPX digitized film packages have an extra subdirectory with an unpredictable name
-            _runtest "There are unexpected subdirectories in your package!" xmlstarlet sel -t -v "/tree/directory/directory[@name!='derivative' and @name!='MP4_2048x1152' and @name!='ProRes_2048x1536' and @name!='DPX' and @name!='MOV' and @name!='WAV']/@name" -n "${TEMPTREE}"
+        #look for unexpected directories within the package
+        if [[ "${PACKAGETYPE}" != "FILM_FILES" ]] && [[ "${PACKAGETYPE}" != "GM" ]] ; then # the non-DPX digitized film packages have an extra subdirectory with an unpredictable name
+            _runtest "There are unexpected subdirectories in your package!" xmlstarlet sel -t -v "/tree/directory/directory[@name!='derivative' and @name!='MP4_2048x1152' and @name!='ProRes_2048x1536' and @name!='DPX' and @name!='MOV' and @name!='WAV' and @name!='ACCESS' and @name!='PRESERVATION']/@name" -n "${TEMPTREE}"
         fi
-        #finds any empty files
+        #find any empty files
         _runtest "There are empty files in your package!:" xmlstarlet sel -t -v "//file[@size='0']/@name" -n  "${TEMPTREE}"
-        #makes sure no file names contain colons
+        #make sure no file names contain colons
         _runtest "There are improperly named files in this package!" xmlstarlet sel -t -v "//file[contains(@name,':')]/@name" -n  "${TEMPTREE}"
-        #finds any hidden files
+        #find any hidden files
         _runtest "There are hidden files in this package!" xmlstarlet sel -t -v "//file[starts-with(@name,'.')]/@name" -n  "${TEMPTREE}"
     fi
 done
@@ -157,3 +175,4 @@ done
 _log -e
 echo
 _report -g "verifySIP process complete."
+_report -g "If there was no output during this test after the 'Checking for conformance...' message, your package is good to go."
