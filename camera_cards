@@ -294,7 +294,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     STREAMHASH="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
     ffmpeg -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${STREAMHASH}"
     # tests for video file existing
-    FFMPEG_EXIT_CODE=$(echo $?)
+    FFMPEG_EXIT_CODE="${?}"
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
     _writelog "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
     _writelog -t "Video concatenation process finished"
