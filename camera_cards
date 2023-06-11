@@ -2,20 +2,33 @@
 
 # a script to turn raw camera cards into SIPs
 
-# load nmaahcmmfunctions into this script
-SCRIPT_PATH="${0%/*}"
-. "${SCRIPT_PATH}/nmaahcmmfunctions"
-[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-_initialize_make # safe script termination process defined in nmaahcmmfunctions
 # set script variables
+SCRIPTDIR=$(dirname "${0}")
+NMAAHCMM_CONFIG_FILE="${SCRIPTDIR}/nmaahcmm.conf"
+if [[ -f "${NMAAHCMM_CONFIG_FILE}" ]] ; then
+    . "${NMAAHCMM_CONFIG_FILE}"
+fi
+
+# set up LOGDIR
+if [[ -z "${LOGDIR}" ]] ; then
+    # set default LOGDIR if not found in the nmaahcmm.conf file
+    LOGDIR="${HOME}/nmaahc_logs"
+fi
+[[ -n "${LOGDIR}" ]] && [[ ! -d "${LOGDIR}" ]] && mkdir "${LOGDIR}"
+
+
 DEPENDENCIES=(ffmpeg md5sum tree mediaconch exiftool ffprobe)
 OP="${USER}"
 AIP="YES"
 TAR="NO"
 LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
-REQUIRECONFIG="N"
 
 # define functions
+_cleanup(){
+    _report -rt "Process cancelled" # tell operator that script is ending
+    exit 1
+}
+
 _generate_metadata(){
     _report -g "Generating metadata reports..."
     # create tree of all files in package
@@ -31,6 +44,68 @@ _generate_metadata(){
         ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
     done <"${METADATA_FILELIST}"
     _writelog -t "Metadata reports generated"
+}
+
+_log(){
+    if [[ -n "$LOGDIR" ]] ; then
+        if [[ ! -d "${LOGDIR}" ]] ; then
+            mkdir "${LOGDIR}"
+            if [[ "${?}" -ne 0 ]] ; then
+                _report -rt "${0}: Can't create log directory at ${LOGDIR}, exiting..."
+                exit 1
+            fi
+        fi
+        MMLOGNAME="nmaahcmm.log"
+        OPTIND=1
+        while getopts ":beacw" OPT; do
+            case "${OPT}" in
+                b) STATUS="start" ;;              # script is beginning
+                e) STATUS="end"   ;;              # script is ending
+                a) STATUS="abort" ;;              # script is aborted
+                c) STATUS="comment" ;;            # comment about what script is doing
+                w) STATUS="warning" ;;            # warning information
+            esac
+        done
+        shift $(( ${OPTIND} - 1 ))
+        NOTE="${1}"
+        echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${MMLOGNAME}"
+    fi
+}
+
+_maketemp(){
+    mktemp -t "$(basename "${0}")"
+    if [ "${?}" -ne 0 ]; then
+        _report -rt "${0}: Can't create temp file, exiting..."
+        _writelog "_maketemp was unable to create the temp file, so the script had to exit."
+        exit 1
+    fi
+}
+
+_report(){
+    local RED="$(tput setaf 1)"   # Red      - For Warnings
+    local GREEN="$(tput setaf 2)" # Green    - For Declarations
+    local BLUE="$(tput setaf 4)"  # Blue     - For Questions
+    local NC="$(tput sgr0)"       # No Color
+    local COLOR=""
+    local STARTMESSAGE=""
+    local ENDMESSAGE=""
+    local ECHOOPT=""
+    local LOG_MESSAGE=""
+    OPTIND=1
+    while getopts ":bgrstn" OPT; do
+        case "${OPT}" in
+            b) COLOR="${BLUE}" ;;                         # question mode, use color blue
+            g) COLOR="${GREEN}" ;;                        # declaration mode, use color green
+            r) COLOR="${RED}" ; LOG_MESSAGE="Y" ;;        # warning mode, use color red
+            s) STARTMESSAGE+=([$(basename "${0}")] ) ;;   # prepend scriptname to the message
+            t) STARTMESSAGE+=($(date +%FT%T) '- ' ) ;;   # prepend timestamp to the message
+            n) ECHOOPT="-n" ;;                            # to avoid line breaks after echo
+        esac
+    done
+    shift $(( ${OPTIND} - 1 ))
+    MESSAGE="${1}"
+    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]} ${MESSAGE}${NC}"
+    [ "${LOG_MESSAGE}" = "Y" ] && _log -w "${MESSAGE}"
 }
 
 _usage(){
@@ -64,6 +139,30 @@ Usage: $(basename ${0}) -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/
 EOF
     exit
 }
+
+_writelog(){
+    if [[ -n "$LOGDIR" ]] ; then
+        if [[ -z "${LOG}" ]] ; then
+            echo "Error, can not write to log, ingest log not yet created"
+            exit
+        fi
+        if [[ ! -f "${LOG}" ]] ; then
+            mkdir -p "${LOGDIR}"
+            touch "${LOG}"
+        fi
+        KEY="${1}"                              # key is first string passed to function
+        VALUE="${2}"                            # value is variable passed to function
+        OPTIND=1
+        while getopts ":t" OPT; do
+            case "${OPT}" in
+                t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
+            esac
+        done
+        # need to add yaml style escaping
+        echo "${KEY}: ${VALUE}" >> "${LOG}"
+    fi
+}
+
 # getopts loop
 OPTIND=1
 while getopts ":m:o:ctah" OPT; do
@@ -78,6 +177,8 @@ while getopts ":m:o:ctah" OPT; do
     esac
 done
 shift $(( OPTIND - 1 ))
+
+trap _cleanup SIGHUP SIGINT SIGTERM # "termination signals" that ask the system to clean up and safely kill the ongoing process, with increasing urgency
 
 # check for unassigned variables
 CAMERA_CARD_DIR="${1}"
