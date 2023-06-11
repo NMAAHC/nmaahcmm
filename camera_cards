@@ -8,7 +8,7 @@ SCRIPT_PATH="${0%/*}"
 [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
 _initialize_make # safe script termination process defined in nmaahcmmfunctions
 # set script variables
-DEPENDENCIES=(ffmpeg md5sum tree)
+DEPENDENCIES=(ffmpeg md5sum tree mediaconch exiftool ffprobe)
 OP="${USER}"
 AIP="YES"
 TAR="NO"
