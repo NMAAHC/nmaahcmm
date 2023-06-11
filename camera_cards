@@ -222,7 +222,7 @@ mkdir -p "${METADATA_REPORTS_DIR}"
 if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
     CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}" "${CAMERA_CARD_DIR_2}")
 else
-    CAMERA_CARD_DIRS_TO_SEARCH="${CAMERA_CARD_DIR}"
+    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}")
 fi
 
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
@@ -232,14 +232,14 @@ if [[ "${AIP}" == "YES" ]] ; then
     
     # copy selected original metadata files to AIP
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f -iname "*.cpi" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -iname "*.cpi" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     fi
     
     ## create metadata reports for original package and audiovisual files
@@ -253,7 +253,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         fi
         cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f > "${TEMP_ALLFILES}"
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
         # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
         while read FILE ; do
             if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
@@ -266,7 +266,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         done <"${TEMP_ALLFILES}"
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
     elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
     fi 
     
     # generate metadata reports
@@ -362,14 +362,14 @@ if [[ "${AIP}" == "YES" ]] ; then
     _report -g "Moving significant camera-generated metadata files to AIP..."
     # move significant camera-generated metadata files to a metadata folder
     if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         while read FILE ; do
             rsync -avh "${FILE}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
         done <"${TEMP_METADATALIST}"
     else
-        find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f "${RSYNC_OPTIONS[@]}" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f "${RSYNC_OPTIONS[@]}" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     fi
 fi
 
@@ -380,7 +380,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
-    find "${CAMERA_CARD_DIRS_TO_SEARCH}" -type f > "${TEMP_ALLFILES}"
+    find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
     while read FILE ; do
         if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] || [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
             echo "${FILE}" >> "${TEMP_AVLIST}"
