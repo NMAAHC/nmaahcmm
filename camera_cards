@@ -229,7 +229,7 @@ fi
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ "${TAR}" == "YES" ]] ; then AIPDIR_AIP="${AIPDIR}/objects/AIP" ; else AIPDIR_AIP="${AIPDIR}/objects" ; fi
     mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
-    
+
     # copy selected original metadata files to AIP
     if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
         find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -iname "*.cpi" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
@@ -241,7 +241,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
         find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     fi
-    
+
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
     if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
@@ -267,12 +267,12 @@ if [[ "${AIP}" == "YES" ]] ; then
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
     elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
         find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
-    fi 
-    
+    fi
+
     # generate metadata reports
     if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then METADATA_FILELIST="${TEMP_AVLIST}" ; else METADATA_FILELIST="${TEMP_VIDEOLIST}" ; fi
     _generate_metadata
-    
+
     ## concatenate video files into a single file
     echo
     _report -g "Concatenating video files..."
@@ -283,7 +283,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     else
         CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${EXTENSION}"
     fi
-    
+
     # create list of files to concatenate, formatted for ffmpeg
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
@@ -298,7 +298,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
     _writelog "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
     _writelog -t "Video concatenation process finished"
-    
+
     # if there are audio-only files, concatenate them and join with concatenated video file
     if [[ -s "${TEMP_AUDIOLIST}" ]] ; then
         _report -g "Concatenating audio files..."
@@ -312,7 +312,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_AUDIO_FILE}"
         _writelog "CONCATENATED AUDIO FILE" "${CONCATENATED_AUDIO_FILE}"
         _writelog -t "Audio concatenation process finished"
-        
+
         # merge video and audio
         _report -g "Merging concatenated audio and video files..."
         _writelog -t "Audio + video joining process started"
@@ -330,7 +330,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         _writelog "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE_MERGED}"
         _writelog -t "Audio + video joining process ended"
     fi
-    
+
     # generate md5 of concatenated file
     if [[ -f "${CONCATENATED_FILE_MERGED}" ]] ; then
         CONCATENATED_MD5_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_FILE_MERGED%.*}").md5"
@@ -339,7 +339,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         CONCATENATED_MD5_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}").md5"
         md5sum "${CONCATENATED_VIDEO_FILE}" > "${CONCATENATED_MD5_OUTPUT}"
     fi
-    
+
     if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
         echo
@@ -357,7 +357,7 @@ if [[ "${AIP}" == "YES" ]] ; then
             done <"${TEMP_AUDIOLIST}"
         fi
     fi
-    
+
     echo
     _report -g "Moving significant camera-generated metadata files to AIP..."
     # move significant camera-generated metadata files to a metadata folder
@@ -377,7 +377,7 @@ fi
 if [[ "${TAR}" == "YES" ]] ; then
     AIPDIR_TAR="${AIPDIR}/objects/TAR"
     mkdir -p "${AIPDIR_TAR}"
-    
+
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
     find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
@@ -389,7 +389,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     # generate metadata reports
     METADATA_FILELIST="${TEMP_AVLIST}"
     _generate_metadata
-    
+
     ## tar supplied input directory
     echo
     _report -g "Creating tar archive..."
@@ -397,7 +397,7 @@ if [[ "${TAR}" == "YES" ]] ; then
     tar -czvf "${AIPDIR_TAR}/${MEDIAID}.tar.gz" -C "${CAMERA_CARD_DIR}" .
     _writelog "TAR ARCHIVE" "${MEDIAID}.tar.gz"
     _writelog -t "Tar archive process process finished"
-    
+
     ## generate checksum for tar archive
     TAR_MD5_OUTPUT="${METADATA_REPORTS_DIR}/${MEDIAID}.md5"
     md5sum "${AIPDIR_TAR}/${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
