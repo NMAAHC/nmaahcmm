@@ -98,24 +98,24 @@ EOF
 }
 
 _write_package_log(){
-        if [[ -z "${LOG}" ]] ; then
-            echo "Error, can not write to log, ingest log not yet created"
-            exit
-        fi
-        if [[ ! -f "${LOG}" ]] ; then
-            mkdir -p "${LOGDIR}"
-            touch "${LOG}"
-        fi
-        KEY="${1}"                              # key is first string passed to function
-        VALUE="${2}"                            # value is variable passed to function
-        OPTIND=1
-        while getopts ":t" OPT; do
-            case "${OPT}" in
-                t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
-            esac
-        done
-        # need to add yaml style escaping
-        echo "${KEY}: ${VALUE}" >> "${LOG}"
+    if [[ -z "${LOG}" ]] ; then
+        echo "Error, can not write to log, ingest log not yet created"
+        exit
+    fi
+    if [[ ! -f "${LOG}" ]] ; then
+        mkdir -p "${LOGDIR}"
+        touch "${LOG}"
+    fi
+    KEY="${1}"                              # key is first string passed to function
+    VALUE="${2}"                            # value is variable passed to function
+    OPTIND=1
+    while getopts ":t" OPT; do
+        case "${OPT}" in
+            t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
+        esac
+    done
+    # need to add yaml style escaping
+    echo "${KEY}: ${VALUE}" >> "${LOG}"
 }
 
 # getopts loop
