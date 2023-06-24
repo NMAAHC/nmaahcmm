@@ -99,7 +99,7 @@ The AIP_DESTINATION can be set via nmaahcconfig, or via the -o options, or the s
 
 Dependencies: ${DEPENDENCIES[@]}
 
-Usage: $(basename ${0}) -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2 ]
+Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2 ]
   -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
   -o AIP_DESTINATION (the output directory for the package); if not supplied, script will look for it in nmaahcconfig
   -c combine multiple camera cards into one output package; script will ask you to drag in one at a time, or you can supply both
@@ -350,7 +350,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     # create list of files to concatenate, formatted for ffmpeg
     while read FILE ; do
         echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
-    done <"${TEMP_VIDEOLIST}"
+    done < "${TEMP_VIDEOLIST}"
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
