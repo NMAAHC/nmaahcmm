@@ -4,24 +4,10 @@
 
 # set script variables
 SCRIPTDIR=$(dirname "${0}")
-NMAAHCMM_CONFIG_FILE="${SCRIPTDIR}/nmaahcmm.conf"
-if [[ -f "${NMAAHCMM_CONFIG_FILE}" ]] ; then
-    . "${NMAAHCMM_CONFIG_FILE}"
-fi
-
-# set up LOGDIR
-if [[ -z "${LOGDIR}" ]] ; then
-    # set default LOGDIR if not found in the nmaahcmm.conf file
-    LOGDIR="${HOME}/nmaahc_logs"
-fi
-[[ -n "${LOGDIR}" ]] && [[ ! -d "${LOGDIR}" ]] && mkdir "${LOGDIR}"
-
-
 DEPENDENCIES=(ffmpeg md5sum tree mediaconch exiftool ffprobe)
 OP="${USER}"
 AIP="YES"
 TAR="NO"
-LOG="${LOGDIR%/}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 
 # define functions
 _cleanup(){
@@ -112,7 +98,6 @@ EOF
 }
 
 _write_package_log(){
-    if [[ -n "$LOGDIR" ]] ; then
         if [[ -z "${LOG}" ]] ; then
             echo "Error, can not write to log, ingest log not yet created"
             exit
@@ -131,7 +116,6 @@ _write_package_log(){
         done
         # need to add yaml style escaping
         echo "${KEY}: ${VALUE}" >> "${LOG}"
-    fi
 }
 
 # getopts loop
@@ -199,6 +183,8 @@ if [[ -z "${AIP_DESTINATION}" ]] ; then
 fi
 
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
+LOG="${AIPDIR}/metadata/$(basename "${0}")_$(date +%F-%H%M%S).log"
+
 if [[ -d "${AIPDIR}" ]] ; then
     _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
     exit 1
