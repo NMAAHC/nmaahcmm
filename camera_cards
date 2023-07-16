@@ -365,7 +365,7 @@ if [[ "${AIP}" == "YES" ]] ; then
             _report -r "Audio and video files are not the same length! Review output for sync. (Video duration = ${VIDEO_DURATION}, audio duration = ${AUDIO_DURATION})"
         fi
         # rename concatenated video file to avoid collision with audio file
-        RENAMED_CONCATENATED_VIDEO_FILE="$(echo "${CONCATENATED_VIDEO_FILE}" | sed s/concatenated/concatenated_video/)"
+        RENAMED_CONCATENATED_VIDEO_FILE="${CONCATENATED_VIDEO_FILE//concatenated/concatenated_video}"
         mv "${CONCATENATED_VIDEO_FILE}" "${RENAMED_CONCATENATED_VIDEO_FILE}"
         CONCATENATED_FILE_MERGED="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
         ffmpeg -i "${RENAMED_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE_MERGED}"
