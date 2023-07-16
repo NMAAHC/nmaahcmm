@@ -428,9 +428,6 @@ fi
 
 ### procedure for packaging files into compressed tars
 if [[ "${TAR}" == "YES" ]] ; then
-    AIPDIR_TAR="${AIPDIR}/objects/TAR"
-    mkdir -p "${AIPDIR_TAR}"
-
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
     find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
