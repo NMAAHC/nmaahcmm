@@ -103,8 +103,8 @@ _write_package_log(){
         _report -w "Error, can not write to log, ingest log not yet created"
         exit
     fi
-    if [[ ! -w "$(dirname "${LOG}")" ]] ; then
-        _report -w "Error, can not write to log as $(dirname "${LOG}") is not writable."
+    if [[ ! -w "${METADATADIR}" ]] ; then
+        _report -w "Error, can not write to log as the metadata directory, ${METADATADIR}, is not writable."
         exit
     fi
     KEY="${1}"                              # key is first string passed to function
@@ -185,14 +185,6 @@ if [[ -z "${AIP_DESTINATION}" ]] ; then
     fi
 fi
 
-AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
-LOG="${AIPDIR}/metadata/$(basename "${0}")_$(date +%F-%H%M%S).log"
-
-if [[ -d "${AIPDIR}" ]] ; then
-    _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
-    exit 1
-fi
-
 # detect camera card structure based on directory name and structure
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
@@ -259,9 +251,12 @@ TEMP_METADATALIST="$(_maketemp)"
 TEMP_AVLIST="$(_maketemp)"
 TEMP_ALLFILES="$(_maketemp)"
 # define output directories
-METADATA_REPORTS_DIR="${AIPDIR}/metadata/reports"
-METADATA_ORIGINAL_CAMERA_FILES_DIR="${AIPDIR}/metadata/original_camera_files"
 mkdir -p "${METADATA_REPORTS_DIR}"
+AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
+METADATADIR="${AIPDIR}/metadata"
+LOG="${METADATADIR}/$(basename "${0}")_$(date +%F-%H%M%S).log"
+METADATA_REPORTS_DIR="${METADATADIR}/reports"
+METADATA_ORIGINAL_CAMERA_FILES_DIR="${METADATADIR}/original_camera_files"
 # look in both camera card directories if supplied
 if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
     CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}" "${CAMERA_CARD_DIR_2}")
@@ -271,6 +266,10 @@ fi
 
 START_TIME="$(date +%FT%T)"
 
+if [[ -d "${AIPDIR}" ]] ; then
+    _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
+    exit 1
+fi
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ "${TAR}" == "YES" ]] ; then AIPDIR_AIP="${AIPDIR}/objects/AIP" ; else AIPDIR_AIP="${AIPDIR}/objects" ; fi
