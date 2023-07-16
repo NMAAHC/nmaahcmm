@@ -268,6 +268,20 @@ if [[ -d "${AIPDIR}" ]] ; then
     _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
     exit 1
 fi
+if [[ "${AIP}" == "YES" && "${TAR}" == "YES" ]] ; then
+    AIPDIR_AIP="${AIPDIR}/objects/AIP"
+    AIPDIR_TAR="${AIPDIR}/objects/TAR"
+    mkdir -p "${METADATA_REPORTS_DIR}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}" "${AIPDIR_TAR}"
+elif [[ "${AIP}" == "YES" ]] ; then
+    AIPDIR_AIP="${AIPDIR}/objects"
+    mkdir -p "${METADATA_REPORTS_DIR}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
+elif [[ "${TAR}" == "YES" ]] ; then
+    AIPDIR_TAR="${AIPDIR}/objects/TAR"
+    mkdir -p "${METADATA_REPORTS_DIR}" "${AIPDIR_TAR}"
+else
+    _report -w "ERROR: camera_cards needs to produce either an AIP or TAR output."
+    exit 1
+fi
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ "${TAR}" == "YES" ]] ; then AIPDIR_AIP="${AIPDIR}/objects/AIP" ; else AIPDIR_AIP="${AIPDIR}/objects" ; fi
@@ -448,7 +462,7 @@ _write_package_log "MEDIAID" "${MEDIAID}"
 _write_package_log "OUTPUT DIRECTORY" "${AIPDIR}"
 _write_package_log "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
 _write_package_log "STRATEGY" "${STRATEGY}"
-_write_package_log "START TIME" "$(date +%FT%T)"
+_write_package_log "START TIME" "${START_TIME}"
 
 # error reporting
 echo
