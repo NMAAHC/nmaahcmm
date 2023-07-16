@@ -106,10 +106,6 @@ _write_package_log(){
         _report -w "Error, can not write to log as $(dirname "${LOG}") is not writable."
         exit
     fi
-    if [[ ! -f "${LOG}" ]] ; then
-        mkdir -p "${LOGDIR}"
-        touch "${LOG}"
-    fi
     KEY="${1}"                              # key is first string passed to function
     VALUE="${2}"                            # value is variable passed to function
     OPTIND=1
