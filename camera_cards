@@ -247,6 +247,10 @@ TEMP_CONCATLIST="$(_maketemp)"
 TEMP_METADATALIST="$(_maketemp)"
 TEMP_AVLIST="$(_maketemp)"
 TEMP_ALLFILES="$(_maketemp)"
+
+# note the time we start working on the AIP
+START_TIME="$(date +%FT%T)"
+
 # define output directories
 mkdir -p "${METADATA_REPORTS_DIR}"
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
@@ -260,9 +264,6 @@ if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
 else
     CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}")
 fi
-
-START_TIME="$(date +%FT%T)"
-
 if [[ -d "${AIPDIR}" ]] ; then
     _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
     exit 1
