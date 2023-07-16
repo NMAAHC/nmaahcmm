@@ -291,18 +291,6 @@ if [[ "${AIP}" == "YES" ]] ; then
     fi
     mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
 
-    # copy selected original metadata files to AIP
-    if [[ "${CAMERA_CARD_TYPE}" == "AVCHD" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -iname "*.cpi" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "MXF" ]] || [[ "${CAMERA_CARD_TYPE}" == "XDCAMEX" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.bim" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    fi
-
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
     if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
@@ -328,6 +316,25 @@ if [[ "${AIP}" == "YES" ]] ; then
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
     elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
         find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+    fi
+
+    # copy selected original metadata files to AIP
+    _report -g "Moving significant camera-generated metadata files to AIP..."
+    CAMERA_CARD_METADATA2KEEP=()
+    while read METADATA_FILE ; do
+        CAMERA_CARD_METADATA2KEEP+=("${METADATA_FILE}")
+    done < <(find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f "${RSYNC_OPTIONS[@]}")
+    while read METADATA_FILE ; do
+        CAMERA_CARD_METADATA2KEEP+=("${METADATA_FILE}")
+    done <"${TEMP_METADATALIST}"
+    if [[ -w "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" ]] ; then
+        if (( ${#CAMERA_CARD_METADATA2KEEP[@]} != 0 )) ; then
+            _report -d "Copying some camera metadata files into the package."
+            rsync -avh "${CAMERA_CARD_METADATA2KEEP[@]}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
+        fi
+    else
+        _report -w "Error: the folder for camera metadata is not writable."
+        exit 1
     fi
 
     # generate metadata reports
@@ -417,20 +424,6 @@ if [[ "${AIP}" == "YES" ]] ; then
                 rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
             done <"${TEMP_AUDIOLIST}"
         fi
-    fi
-
-    echo
-    _report -g "Moving significant camera-generated metadata files to AIP..."
-    # move significant camera-generated metadata files to a metadata folder
-    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f \( -iname "*.xml" -o -iname "*.txt" \) -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f -ipath "VOICE" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
-    elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
-        while read FILE ; do
-            rsync -avh "${FILE}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
-        done <"${TEMP_METADATALIST}"
-    else
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f "${RSYNC_OPTIONS[@]}" -exec rsync -avh {} "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" \;
     fi
 fi
 
