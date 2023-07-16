@@ -102,6 +102,10 @@ _write_package_log(){
         _report -w "Error, can not write to log, ingest log not yet created"
         exit
     fi
+    if [[ ! -w "$(dirname "${LOG}")" ]] ; then
+        _report -w "Error, can not write to log as $(dirname "${LOG}") is not writable."
+        exit
+    fi
     if [[ ! -f "${LOG}" ]] ; then
         mkdir -p "${LOGDIR}"
         touch "${LOG}"
