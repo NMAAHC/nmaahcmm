@@ -20,12 +20,12 @@ _generate_metadata(){
     # create tree of all files in package
     TREE="${METADATA_REPORTS_DIR}/${MEDIAID}_tree.txt"
     tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
-    FN="$(basename "${FILE}")"
     # create mediainfo, exiftool, ffprobe reports
     while read -r FILE ; do
+        FN="$(basename "${FILE}")"
         MEDIAINFO_OUTPUT="${METADATA_REPORTS_DIR}/${FN}_mediainfo.txt"
         EXIFTOOL_OUTPUT="${METADATA_REPORTS_DIR}/${FN}_exiftool.txt"
-        FFPROBE_OUTPUT="${METADATA_REPORTS_DIR}/${FN}s_ffprobe.xml"
+        FFPROBE_OUTPUT="${METADATA_REPORTS_DIR}/${FN}_ffprobe.xml"
         mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
         exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
         ffprobe -v 0 "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
