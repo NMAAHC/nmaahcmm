@@ -30,7 +30,7 @@ _generate_metadata(){
         exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
         ffprobe -v 0 "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
     done <"${METADATA_FILELIST}"
-    _report -d "Metadata reports generated for ${MEDIAID}"
+    _report -g "Metadata reports generated for ${MEDIAID}"
 }
 
 _maketemp(){
