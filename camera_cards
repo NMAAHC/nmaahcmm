@@ -99,7 +99,7 @@ EOF
 
 _write_package_log(){
     if [[ -z "${LOG}" ]] ; then
-        echo "Error, can not write to log, ingest log not yet created"
+        _report -w "Error, can not write to log, ingest log not yet created"
         exit
     fi
     if [[ ! -f "${LOG}" ]] ; then
