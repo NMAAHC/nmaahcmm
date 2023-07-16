@@ -28,7 +28,7 @@ _generate_metadata(){
         FFPROBE_OUTPUT="${METADATA_REPORTS_DIR}/${FN}s_ffprobe.xml"
         mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
         exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
-        ffprobe 2> /dev/null "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
+        ffprobe -v 0 "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
     done <"${METADATA_FILELIST}"
     _report -d "Metadata reports generated for ${MEDIAID}"
 }
