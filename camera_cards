@@ -115,7 +115,9 @@ _write_package_log(){
         esac
     done
     # need to add yaml style escaping
-    echo "${KEY}: ${VALUE}" >> "${LOG}"
+    if [[ -n "${VALUE}" ]] ; then
+        echo "${KEY}: ${VALUE}" >> "${LOG}"
+    fi
 }
 
 # getopts loop
