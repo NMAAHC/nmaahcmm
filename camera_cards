@@ -196,13 +196,6 @@ if [[ -d "${AIPDIR}" ]] ; then
     exit 1
 fi
 
-# record variables in ingest log
-_write_package_log "OPERATOR" "${OP}"
-_write_package_log "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
-if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then _write_package_log "CAMERA CARD DIRECTORY 2" "${CAMERA_CARD_DIR_2}" ; fi
-_write_package_log "MEDIAID" "${MEDIAID}"
-_write_package_log "OUTPUT DIRECTORY" "${AIPDIR}"
-
 # detect camera card structure based on directory name and structure
 if [[ "${AIP}" == "YES" ]] ; then
     if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "PRIVATE")" ]] ; then
@@ -256,10 +249,8 @@ if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
         if [[ "${STRATEGY}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
         break
     done
-    _write_package_log "STRATEGY" "${STRATEGY}"
 fi
 
-_write_package_log "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
 # remove .DS_Store files and log action if successful
 "${SCRIPTDIR}/removeDSStore" "${AIPDIR}" && _report -d ".DS_Store files removed by invoking removeDSStore"
 
@@ -280,6 +271,8 @@ if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
 else
     CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}")
 fi
+
+START_TIME="$(date +%FT%T)"
 
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
@@ -452,6 +445,16 @@ if [[ "${TAR}" == "YES" ]] ; then
     TAR_MD5_OUTPUT="${METADATA_REPORTS_DIR}/${MEDIAID}.md5"
     md5sum "${AIPDIR_TAR}/${MEDIAID}.tar.gz" > "${TAR_MD5_OUTPUT}"
 fi
+
+# record variables in ingest log
+_write_package_log "OPERATOR" "${OP}"
+_write_package_log "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
+if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then _write_package_log "CAMERA CARD DIRECTORY 2" "${CAMERA_CARD_DIR_2}" ; fi
+_write_package_log "MEDIAID" "${MEDIAID}"
+_write_package_log "OUTPUT DIRECTORY" "${AIPDIR}"
+_write_package_log "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
+_write_package_log "STRATEGY" "${STRATEGY}"
+_write_package_log "START TIME" "$(date +%FT%T)"
 
 # error reporting
 echo
