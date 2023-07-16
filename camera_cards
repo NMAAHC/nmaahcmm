@@ -284,7 +284,11 @@ else
 fi
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
-    if [[ "${TAR}" == "YES" ]] ; then AIPDIR_AIP="${AIPDIR}/objects/AIP" ; else AIPDIR_AIP="${AIPDIR}/objects" ; fi
+    if [[ "${TAR}" == "YES" ]] ; then
+        AIPDIR_AIP="${AIPDIR}/objects/AIP"
+    else
+        AIPDIR_AIP="${AIPDIR}/objects"
+    fi
     mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
 
     # copy selected original metadata files to AIP
@@ -327,7 +331,11 @@ if [[ "${AIP}" == "YES" ]] ; then
     fi
 
     # generate metadata reports
-    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then METADATA_FILELIST="${TEMP_AVLIST}" ; else METADATA_FILELIST="${TEMP_VIDEOLIST}" ; fi
+    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+        METADATA_FILELIST="${TEMP_AVLIST}"
+    else
+        METADATA_FILELIST="${TEMP_VIDEOLIST}"
+    fi
     _generate_metadata
 
     ## concatenate video files into a single file
