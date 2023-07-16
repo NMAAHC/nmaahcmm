@@ -252,7 +252,6 @@ TEMP_ALLFILES="$(_maketemp)"
 START_TIME="$(date +%FT%T)"
 
 # define output directories
-mkdir -p "${METADATA_REPORTS_DIR}"
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
 METADATADIR="${AIPDIR}/metadata"
 LOG="${METADATADIR}/$(basename "${0}")_$(date +%F-%H%M%S).log"
