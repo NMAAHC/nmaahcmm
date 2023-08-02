@@ -88,6 +88,7 @@ Dependencies: ${DEPENDENCIES[@]}
 
 Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2 ]
   -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
+  -f FORMAT (choose the output format (as a file extension) for the rewrapping process, such as 'mxf' or 'mkv'. The default is set to match the input card set. Experimental.)
   -o AIP_DESTINATION (the output directory for the package); if not supplied, script will look for it in nmaahcconfig
   -c combine multiple camera cards into one output package; script will ask you to drag in one at a time, or you can supply both
   -t tar camera files and folders into a tarball, compressed with gzip
@@ -152,10 +153,11 @@ _gather_file_lists(){
 
 # getopts loop
 OPTIND=1
-while getopts ":m:o:ctah" OPT; do
+while getopts ":m:o:f:ctah" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         o) AIP_DESTINATION="${OPTARG}" ;;
+        f) OUTPUT_EXTENSION="${OPTARG}" ;;
         c) COMBINE_CAMERA_CARDS="YES" ;;
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
@@ -351,11 +353,14 @@ if [[ "${AIP}" == "YES" ]] ; then
     echo
     _report -g "Concatenating video files..."
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
-    if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
-        CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
+    if [[ -n "${OUTPUT_EXTENSION}" ]] ; then
+        OUTPUT_EXTENSION="${OUTPUT_EXTENSION}"
+    elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+        OUTPUT_EXTENSION="${FIRST_FILE#*.}"
     else
-        CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${EXTENSION}"
+        OUTPUT_EXTENSION="${EXTENSION}"
     fi
+    CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${OUTPUT_EXTENSION}"
 
     # create list of files to concatenate, formatted for ffmpeg
     while read FILE ; do
