@@ -121,6 +121,35 @@ _write_package_log(){
     fi
 }
 
+_gather_file_lists(){
+    ## create metadata reports for original package and audiovisual files
+    # generate lists of audiovisual files
+    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort > "${TEMP_AUDIOLIST}"
+        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+            find "${CAMERA_CARD_DIR_2}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort >> "${TEMP_VIDEOLIST}"
+            find "${CAMERA_CARD_DIR_2}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort >> "${TEMP_AUDIOLIST}"
+        fi
+        cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
+    elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
+        # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
+        while read FILE ; do
+            if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
+                echo "${FILE}" >> "${TEMP_VIDEOLIST}"
+            elif [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
+                echo "${FILE}" >> "${TEMP_AUDIOLIST}"
+            elif [[ -f "${FILE}" ]] ; then
+                echo "${FILE}" >> "${TEMP_METADATALIST}"
+            fi
+        done <"${TEMP_ALLFILES}"
+        sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
+    elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
+        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+    fi
+}
+
 # getopts loop
 OPTIND=1
 while getopts ":m:o:ctah" OPT; do
@@ -289,33 +318,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         AIPDIR_AIP="${AIPDIR}/objects"
     fi
     mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
-
-    ## create metadata reports for original package and audiovisual files
-    # generate lists of audiovisual files
-    if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
-        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort > "${TEMP_AUDIOLIST}"
-        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
-            find "${CAMERA_CARD_DIR_2}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort >> "${TEMP_VIDEOLIST}"
-            find "${CAMERA_CARD_DIR_2}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort >> "${TEMP_AUDIOLIST}"
-        fi
-        cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
-    elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
-        # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
-        while read FILE ; do
-            if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
-                echo "${FILE}" >> "${TEMP_VIDEOLIST}"
-            elif [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
-                echo "${FILE}" >> "${TEMP_AUDIOLIST}"
-            elif [[ -f "${FILE}" ]] ; then
-                echo "${FILE}" >> "${TEMP_METADATALIST}"
-            fi
-        done <"${TEMP_ALLFILES}"
-        sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
-    elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
-    fi
+    _gather_file_lists
 
     # copy selected original metadata files to AIP
     _report -g "Moving significant camera-generated metadata files to AIP..."
