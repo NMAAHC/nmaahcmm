@@ -218,11 +218,11 @@ fi
 
 # detect camera card structure based on directory name and structure
 if [[ "${AIP}" == "YES" ]] ; then
-    if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -ipath "*/PRIVATE/*" -iname "BDMV" | head -n 1)" ]] ; then
+    if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "BDMV" | head -n 1)" ]] ; then
         _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
         CAMERA_CARD_TYPE="AVCHD"
-        CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR}" -type d -ipath "*/PRIVATE/*" -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
-        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then CAMERA_CARD_DIR_2="$(find "$CAMERA_CARD_DIR_2}" -type d -ipath "*/PRIVATE/*" -iname "BDMV" | head -n 1)" ; fi
+        CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR}" -type d -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
+        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then CAMERA_CARD_DIR_2="$(find "$CAMERA_CARD_DIR_2}" -type d -iname "BDMV" | head -n 1)" ; fi
         EXTENSION="mts"
         RSYNC_OPTIONS=(-iname "*.cpi")
     elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
