@@ -351,7 +351,7 @@ if [[ "${AIP}" == "YES" ]] ; then
 
     ## concatenate video files into a single file
     echo
-    _report -g "Concatenating video files..."
+    _report -g "Concatenating video files into a ${OUTPUT_EXTENSION} file."
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
     if [[ -n "${OUTPUT_EXTENSION}" ]] ; then
         OUTPUT_EXTENSION="${OUTPUT_EXTENSION}"
