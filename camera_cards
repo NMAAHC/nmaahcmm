@@ -100,11 +100,11 @@ EOF
 
 _write_package_log(){
     if [[ -z "${LOG}" ]] ; then
-        _report -w "Error, can not write to log, ingest log not yet created"
+        _report -r "Error, can not write to log, ingest log not yet created"
         exit
     fi
     if [[ ! -w "${METADATADIR}" ]] ; then
-        _report -w "Error, can not write to log as the metadata directory, ${METADATADIR}, is not writable."
+        _report -r "Error, can not write to log as the metadata directory, ${METADATADIR}, is not writable."
         exit
     fi
     KEY="${1}"                              # key is first string passed to function
@@ -307,7 +307,7 @@ elif [[ "${TAR}" == "YES" ]] ; then
     AIPDIR_TAR="${AIPDIR}/objects/TAR"
     mkdir -p "${METADATA_REPORTS_DIR}" "${AIPDIR_TAR}"
 else
-    _report -w "ERROR: camera_cards needs to produce either an AIP or TAR output."
+    _report -r "ERROR: camera_cards needs to produce either an AIP or TAR output."
     exit 1
 fi
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
@@ -331,11 +331,11 @@ if [[ "${AIP}" == "YES" ]] ; then
     done <"${TEMP_METADATALIST}"
     if [[ -w "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" ]] ; then
         if (( ${#CAMERA_CARD_METADATA2KEEP[@]} != 0 )) ; then
-            _report -d "Copying some camera metadata files into the package."
+            _report -g "Copying some camera metadata files into the package."
             rsync -avh "${CAMERA_CARD_METADATA2KEEP[@]}" "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
         fi
     else
-        _report -w "Error: the folder for camera metadata is not writable."
+        _report -r "Error: the folder for camera metadata is not writable."
         exit 1
     fi
 
@@ -370,7 +370,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     FFMPEG_EXIT_CODE="${?}"
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
     _write_package_log "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
-    _report -d "Video concatenation process finished"
+    _report -g "Video concatenation process finished"
 
     # if there are audio-only files, concatenate them and join with concatenated video file
     if [[ -s "${TEMP_AUDIOLIST}" ]] ; then
@@ -398,7 +398,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         CONCATENATED_FILE_MERGED="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
         ffmpeg -i "${RENAMED_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE_MERGED}"
         _write_package_log "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE_MERGED}"
-        _report -d "Audio + video joining process ended"
+        _report -g "Audio + video joining process ended"
     fi
 
     # generate md5 of concatenated file
