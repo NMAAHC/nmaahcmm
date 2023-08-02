@@ -151,6 +151,22 @@ _gather_file_lists(){
     fi
 }
 
+_print_table(){
+    TABLE="$1"
+    if [[ -z "${TABLE}" ]] ; then
+        TABLE="${TEMP_VIDEOLIST}"
+    fi
+    C=1
+    echo
+    echo "Index#   File Name                    Modification Date     Duration            Timecode"
+    while read TABLE_FILE ; do
+        FILENAME="$(basename "${TABLE_FILE}")"
+        IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${TABLE_FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
+        printf '%-3s %32s %20s %16s %16s\n'  "${C}" "${FILENAME}" "${MOD_TS%.*}" "${DURATION}" "${TC}"
+        ((C++))
+    done < "${TABLE}"
+    echo
+}
 # getopts loop
 OPTIND=1
 while getopts ":m:o:f:ctah" OPT; do
@@ -321,7 +337,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     fi
     mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
     _gather_file_lists
-
+    _print_table
     # copy selected original metadata files to AIP
     _report -g "Moving significant camera-generated metadata files to AIP..."
     CAMERA_CARD_METADATA2KEEP=()
