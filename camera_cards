@@ -488,6 +488,7 @@ if [[ -s "${CONCATENATED_AUDIO_FILE}" ]] ; then
 fi
 if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file by comparing bitstream md5s
     OUTPUT_STREAMHASH="$(_maketemp)"
+    _report -b "Checking streamhash between input and output..."
     ffmpeg -y -loglevel quiet -report -i "${CONCATENATED_VIDEO_FILE}" -map 0 -f streamhash -hash md5 "${OUTPUT_STREAMHASH}"
     if [[ $(cat "${STREAMHASH}") != $(cat "${OUTPUT_STREAMHASH}") ]] ; then
         _report -r "Concatenation process was not lossless! Review final merged file at ${CONCATENATED_VIDEO_FILE}"
