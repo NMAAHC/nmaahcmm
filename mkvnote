@@ -1,0 +1,62 @@
+#!/bin/bash
+
+_maketemp(){
+    mktemp -q -t "$(basename "${0}")"
+    if [ "${?}" -ne 0 ]; then
+        echo "${0}: Can't create temp file, exiting..."
+        exit 1
+    fi
+}
+
+MKV_TAG_SET=(
+    "title"
+    "coding_history"
+    "camera_make_model"
+    "camera_card_script"
+    "content_description"
+    "identifier"
+    "alternate_identifier"
+    "original_projection_speed"
+    "originating_format"
+    "creator"
+    )
+
+DEPENDENCIES=(mkvpropedit xmlstarlet)
+
+MKV_FILE="${1}"
+#todo _check_if_mkv "${MKV_FILE}"
+MKV_FILE_NAME="$(basename "${MKV_FILE}")"
+TAG_TEMPLATE="$(_maketemp).txt"
+XML_DRAFT="$(_maketemp).xml"
+
+echo "# Feel welcome to catalog ${MKV_FILE_NAME} here and then save this document. The resulting metadata (if any) will be embedded into the file. You may add new tags as long as the structure is: tag_name=[tag_value]." > "${TAG_TEMPLATE}"
+echo "# These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file." >> "${TAG_TEMPLATE}"
+echo "# Empty tags will be ignored." >> "${TAG_TEMPLATE}"
+echo >> "${TAG_TEMPLATE}"
+echo "# These tags already exist in the file. If you edit them here they will be overwritten when saved." >> "${TAG_TEMPLATE}"
+mkvextract tags "${MKV_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets)]/Simple" -v "Name" -o "=[" -v "String" -o "]" -n >> "${TAG_TEMPLATE}"
+echo >> "${TAG_TEMPLATE}"
+echo "# These tags already exist in the file. If you edit them here they will be overwritten when saved." >> "${TAG_TEMPLATE}"
+
+for TAG in "${MKV_TAG_SET[@]}" ; do
+    echo "${TAG}=[]" >> "${TAG_TEMPLATE}"
+done
+
+# present a tag template for user edits
+open "${TAG_TEMPLATE}"
+echo "A cataloging record is opened for ${MKV_FILE}. Edit that and save it, click any key to continue... B)"
+read
+
+# start mkv metadata xml
+echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
+
+# add metadata from tag template to mkv metadata xml
+while read TAG_LINE ; do
+    TAG_NAME="$(echo "${TAG_LINE}" | cut -d "=" -f1)"
+    TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "[" -f2 | cut -d "]" -f1)"
+    if [[ -n "${TAG_VALUE// /}" ]] ; then
+        xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
+    fi
+done < <(grep "=\[.*\]$" "${TAG_TEMPLATE}")
+mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
+echo "Cool. Done. Enjoy ${MKV_FILE}."
