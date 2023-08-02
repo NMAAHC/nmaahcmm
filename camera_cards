@@ -477,7 +477,6 @@ if [[ "${FFMPEG_EXIT_CODE}" -gt 0 ]] || [[ "${FFMPEG_ERRORS}" -gt 0 ]] ; then
     _report -r "FFmpeg may have encountered errors - review terminal output for more detail."
 else
     _report -g "FFmpeg exit codes look ok"
-fi
 if [[ -s "${CONCATENATED_AUDIO_FILE}" ]] ; then
     if [[ "${VIDEO_DURATION}" -ne "${AUDIO_DURATION}" ]] ; then
     _report -r "Concatenated audio and video files were not the same length - review final merged file for sync at ${CONCATENATED_FILE_MERGED} (video duration = ${VIDEO_DURATION}, audio duration = ${AUDIO_DURATION})"
@@ -496,6 +495,7 @@ if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file 
     else
         _report -g "Concatenated process looks lossless"
     fi
+fi
 fi
 
 # log script ending
