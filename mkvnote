@@ -12,13 +12,13 @@ MKV_TAG_SET=(
     "identifier"
     "alternate_identifier"
     "title"
-    "originating_format"
     "content_description"
+    "originating_format"
+    "original_projection_speed"
     "coding_history"
     "camera_make_model"
     "camera_card_script"
-    "original_projection_speed"
-    "creator"
+    "originator"
     )
 
 DEPENDENCIES=(mkvpropedit xmlstarlet)
