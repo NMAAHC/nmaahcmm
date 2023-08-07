@@ -9,16 +9,16 @@ _maketemp(){
 }
 
 MKV_TAG_SET=(
+    "identifier"
+    "alternate_identifier"
     "title"
+    "content_description"
+    "originating_format"
+    "original_projection_speed"
     "coding_history"
     "camera_make_model"
     "camera_card_script"
-    "content_description"
-    "identifier"
-    "alternate_identifier"
-    "original_projection_speed"
-    "originating_format"
-    "creator"
+    "originator"
     )
 
 DEPENDENCIES=(mkvpropedit xmlstarlet)
@@ -59,4 +59,4 @@ while read TAG_LINE ; do
     fi
 done < <(grep "=\[.*\]$" "${TAG_TEMPLATE}")
 mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
-echo "Cool. Done. Enjoy ${MKV_FILE}."
+cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}."
