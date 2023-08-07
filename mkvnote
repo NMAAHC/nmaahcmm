@@ -1,5 +1,77 @@
 #!/bin/bash
 
+_usage(){
+    echo
+    echo "$(basename "${0}")"
+    echo
+    echo "This application will embedded key:value pairs ("tags") into a Matroka file in accordance with NMAAHC guidelines."
+    echo
+    echo "Usage: $(basename ${0}) /path/to/file"
+    echo "  "
+    echo
+    echo "Some key:value pairs have controlled vocabulary."
+    echo
+    echo " identifier - free text. Enter in NMAAHC Object ID#. 
+    ex. 2012.79.1.16.1a"
+    echo
+    echo " alternate_identifier - free text. Enter in NMAAHC TR#. 
+    ex. TR2011-71.173"
+    echo
+    echo " title - free text. Please provide a title for this file. 
+    ex. Black Journal: Alice Coltrane"
+    echo
+    echo " content_description - free text. Please provide a brief description of the content in this file. 
+    ex. A segment from the public television series Black Journal focusing the life and music of Alice Coltrane 
+        and her children in the wake of the death of her husband, famed jazz musician John Coltrane.
+        This film was shot sometime during 1970; three years after the death of John Coltrane. 
+        She discusses her musical career and how she balances that with being a mother and paying tribute to her late husband, 
+        but also not wanting to be defined as an extension of John Coltrane's music."
+    echo
+    echo " originating_format - controlled vocab. Please choose the original format this file was dervived from.
+    controlled vocab list:
+        1 inch videotape
+        2 inch videotape
+        ½ inch videotape
+        U-matic
+        Betacam
+        Betamax
+        Digital Betacam
+        VHS
+        MiniDV
+        D2
+        DVD
+        Hi-8
+        8mm film
+        Super 8mm film
+        16mm film
+        Super 16mm film
+        35mm film"
+    echo    
+    echo " original_projection_speed - if the orginating format for this file was motion picture film, please provide a projection speed.
+    ex. 24fps, 18fps, etc." 
+    echo
+    echo "coding_history - please provide a coding history for this file. 
+    ex. O=VHS, C=Color, S=Analog, VS= NTSC, F=24, A=4:3, R=640×480, 
+    T=Sony SVO-5800, O=FFV1mkv, C=Color, V=Composite, S=Analog Stereo, 
+    F=24, A=4:3, W=10-bit, R=640×480, M=YUV422p10, T=Blackmagic UltraStudio 4K Mini SN123456, ffmpeg vrecord, in-house, 
+    O=FFV1mkv, W=10-bit, R640x480, MYUV422p10 N=Emily Nabasny"
+    echo
+    echo "camera_make_model - for files created from digital camera cards. controlled vocab.
+    controlled vocab list:
+        Canon C300
+        Canon C100"
+    echo
+    echo "camera_card_script - please enter the script used to repackage the original camera card into a NMAAHC AIP"
+    echo
+    echo "originator
+    ex. Smithsonian NMAAHC"
+    echo
+    echo "See the nmaachmm README for more information on package definitions."
+    echo
+    exit
+}
+[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
+
 _maketemp(){
     mktemp -q -t "$(basename "${0}")"
     if [ "${?}" -ne 0 ]; then
@@ -16,7 +88,7 @@ MKV_TAG_SET=(
     "originating_format"
     "original_projection_speed"
     "coding_history"
-    "camera_make_model"
+    "camera_make_model" 
     "camera_card_script"
     "originator"
     )
