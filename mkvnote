@@ -34,7 +34,7 @@ echo "# These tags semantically are intended to describe the file as a whole and
 echo "# Empty tags will be ignored." >> "${TAG_TEMPLATE}"
 echo >> "${TAG_TEMPLATE}"
 echo "# These tags already exist in the file. If you edit them here they will be overwritten when saved." >> "${TAG_TEMPLATE}"
-mkvextract tags "${MKV_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets)]/Simple" -v "Name" -o "=[" -v "String" -o "]" -n >> "${TAG_TEMPLATE}"
+mkvextract tags "${MKV_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -o "=[" -v "String" -o "]" -n >> "${TAG_TEMPLATE}"
 echo >> "${TAG_TEMPLATE}"
 echo "# These tags already exist in the file. If you edit them here they will be overwritten when saved." >> "${TAG_TEMPLATE}"
 
