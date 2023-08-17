@@ -146,7 +146,7 @@ _gather_file_lists(){
             fi
         done <"${TEMP_ALLFILES}"
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
-    elif [[ "${CAMERA_CARD_TYPE}" != "P2" ]] ; then
+    else
         find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
     fi
 }
