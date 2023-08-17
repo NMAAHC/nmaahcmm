@@ -90,7 +90,6 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
   -f FORMAT (choose the output format (as a file extension) for the rewrapping process, such as 'mxf' or 'mkv'. The default is set to match the input card set. Experimental.)
   -o AIP_DESTINATION (the output directory for the package); if not supplied, script will look for it in nmaahcconfig
-  -c combine multiple camera cards into one output package; script will ask you to drag in one at a time, or you can supply both
   -t tar camera files and folders into a tarball, compressed with gzip
   -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
   -n Do not actually package anything, but just show information about the input and what would happen.
@@ -127,10 +126,6 @@ _gather_file_lists(){
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
     if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
-            find "${CAMERA_CARD_DIR_2}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort >> "${TEMP_VIDEOLIST}"
-            find "${CAMERA_CARD_DIR_2}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort >> "${TEMP_AUDIOLIST}"
-        fi
         find "${CAMERA_CARD_DIR[@]}" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
         find "${CAMERA_CARD_DIR[@]}" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}" | sort > "${TEMP_AUDIOLIST}"
         cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
@@ -175,7 +170,7 @@ while getopts ":m:o:f:ctanh" OPT; do
         m) MEDIAID="${OPTARG}" ;;
         o) AIP_DESTINATION="${OPTARG}" ;;
         f) OUTPUT_EXTENSION="${OPTARG}" ;;
-        c) COMBINE_CAMERA_CARDS="YES" ;;
+        c) _report "The -c option (which combined 2 cards) is now removed. Please simply list as many camera cards as inputs as you need." ;;
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
         n) REPORT_ONLY="Y" ;;
@@ -202,20 +197,6 @@ for CARD_DIR in "${CAMERA_CARD_DIR[@]}" ; do
         exit 1
     fi
 done
-# repeat for combined camera cards
-if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
-    CAMERA_CARD_DIR_2="${2}"
-    if [[ -z "${CAMERA_CARD_DIR_2}" ]] ; then
-        _report -b "Drag in the second input directory or type 'q' to quit: "
-        read -e CAMERA_CARD_DIR_2
-        [[ "${CAMERA_CARD_DIR_2}" = "q" ]] && exit 0
-    fi
-    # check that camera card is a directory
-    if [[ ! -d "${CAMERA_CARD_DIR_2}" ]] ; then
-        _report -rt "ERROR: Input directory ${CAMERA_CARD_DIR} is not a directory. Exiting..."
-        exit 1
-    fi
-fi
 
 if [[ "${REPORT_ONLY}" != "Y" ]] ; then
     # ask for MEDIAID if it wasn't supplied
@@ -244,7 +225,6 @@ if [[ "${AIP}" == "YES" ]] ; then
         _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
         CAMERA_CARD_TYPE="AVCHD"
         CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR[1]}" -type d -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
-        if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then CAMERA_CARD_DIR_2="$(find "$CAMERA_CARD_DIR_2}" -type d -iname "BDMV" | head -n 1)" ; fi
         EXTENSION="mts"
         RSYNC_OPTIONS=(-iname "*.cpi")
     elif [[ -n "$(find "${CAMERA_CARD_DIR[1]}" -type d -iname "CLIPS001")" ]] ; then
@@ -268,12 +248,6 @@ if [[ "${AIP}" == "YES" ]] ; then
         EXTENSION="mp4"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
     fi
-fi
-# look in both camera card directories if supplied
-if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
-    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}" "${CAMERA_CARD_DIR_2}")
-else
-    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}")
 fi
 
 # create temp filelists for use during script
@@ -489,7 +463,6 @@ fi
 
 # record variables in ingest log
 _write_package_log "OPERATOR" "${OP}"
-if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then _write_package_log "CAMERA CARD DIRECTORY 2" "${CAMERA_CARD_DIR_2}" ; fi
 _write_package_log "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR[@]}"
 _write_package_log "MEDIAID" "${MEDIAID}"
 _write_package_log "OUTPUT DIRECTORY" "${AIPDIR}"
