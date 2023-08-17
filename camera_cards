@@ -227,7 +227,7 @@ if [[ -z "${AIP_DESTINATION}" ]] ; then
     [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
     # check that camera card is a directory
     if [[ ! -d "${AIP_DESTINATION}" ]] ; then
-        _report -rt "ERROR: Input directory ${AIP_DESTINATION} is not a directory. Exiting..."
+        _report -rt "ERROR: Output directory ${AIP_DESTINATION} is not a directory. Exiting..."
         exit 1
     fi
 fi
