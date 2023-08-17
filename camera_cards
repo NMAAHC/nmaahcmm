@@ -216,24 +216,24 @@ if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
 fi
 
 if [[ "${REPORT_ONLY}" != "Y" ]] ; then
-# ask for MEDIAID if it wasn't supplied
-if [[ -z "${MEDIAID}" ]] ; then
-    _report -b -n "Enter a unique package name or 'q' to quit: "
-    read -e MEDIAID
-    [[ "${MEDIAID}" = "q" ]] && exit 0
-fi
-# ask for AIP_DESTINATION if it wasn't supplied
-if [[ -z "${AIP_DESTINATION}" ]] ; then
-    _report -b -n "Provide the destination for the resulting package or 'q' to quit: "
-    read -e AIP_DESTINATION
-    echo
-    [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
-    # check that camera card is a directory
-    if [[ ! -d "${AIP_DESTINATION}" ]] ; then
-        _report -rt "ERROR: Output directory ${AIP_DESTINATION} is not a directory. Exiting..."
-        exit 1
+    # ask for MEDIAID if it wasn't supplied
+    if [[ -z "${MEDIAID}" ]] ; then
+        _report -b -n "Enter a unique package name or 'q' to quit: "
+        read -e MEDIAID
+        [[ "${MEDIAID}" = "q" ]] && exit 0
     fi
-fi
+    # ask for AIP_DESTINATION if it wasn't supplied
+    if [[ -z "${AIP_DESTINATION}" ]] ; then
+        _report -b -n "Provide the destination for the resulting package or 'q' to quit: "
+        read -e AIP_DESTINATION
+        echo
+        [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
+        # check that camera card is a directory
+        if [[ ! -d "${AIP_DESTINATION}" ]] ; then
+            _report -rt "ERROR: Output directory ${AIP_DESTINATION} is not a directory. Exiting..."
+            exit 1
+        fi
+    fi
 fi
 
 # detect camera card structure based on directory name and structure
