@@ -38,7 +38,7 @@ while getopts ":ath" OPT ; do
 done
 
 #_config_edit(){
-#    [ -z "${1}" -o -z "${2}" ] && { _report -w "The config_edit function requires two arguments. Error." ; exit ;};
+#    [ -z "${1}" -o -z "${2}" ] && { _report -r "The config_edit function requires two arguments. Error." ; exit ;};
 #    SEDTEMP=$(_maketemp)
 #    sed "s:^${1}=[^ ]*:$1=$2:" "${GM_CONFIG_FILE}" > "${SEDTEMP}"
 #    cp "${SEDTEMP}" "${GM_CONFIG_FILE}"
@@ -285,7 +285,7 @@ else
     for KEY in "${REQUIRED_VARIABLES[@]}" ; do
         _add_key "${KEY}"
     done
-    _report -d "Table of existing variables:"
+    _report -g "Table of existing variables:"
     for KEY in "${REQUIRED_VARIABLES[@]}" ; do
         VALUE=$(grep "^${KEY}=" "${GM_CONFIG_FILE}" | cut -d= -f2)
         printf '\t%-40s %-40s\n' "${KEY}" "${VALUE}"
@@ -310,7 +310,7 @@ fi
 
 # test whether requested output directory exists
 if [[ ! -d "${GM_DIR}" ]] ; then
-    _report -w "${GM_DIR} is not a valid directory. Exiting..."
+    _report -r "${GM_DIR} is not a valid directory. Exiting..."
     exit 1
     _log -a "Process terminated by script (no valid directory at requested Great Migration location)."
 fi
