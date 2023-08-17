@@ -351,15 +351,15 @@ if [[ "${AIP}" == "YES" ]] ; then
 
     ## concatenate video files into a single file
     echo
-    _report -g "Concatenating video files into a ${OUTPUT_EXTENSION} file."
     FIRST_FILE="$(head -n 1 "${TEMP_VIDEOLIST}")"
-    if [[ -n "${OUTPUT_EXTENSION}" ]] ; then
-        OUTPUT_EXTENSION="${OUTPUT_EXTENSION}"
-    elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
-        OUTPUT_EXTENSION="${FIRST_FILE#*.}"
-    else
-        OUTPUT_EXTENSION="${EXTENSION}"
+    if [[ -z "${OUTPUT_EXTENSION}" ]] ; then
+        if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+            OUTPUT_EXTENSION="${FIRST_FILE#*.}"
+        else
+            OUTPUT_EXTENSION="${EXTENSION}"
+        fi
     fi
+    _report -g "Concatenating video files into a ${OUTPUT_EXTENSION} file."
     CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${OUTPUT_EXTENSION}"
 
     # create list of files to concatenate, formatted for ffmpeg
