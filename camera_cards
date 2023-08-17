@@ -3,7 +3,6 @@
 # a script to turn raw camera cards into SIPs
 
 # set script variables
-SCRIPTDIR=$(dirname "${0}")
 DEPENDENCIES=(ffmpeg md5sum tree mediaconch exiftool ffprobe)
 OP="${USER}"
 AIP="YES"
@@ -48,7 +47,6 @@ _report(){
     local NC="$(tput sgr0)"       # No Color
     local COLOR=""
     local STARTMESSAGE=""
-    local ENDMESSAGE=""
     local ECHOOPT=""
     OPTIND=1
     while getopts ":bgrstn" OPT; do
