@@ -93,6 +93,7 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -c combine multiple camera cards into one output package; script will ask you to drag in one at a time, or you can supply both
   -t tar camera files and folders into a tarball, compressed with gzip
   -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
+  -n Do not actually package anything, but just show information about the input and what would happen.
   -h display this help
 
 EOF
@@ -169,7 +170,7 @@ _print_table(){
 }
 # getopts loop
 OPTIND=1
-while getopts ":m:o:f:ctah" OPT; do
+while getopts ":m:o:f:ctanh" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         o) AIP_DESTINATION="${OPTARG}" ;;
@@ -177,6 +178,7 @@ while getopts ":m:o:f:ctah" OPT; do
         c) COMBINE_CAMERA_CARDS="YES" ;;
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
+        n) REPORT_ONLY="Y" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
@@ -213,6 +215,7 @@ if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
     fi
 fi
 
+if [[ "${REPORT_ONLY}" != "Y" ]] ; then
 # ask for MEDIAID if it wasn't supplied
 if [[ -z "${MEDIAID}" ]] ; then
     _report -b -n "Enter a unique package name or 'q' to quit: "
@@ -230,6 +233,7 @@ if [[ -z "${AIP_DESTINATION}" ]] ; then
         _report -rt "ERROR: Output directory ${AIP_DESTINATION} is not a directory. Exiting..."
         exit 1
     fi
+fi
 fi
 
 # detect camera card structure based on directory name and structure
@@ -278,6 +282,11 @@ TEMP_METADATALIST="$(_maketemp)"
 TEMP_AVLIST="$(_maketemp)"
 TEMP_ALLFILES="$(_maketemp)"
 
+if [[ "${REPORT_ONLY}" = "Y" ]] ; then
+    _gather_file_lists
+    _print_table
+    exit 0
+fi
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     CAMERA_CARD_TYPE="GENERAL"
     _report -b "Camera card type not identified!"
