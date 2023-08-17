@@ -59,7 +59,7 @@ _report(){
             n) ECHOOPT="-n" ;;                            # to avoid line breaks after echo
         esac
     done
-    shift $(( ${OPTIND} - 1 ))
+    shift $(( OPTIND - 1 ))
     MESSAGE="${1}"
     echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]} ${MESSAGE}${NC}"
 }
