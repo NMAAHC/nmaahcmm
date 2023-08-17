@@ -19,7 +19,7 @@ _generate_metadata(){
     _report -g "Generating metadata reports..."
     # create tree of all files in package
     TREE="${METADATA_REPORTS_DIR}/${MEDIAID}_tree.txt"
-    tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR}" > "${TREE}"
+    tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR[@]}" > "${TREE}"
     # create mediainfo, exiftool, ffprobe reports
     while read -r FILE ; do
         FN="$(basename "${FILE}")"
@@ -86,7 +86,7 @@ The AIP_DESTINATION can be set via nmaahcconfig, or via the -o options, or the s
 
 Dependencies: ${DEPENDENCIES[@]}
 
-Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2 ]
+Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2... ]
   -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
   -f FORMAT (choose the output format (as a file extension) for the rewrapping process, such as 'mxf' or 'mkv'. The default is set to match the input card set. Experimental.)
   -o AIP_DESTINATION (the output directory for the package); if not supplied, script will look for it in nmaahcconfig
@@ -127,15 +127,15 @@ _gather_file_lists(){
     ## create metadata reports for original package and audiovisual files
     # generate lists of audiovisual files
     if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
-        find "${CAMERA_CARD_DIR}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
-        find "${CAMERA_CARD_DIR}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort > "${TEMP_AUDIOLIST}"
         if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
             find "${CAMERA_CARD_DIR_2}/CONTENTS/VIDEO" -iname "*.${EXTENSION}" | sort >> "${TEMP_VIDEOLIST}"
             find "${CAMERA_CARD_DIR_2}/CONTENTS/AUDIO" -iname "*.${EXTENSION}" | sort >> "${TEMP_AUDIOLIST}"
         fi
+        find "${CAMERA_CARD_DIR[@]}" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR[@]}" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}" | sort > "${TEMP_AUDIOLIST}"
         cat "${TEMP_VIDEOLIST}" "${TEMP_AUDIOLIST}" > "${TEMP_AVLIST}"
     elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
+        find "${CAMERA_CARD_DIR[@]}" -type f > "${TEMP_ALLFILES}"
         # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
         while read FILE ; do
             if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
@@ -148,7 +148,7 @@ _gather_file_lists(){
         done <"${TEMP_ALLFILES}"
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
     else
-        find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
+        find "${CAMERA_CARD_DIR[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
     fi
 }
 
@@ -188,18 +188,20 @@ shift $(( OPTIND - 1 ))
 trap _cleanup SIGHUP SIGINT SIGTERM # "termination signals" that ask the system to clean up and safely kill the ongoing process, with increasing urgency
 
 # check for unassigned variables
-CAMERA_CARD_DIR="${1}"
+CAMERA_CARD_DIR=("${@}")
 # ask for camera card if it wasn't supplied
-if [[ -z "${CAMERA_CARD_DIR}" ]] ; then
+if [[ -z "${CAMERA_CARD_DIR[1]}" ]] ; then
     _report -b "Drag in the input directory or type 'q' to quit: "
     read -e CAMERA_CARD_DIR
     [[ "${CAMERA_CARD_DIR}" = "q" ]] && exit 0
 fi
-# check that camera card is a directory
-if [[ ! -d "${CAMERA_CARD_DIR}" ]] ; then
-    _report -rt "ERROR: Input directory ${CAMERA_CARD_DIR} is not a directory. Exiting..."
-    exit 1
-fi
+# check that each camera card is a directory
+for CARD_DIR in "${CAMERA_CARD_DIR[@]}" ; do
+    if [[ ! -d "${CARD_DIR}" ]] ; then
+        _report -rt "ERROR: Input directory ${CAMERA_CARD_DIR} is not a directory. Exiting..."
+        exit 1
+    fi
+done
 # repeat for combined camera cards
 if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
     CAMERA_CARD_DIR_2="${2}"
@@ -238,29 +240,29 @@ fi
 
 # detect camera card structure based on directory name and structure
 if [[ "${AIP}" == "YES" ]] ; then
-    if [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "BDMV" | head -n 1)" ]] ; then
+    if [[ -n "$(find "${CAMERA_CARD_DIR[1]}" -type d -iname "BDMV" | head -n 1)" ]] ; then
         _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
         CAMERA_CARD_TYPE="AVCHD"
-        CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR}" -type d -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
+        CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR[1]}" -type d -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
         if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then CAMERA_CARD_DIR_2="$(find "$CAMERA_CARD_DIR_2}" -type d -iname "BDMV" | head -n 1)" ; fi
         EXTENSION="mts"
         RSYNC_OPTIONS=(-iname "*.cpi")
-    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "CLIPS001")" ]] ; then
+    elif [[ -n "$(find "${CAMERA_CARD_DIR[1]}" -type d -iname "CLIPS001")" ]] ; then
         _report -g "Camera card type identified: Canon XF (e.g. Canon C300)"
         CAMERA_CARD_TYPE="MXF"
         EXTENSION="mxf"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
-    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type f -iname "LASTCLIP.TXT")" ]] ; then
+    elif [[ -n "$(find "${CAMERA_CARD_DIR[1]}" -type f -iname "LASTCLIP.TXT")" ]] ; then
         _report -g "Camera card type identified: P2 (Panasonic brand)"
         CAMERA_CARD_TYPE="P2"
         EXTENSION="mxf"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.txt" -o -ipath "VOICE" \))
-    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "XDROOT")" ]] ; then
+    elif [[ -n "$(find "${CAMERA_CARD_DIR[1]}" -type d -iname "XDROOT")" ]] ; then
         _report -g "Camera card type identified: XAVC (Sony brand)"
         CAMERA_CARD_TYPE="XAVC"
         EXTENSION="mxf"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
-    elif [[ -n "$(find "${CAMERA_CARD_DIR}" -type d -iname "BPAV")" ]] ; then
+    elif [[ -n "$(find "${CAMERA_CARD_DIR[1]}" -type d -iname "BPAV")" ]] ; then
         _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
         CAMERA_CARD_TYPE="XDCAMEX"
         EXTENSION="mp4"
@@ -353,7 +355,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     CAMERA_CARD_METADATA2KEEP=()
     while read METADATA_FILE ; do
         CAMERA_CARD_METADATA2KEEP+=("${METADATA_FILE}")
-    done < <(find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f "${RSYNC_OPTIONS[@]}")
+    done < <(find "${CAMERA_CARD_DIR[@]}" -type f "${RSYNC_OPTIONS[@]}")
     while read METADATA_FILE ; do
         CAMERA_CARD_METADATA2KEEP+=("${METADATA_FILE}")
     done <"${TEMP_METADATALIST}"
@@ -464,7 +466,7 @@ fi
 if [[ "${TAR}" == "YES" ]] ; then
     ## create metadata reports for original package and audiovisual files
     # identify all files with a video or audio track; sort video and audio files into separate lists, and all other files into a list of metadata files
-    find "${CAMERA_CARD_DIRS_TO_SEARCH[@]}" -type f > "${TEMP_ALLFILES}"
+    find "${CAMERA_CARD_DIR[@]}" -type f > "${TEMP_ALLFILES}"
     while read FILE ; do
         if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] || [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
             echo "${FILE}" >> "${TEMP_AVLIST}"
@@ -487,8 +489,8 @@ fi
 
 # record variables in ingest log
 _write_package_log "OPERATOR" "${OP}"
-_write_package_log "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR}"
 if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then _write_package_log "CAMERA CARD DIRECTORY 2" "${CAMERA_CARD_DIR_2}" ; fi
+_write_package_log "CAMERA CARD DIRECTORY" "${CAMERA_CARD_DIR[@]}"
 _write_package_log "MEDIAID" "${MEDIAID}"
 _write_package_log "OUTPUT DIRECTORY" "${AIPDIR}"
 _write_package_log "CAMERA CARD TYPE" "${CAMERA_CARD_TYPE}"
