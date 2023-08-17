@@ -263,6 +263,21 @@ if [[ "${AIP}" == "YES" ]] ; then
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
     fi
 fi
+# look in both camera card directories if supplied
+if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
+    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}" "${CAMERA_CARD_DIR_2}")
+else
+    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}")
+fi
+
+# create temp filelists for use during script
+TEMP_VIDEOLIST="$(_maketemp)"
+TEMP_AUDIOLIST="$(_maketemp)"
+TEMP_CONCATLIST="$(_maketemp)"
+TEMP_METADATALIST="$(_maketemp)"
+TEMP_AVLIST="$(_maketemp)"
+TEMP_ALLFILES="$(_maketemp)"
+
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     CAMERA_CARD_TYPE="GENERAL"
     _report -b "Camera card type not identified!"
@@ -287,14 +302,6 @@ if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     done
 fi
 
-# create temp filelists for use during script
-TEMP_VIDEOLIST="$(_maketemp)"
-TEMP_AUDIOLIST="$(_maketemp)"
-TEMP_CONCATLIST="$(_maketemp)"
-TEMP_METADATALIST="$(_maketemp)"
-TEMP_AVLIST="$(_maketemp)"
-TEMP_ALLFILES="$(_maketemp)"
-
 # note the time we start working on the AIP
 START_TIME="$(date +%FT%T)"
 
@@ -304,12 +311,6 @@ METADATADIR="${AIPDIR}/metadata"
 LOG="${METADATADIR}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 METADATA_REPORTS_DIR="${METADATADIR}/reports"
 METADATA_ORIGINAL_CAMERA_FILES_DIR="${METADATADIR}/original_camera_files"
-# look in both camera card directories if supplied
-if [[ "${COMBINE_CAMERA_CARDS}" == "YES" ]] ; then
-    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}" "${CAMERA_CARD_DIR_2}")
-else
-    CAMERA_CARD_DIRS_TO_SEARCH=("${CAMERA_CARD_DIR}")
-fi
 if [[ -d "${AIPDIR}" ]] ; then
     _report -rt "ERROR: Output directory ${AIPDIR} already exists! Exiting to avoid overwriting..."
     exit 1
