@@ -34,7 +34,7 @@ while getopts ":ath" OPT ; do
 done
 
 _config_edit(){
-    [ -z "${1}" -o -z "${2}" ] && { _report -w "The config_edit function requires two arguments. Error." ; exit ;};
+    [ -z "${1}" -o -z "${2}" ] && { _report -r "The config_edit function requires two arguments. Error." ; exit ;};
     SEDTEMP=$(_maketemp)
     sed "s:^${1}=[^ ]*:$1=$2:" "${NMAAHCMM_CONFIG_FILE}" > "${SEDTEMP}"
     cp "${SEDTEMP}" "${NMAAHCMM_CONFIG_FILE}"
@@ -43,7 +43,7 @@ _config_edit(){
 _test_config(){
     for DIRECTORYVARIABLE in LOGDIR DPX_DESTINATION DRIVE_CONTENTS_DESTINATION AIP_DESTINATION ; do
         if [ ! -d "${!DIRECTORYVARIABLE}" ] ; then
-            _report -w "${DIRECTORYVARIABLE} is NOT a valid directory"
+            _report -r "${DIRECTORYVARIABLE} is NOT a valid directory"
         fi
     done
 }

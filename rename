@@ -42,14 +42,14 @@ done
 echo
 for A_FILE in "${SO_MANY_FILES[@]}" ; do
     if [[ ! -f "${A_FILE}" ]] ; then
-        _report -w "Error: ${A_FILE} is not a file. Stopping."
+        _report -r "Error: ${A_FILE} is not a file. Stopping."
         exit 1
     fi
 done
 
 for A_FILE in "${SO_MANY_FILES[@]}" ; do
     if [[ ! -r "${A_FILE}" ]] ; then
-        _report -w "Error: ${A_FILE} is not readable. Stopping."
+        _report -r "Error: ${A_FILE} is not readable. Stopping."
         exit 1
     fi
 done

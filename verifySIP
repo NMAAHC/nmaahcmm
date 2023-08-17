@@ -74,7 +74,7 @@ _runtest(){
     RUN_ERR="${?}" # any stderr output by the xpath function
     if [[ "${RUN_ERR}" != 0 ]] ; then
         printf "${LABEL}" # the error message associated with each xpath query
-        _report -wt "ERROR: Running: \"${*}\" gave Error Code ${RUN_ERR}"
+        _report -rt "ERROR: Running: \"${*}\" gave Error Code ${RUN_ERR}"
         echo "${XMLRESULT}"
     fi
     # if the xpath statement finds a file that the test is looking for (default test); || OR if the xpath statement does NOT find a file and the test is NOT looking for one (inverted test);
