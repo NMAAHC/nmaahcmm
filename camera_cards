@@ -147,18 +147,44 @@ _gather_file_lists(){
     fi
 }
 
+_convert_hhmmssmmm2ns(){
+    TS="${1}"
+    echo "${TS}" | awk -F ":" '{ printf "%8i\n", (($1 * 3600) + ($2 * 60) + $3 ) * 100000}'
+}
+
 _print_table(){
+    # this prints a table of files but also creates a chapter list at the same time
     TABLE="$1"
+    CHAPTER_LIST="$(_maketemp).ffmetadata"
+    echo ";FFMETADATA1" > "${CHAPTER_LIST}"
     if [[ -z "${TABLE}" ]] ; then
         TABLE="${TEMP_VIDEOLIST}"
     fi
     C=1
+    START_VALUE=0
+    END_VALUE=0
     echo
     echo "Index#   File Name                    Modification Date     Duration            Timecode"
     while read TABLE_FILE ; do
         FILENAME="$(basename "${TABLE_FILE}")"
         IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${TABLE_FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
         printf '%-3s %32s %20s %16s %16s\n'  "${C}" "${FILENAME}" "${MOD_TS%.*}" "${DURATION}" "${TC}"
+        echo "[CHAPTER]" >> "${CHAPTER_LIST}"
+        echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
+        DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
+        END_VALUE=$((END_VALUE + DURATION_S))
+        echo "START=${START_VALUE}" >> "${CHAPTER_LIST}"
+        echo "END=${END_VALUE}" >> "${CHAPTER_LIST}"
+        START_VALUE=$((START_VALUE + DURATION_S))
+        if [[ -n "${MOD_TS}" && -n "${TC}" ]] ; then
+            echo "title=${FILENAME}: ${TC} - ${MOD_TS}" >> "${CHAPTER_LIST}"
+        elif [[ -n "${MOD_TS}" ]] ; then
+            echo "title=${FILENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
+        elif [[ -n "${TC}" ]] ; then
+            echo "title=${FILENAME}: ${TC}" >> "${CHAPTER_LIST}"
+        else
+            echo "title=${FILENAME}" >> "${CHAPTER_LIST}"
+        fi
         ((C++))
     done < "${TABLE}"
     echo
