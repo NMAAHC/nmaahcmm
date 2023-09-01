@@ -140,6 +140,8 @@ _gather_file_lists(){
             fi
         done <"${TEMP_ALLFILES}"
         sort -o "${TEMP_VIDEOLIST}" "${TEMP_VIDEOLIST}" # sort video list by filename; this is presumed to retain original file structure
+    elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
+        find "${CAMERA_CARD_DIR[@]}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" | sort > "${TEMP_VIDEOLIST}"
     else
         find "${CAMERA_CARD_DIR[@]}" -iname "*.${EXTENSION}" | sort > "${TEMP_VIDEOLIST}"
     fi
@@ -235,10 +237,32 @@ if [[ "${AIP}" == "YES" ]] ; then
         CAMERA_CARD_TYPE="P2"
         EXTENSION="mxf"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.txt" -o -ipath "VOICE" \))
-    elif [[ -n "$(find "${CAMERA_CARD_DIR[0]}" -type d -iname "XDROOT")" ]] ; then
+    elif [[ -n "$(find "${CAMERA_CARD_DIR[0]}" \( -type d -iname "XDROOT" \) -o \( -type f -name "DISCMETA.XML" \) )" ]] ; then
         _report -g "Camera card type identified: XAVC (Sony brand)"
         CAMERA_CARD_TYPE="XAVC"
         EXTENSION="mxf"
+        # example (from an XDCam disc loaded with proav disabled):
+        #├── ALIAS.XML
+        #├── Clip
+        #│   ├── C0001.MXF
+        #│   ├── C0001M01.XML
+        #│   ├── C0002.MXF
+        #│   ├── C0002M01.XML
+        #│   ├── C0003.MXF
+        #│   └── C0003M01.XML
+        #├── Component
+        #├── DISCMETA.XML
+        #├── Edit
+        #├── General
+        #│   └── Sony
+        #│       └── Planning
+        #├── INDEX.XML
+        #├── MEDIAPRO.XML
+        #├── SYSPRO.XML
+        #├── Sub
+        #│   ├── C0001S01.MXF
+        #│   ├── C0002S01.MXF
+        #│   └── C0003S0
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
     elif [[ -n "$(find "${CAMERA_CARD_DIR[0]}" -type d -iname "BPAV")" ]] ; then
         _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
