@@ -164,11 +164,11 @@ _print_table(){
     START_VALUE=0
     END_VALUE=0
     echo
-    echo "Index#   File Name                    Modification Date     Duration            Timecode"
+    echo "Index#  File Name                    Modification Date     Duration            Timecode"
     while read TABLE_FILE ; do
         FILENAME="$(basename "${TABLE_FILE}")"
         IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${TABLE_FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
-        printf '%-3s %32s %20s %16s %16s\n'  "${C}" "${FILENAME}" "${MOD_TS%.*}" "${DURATION}" "${TC}"
+        printf '%-7s %-27s %20s %16s %16s\n'  "${C}" "${FILENAME}" "${MOD_TS%.*}" "${DURATION}" "${TC}"
         echo "[CHAPTER]" >> "${CHAPTER_LIST}"
         echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
         DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
