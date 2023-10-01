@@ -243,6 +243,60 @@ _print_table(){
     done < <(_read_inventory -f ",video," "FILE_NAME")
     echo
 }
+
+_identify_card_type(){
+    CARD="${1}"
+    if [[ -n "$(find "${CARD}" -type d -iname "BDMV" | head -n 1)" ]] ; then
+        _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
+        CAMERA_CARD_TYPE="AVCHD"
+        CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR[0]}" -type d -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
+        EXTENSION="mts"
+        RSYNC_OPTIONS=(-iname "*.cpi")
+    elif [[ -n "$(find "${CARD}" -type d -iname "CLIPS001")" ]] ; then
+        _report -g "Camera card type identified: Canon XF (e.g. Canon C300)"
+        CAMERA_CARD_TYPE="MXF"
+        EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
+    elif [[ -n "$(find "${CARD}" -type f -iname "LASTCLIP.TXT")" ]] ; then
+        _report -g "Camera card type identified: P2 (Panasonic brand)"
+        CAMERA_CARD_TYPE="P2"
+        EXTENSION="mxf"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.txt" -o -ipath "VOICE" \))
+    elif [[ -n "$(find "${CARD}" \( -type d -iname "XDROOT" \) -o \( -type f -name "DISCMETA.XML" \) )" ]] ; then
+        _report -g "Camera card type identified: XAVC (Sony brand)"
+        CAMERA_CARD_TYPE="XAVC"
+        EXTENSION="mxf"
+        # example (from an XDCam disc loaded with proav disabled):
+        #├── ALIAS.XML
+        #├── Clip
+        #│   ├── C0001.MXF
+        #│   ├── C0001M01.XML
+        #│   ├── C0002.MXF
+        #│   ├── C0002M01.XML
+        #│   ├── C0003.MXF
+        #│   └── C0003M01.XML
+        #├── Component
+        #├── DISCMETA.XML
+        #├── Edit
+        #├── General
+        #│   └── Sony
+        #│       └── Planning
+        #├── INDEX.XML
+        #├── MEDIAPRO.XML
+        #├── SYSPRO.XML
+        #├── Sub
+        #│   ├── C0001S01.MXF
+        #│   ├── C0002S01.MXF
+        #│   └── C0003S0
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
+    elif [[ -n "$(find "${CARD}" -type d -iname "BPAV")" ]] ; then
+        _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
+        CAMERA_CARD_TYPE="XDCAMEX"
+        EXTENSION="mp4"
+        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
+    fi
+}
+
 # getopts loop
 OPTIND=1
 while getopts ":m:o:f:ctanh" OPT; do
@@ -298,59 +352,6 @@ if [[ "${REPORT_ONLY}" != "Y" ]] ; then
         fi
     fi
 fi
-
-_identify_card_type(){
-    CARD="${1}"
-    if [[ -n "$(find "${CARD}" -type d -iname "BDMV" | head -n 1)" ]] ; then
-        _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
-        CAMERA_CARD_TYPE="AVCHD"
-        CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR[0]}" -type d -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
-        EXTENSION="mts"
-        RSYNC_OPTIONS=(-iname "*.cpi")
-    elif [[ -n "$(find "${CARD}" -type d -iname "CLIPS001")" ]] ; then
-        _report -g "Camera card type identified: Canon XF (e.g. Canon C300)"
-        CAMERA_CARD_TYPE="MXF"
-        EXTENSION="mxf"
-        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
-    elif [[ -n "$(find "${CARD}" -type f -iname "LASTCLIP.TXT")" ]] ; then
-        _report -g "Camera card type identified: P2 (Panasonic brand)"
-        CAMERA_CARD_TYPE="P2"
-        EXTENSION="mxf"
-        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.txt" -o -ipath "VOICE" \))
-    elif [[ -n "$(find "${CARD}" \( -type d -iname "XDROOT" \) -o \( -type f -name "DISCMETA.XML" \) )" ]] ; then
-        _report -g "Camera card type identified: XAVC (Sony brand)"
-        CAMERA_CARD_TYPE="XAVC"
-        EXTENSION="mxf"
-        # example (from an XDCam disc loaded with proav disabled):
-        #├── ALIAS.XML
-        #├── Clip
-        #│   ├── C0001.MXF
-        #│   ├── C0001M01.XML
-        #│   ├── C0002.MXF
-        #│   ├── C0002M01.XML
-        #│   ├── C0003.MXF
-        #│   └── C0003M01.XML
-        #├── Component
-        #├── DISCMETA.XML
-        #├── Edit
-        #├── General
-        #│   └── Sony
-        #│       └── Planning
-        #├── INDEX.XML
-        #├── MEDIAPRO.XML
-        #├── SYSPRO.XML
-        #├── Sub
-        #│   ├── C0001S01.MXF
-        #│   ├── C0002S01.MXF
-        #│   └── C0003S0
-        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
-    elif [[ -n "$(find "${CARD}" -type d -iname "BPAV")" ]] ; then
-        _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
-        CAMERA_CARD_TYPE="XDCAMEX"
-        EXTENSION="mp4"
-        RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
-    fi
-}
 
 # create temp filelists for use during script
 FILE_INVENTORY="$(_maketemp).csv"
