@@ -220,15 +220,13 @@ _print_table(){
     # this prints a table of files but also creates a chapter list at the same time
     CHAPTER_LIST="$(_maketemp).ffmetadata"
     echo ";FFMETADATA1" > "${CHAPTER_LIST}"
-    C=1
     START_VALUE=0
     END_VALUE=0
     echo
     echo "Index#  File Name                    Modification Date     Duration            Timecode"
-    while read TABLE_FILE ; do
-        FILENAME="$(basename "${TABLE_FILE}")"
-        IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${TABLE_FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
-        printf '%-7s %-27s %20s %16s %16s\n'  "${C}" "${FILENAME}" "${MOD_TS%.*}" "${DURATION}" "${TC}"
+    while IFS=, read -r CARD_NUM CARD_TYPE VIDEO_NUM FILE_NUM MEDIA_TYPE DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TIMECODE FILE_NAME ; do
+        FILEBASENAME="$(basename "${FILE_NAME}")"
+        printf '%-7s %-27s %20s %16s %16s\n'  "${VIDEO_NUM}" "${FILEBASENAME}" "${MOD_TS%.*}" "${DURATION}" "${TIMECODE}"
         echo "[CHAPTER]" >> "${CHAPTER_LIST}"
         echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
         DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
@@ -237,16 +235,15 @@ _print_table(){
         echo "END=${END_VALUE}" >> "${CHAPTER_LIST}"
         START_VALUE=$((START_VALUE + DURATION_S))
         if [[ -n "${MOD_TS}" && -n "${TC}" ]] ; then
-            echo "title=${FILENAME}: ${TC} - ${MOD_TS}" >> "${CHAPTER_LIST}"
+            echo "title=${FILEBASENAME}: ${TC} - ${MOD_TS}" >> "${CHAPTER_LIST}"
         elif [[ -n "${MOD_TS}" ]] ; then
-            echo "title=${FILENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
-        elif [[ -n "${TC}" ]] ; then
-            echo "title=${FILENAME}: ${TC}" >> "${CHAPTER_LIST}"
+            echo "title=${FILEBASENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
+        elif [[ -n "${TIMECODE}" ]] ; then
+            echo "title=${FILEBASENAME}: ${TIMECODE}" >> "${CHAPTER_LIST}"
         else
-            echo "title=${FILENAME}" >> "${CHAPTER_LIST}"
+            echo "title=${FILEBASENAME}" >> "${CHAPTER_LIST}"
         fi
-        ((C++))
-    done < <(_read_inventory -f ",video," "FILE_NAME")
+    done < <(tail -n +2 "${FILE_INVENTORY}" | grep ",video,")
     echo
 }
 
