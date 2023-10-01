@@ -332,6 +332,16 @@ for CARD_DIR in "${CAMERA_CARD_DIR[@]}" ; do
     fi
 done
 
+# create temp filelists for use during script
+FILE_INVENTORY="$(_maketemp).csv"
+TEMP_CONCATLIST="$(_maketemp).ffconcat"
+
+_make_inventory
+_print_table
+if [[ "${REPORT_ONLY}" = "Y" ]] ; then
+    exit 0
+fi
+
 if [[ "${REPORT_ONLY}" != "Y" ]] ; then
     # ask for MEDIAID if it wasn't supplied
     if [[ -z "${MEDIAID}" ]] ; then
@@ -353,15 +363,6 @@ if [[ "${REPORT_ONLY}" != "Y" ]] ; then
     fi
 fi
 
-# create temp filelists for use during script
-FILE_INVENTORY="$(_maketemp).csv"
-TEMP_CONCATLIST="$(_maketemp).ffconcat"
-
-if [[ "${REPORT_ONLY}" = "Y" ]] ; then
-    _make_inventory
-    _print_table
-    exit 0
-fi
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     CAMERA_CARD_TYPE="GENERAL"
     _report -b "Camera card type not identified!"
@@ -421,8 +422,6 @@ if [[ "${AIP}" == "YES" ]] ; then
         AIPDIR_AIP="${AIPDIR}/objects"
     fi
     mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
-    _make_inventory
-    _print_table
     # copy selected original metadata files to AIP
     _report -g "Moving significant camera-generated metadata files to AIP..."
     CAMERA_CARD_METADATA2KEEP=()
