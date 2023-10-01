@@ -146,7 +146,12 @@ _read_inventory(){
 }
 
 _make_inventory(){
-    echo "CARD_NUM,CARD_TYPE,VIDEO_NUM,FILE_NUM,MEDIA_TYPE,FILE_NAME" > "${FILE_INVENTORY}"
+    _catalog_video(){
+        FILE="${1}"
+        IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
+        echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${DURATION},${COMPANY_NAME},${PRODUCT_NAME},${MOD_TS},${TC},${FILE}" >> "${FILE_INVENTORY}"
+    }
+    echo "CARD_NUM,CARD_TYPE,VIDEO_NUM,FILE_NUM,MEDIA_TYPE,DURATION,COMPANY_NAME,PRODUCT_NAME,MOD_TS,TIMECODE,FILE_NAME" > "${FILE_INVENTORY}"
     CARD_NUM=1
     VIDEO_NUM=1
     FILE_NUM=1
@@ -154,7 +159,7 @@ _make_inventory(){
         _identify_card_type "${CARD}"
         if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
             while read FILE ; do
-                echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${FILE}" >> "${FILE_INVENTORY}"
+                _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
             done < <(find "${CARD}" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}")
@@ -165,39 +170,40 @@ _make_inventory(){
         elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
             while read FILE ; do
                 if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
-                    echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${FILE}" >> "${FILE_INVENTORY}"
+                    IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
+                    echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${DURATION},${COMPANY_NAME},${PRODUCT_NAME},${MOD_TS},${TC},${FILE}" >> "${FILE_INVENTORY}"
                     ((VIDEO_NUM++))
                     ((FILE_NUM++))
                 elif [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
-                    echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},audio,${FILE}" >> "${FILE_INVENTORY}"
+                    echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},audio,,,,,,${FILE}" >> "${FILE_INVENTORY}"
                     ((FILE_NUM++))
                 elif [[ -f "${FILE}" ]] ; then
-                    echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,${FILE}" >> "${FILE_INVENTORY}"
+                    echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,,,,,,${FILE}" >> "${FILE_INVENTORY}"
                     ((FILE_NUM++))
                 fi
                 ((FILE_NUM++))
             done < <(find "${CARD}" -type f)
         elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
             while read FILE ; do
-                echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${FILE}" >> "${FILE_INVENTORY}"
+                _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
             done < <(find "${CARD}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f)
         else
             while read FILE ; do
-                echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${FILE}" >> "${FILE_INVENTORY}"
+                _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
             done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f)
         fi
         while read FILE ; do
-            echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,${FILE}" >> "${FILE_INVENTORY}"
+            echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,,,,,,${FILE}" >> "${FILE_INVENTORY}"
             ((FILE_NUM++))
         done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}")
         # grab everything else
         while read FILE ; do
             if [[ -z "$(grep ",${FILE}$" "${FILE_INVENTORY}")" ]] ; then
-                echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},other,${FILE}" >> "${FILE_INVENTORY}"
+                echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},other,,,,,,${FILE}" >> "${FILE_INVENTORY}"
                 ((FILE_NUM++))
             fi
         done < <(find "${CARD}" ! -name ".DS_Store" -type f)
