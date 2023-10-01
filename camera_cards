@@ -154,12 +154,8 @@ _convert_hhmmssmmm2ns(){
 
 _print_table(){
     # this prints a table of files but also creates a chapter list at the same time
-    TABLE="$1"
     CHAPTER_LIST="$(_maketemp).ffmetadata"
     echo ";FFMETADATA1" > "${CHAPTER_LIST}"
-    if [[ -z "${TABLE}" ]] ; then
-        TABLE="${TEMP_VIDEOLIST}"
-    fi
     C=1
     START_VALUE=0
     END_VALUE=0
