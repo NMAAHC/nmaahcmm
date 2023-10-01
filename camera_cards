@@ -342,24 +342,24 @@ if [[ "${REPORT_ONLY}" = "Y" ]] ; then
     exit 0
 fi
 
-    # ask for MEDIAID if it wasn't supplied
-    if [[ -z "${MEDIAID}" ]] ; then
-        _report -b -n "Enter a unique package name or 'q' to quit: "
-        read -e MEDIAID
-        [[ "${MEDIAID}" = "q" ]] && exit 0
+# ask for MEDIAID if it wasn't supplied
+if [[ -z "${MEDIAID}" ]] ; then
+    _report -b -n "Enter a unique package name or 'q' to quit: "
+    read -e MEDIAID
+    [[ "${MEDIAID}" = "q" ]] && exit 0
+fi
+# ask for AIP_DESTINATION if it wasn't supplied
+if [[ -z "${AIP_DESTINATION}" ]] ; then
+    _report -b -n "Provide the destination for the resulting package or 'q' to quit: "
+    read -e AIP_DESTINATION
+    echo
+    [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
+    # check that camera card is a directory
+    if [[ ! -d "${AIP_DESTINATION}" ]] ; then
+        _report -rt "ERROR: Output directory ${AIP_DESTINATION} is not a directory. Exiting..."
+        exit 1
     fi
-    # ask for AIP_DESTINATION if it wasn't supplied
-    if [[ -z "${AIP_DESTINATION}" ]] ; then
-        _report -b -n "Provide the destination for the resulting package or 'q' to quit: "
-        read -e AIP_DESTINATION
-        echo
-        [[ "${AIP_DESTINATION}" = "q" ]] && exit 0
-        # check that camera card is a directory
-        if [[ ! -d "${AIP_DESTINATION}" ]] ; then
-            _report -rt "ERROR: Output directory ${AIP_DESTINATION} is not a directory. Exiting..."
-            exit 1
-        fi
-    fi
+fi
 
 if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
     CAMERA_CARD_TYPE="GENERAL"
