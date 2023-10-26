@@ -86,6 +86,9 @@ Dependencies: ${DEPENDENCIES[@]}
 
 Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/input/camera_card_directory [ /path/to/input/camera_card_directory_2... ]
   -m MEDIAID (type media id for final package, e.g. SC0001_20190101_SMITH_VHS_01)
+  -N <parts> (List the numbers of the clips that should be packaged.
+              Multiple clip numbers may be listed as comma-delimited ranges; for
+              instance "-N '1,3-5'" would output the 1st, 3rd, 4th, and 5th clips and not others.)
   -f FORMAT (choose the output format (as a file extension) for the rewrapping process, such as 'mxf' or 'mkv'. The default is set to match the input card set. Experimental.)
   -o AIP_DESTINATION (the output directory for the package); if not supplied, script will look for it in nmaahcconfig
   -t tar camera files and folders into a tarball, compressed with gzip
@@ -303,11 +306,37 @@ _identify_card_type(){
     fi
 }
 
+_check_if_in_list(){
+    VALUE="${1}"
+    LIST="${2}" # list is expected as comma-delimited
+    unset LIST_EXPANDED
+    # inspired by https://unix.stackexchange.com/posts/463617/revisions
+    IFS=',' read -a RANGES  <<< "${LIST}"
+    for RANGE in "${RANGES[@]}"; do
+        if [[ ${RANGE} == *"-"* ]] ; then
+            IFS=- read START END <<< "${RANGE}"
+            [ -z "${START}" ] && continue
+            [ -z "${END}" ] && end=$start
+            for (( i=START ; i <= END ; i++ )); do
+                LIST_EXPANDED+=",${i}"
+            done
+        else
+            LIST_EXPANDED+=",${RANGE}"
+        fi
+    done
+    if [[ ",${LIST_EXPANDED}," = *",${VALUE},"* ]] ; then
+        echo "y"
+    else
+        echo "n"
+    fi
+}
+
 # getopts loop
 OPTIND=1
-while getopts ":m:o:f:ctanh" OPT; do
+while getopts ":m:N:o:f:ctanh" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
+        N) CLIP_SELECTION="${OPTARG}" ;;
         o) AIP_DESTINATION="${OPTARG}" ;;
         f) OUTPUT_EXTENSION="${OPTARG}" ;;
         c) _report "The -c option (which combined 2 cards) is now removed. Please simply list as many camera cards as inputs as you need." ; exit ;;
@@ -459,9 +488,14 @@ if [[ "${AIP}" == "YES" ]] ; then
     CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${OUTPUT_EXTENSION}"
 
     # create list of files to concatenate, formatted for ffmpeg
-    while read FILE ; do
-        echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
-    done < <(_read_inventory -f ",video," "FILE_NAME" | head -n 1)
+    while read INVENTORY_ROW ; do
+        SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
+        FILE_NAME="$(echo "${INVENTORY_ROW}" | cut -d "," -f 11)"
+        if [[ -z "${CLIP_SELECTION}" || "$(_check_if_in_list "${SEG_NUMBER}" "${CLIP_SELECTION}")" == "y" ]] ; then
+            echo "file '${FILE_NAME}'" >> "${TEMP_CONCATLIST}"
+        fi
+    done < "${FILE_INVENTORY}"
+
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
