@@ -231,8 +231,13 @@ _print_table(){
     echo
     echo "Card#   Index#  File Name                    Modification Date     Duration            Timecode"
     while IFS=, read -r CARD_NUM CARD_TYPE VIDEO_NUM FILE_NUM MEDIA_TYPE DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TIMECODE FILE_NAME ; do
+        if [[ -z "${CLIP_SELECTION}" || "$(_check_if_in_list "${VIDEO_NUM}" "${CLIP_SELECTION}")" == "y" ]] ; then
+            VIDEO_NUM_EXT="${VIDEO_NUM}*"
+        else
+            VIDEO_NUM_EXT="${VIDEO_NUM}"
+        fi
         FILEBASENAME="$(basename "${FILE_NAME}")"
-        printf '%-7s %-7s %-27s %20s %16s %16s\n'  "${CARD_NUM}" "${VIDEO_NUM}" "${FILEBASENAME}" "${MOD_TS%.*}" "${DURATION}" "${TIMECODE}"
+        printf '%-7s %-7s %-27s %20s %16s %16s\n'  "${CARD_NUM}" "${VIDEO_NUM_EXT}" "${FILEBASENAME}" "${MOD_TS%.*}" "${DURATION}" "${TIMECODE}"
         echo "[CHAPTER]" >> "${CHAPTER_LIST}"
         echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
         DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
