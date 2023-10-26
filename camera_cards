@@ -307,7 +307,7 @@ while getopts ":m:o:f:ctanh" OPT; do
         m) MEDIAID="${OPTARG}" ;;
         o) AIP_DESTINATION="${OPTARG}" ;;
         f) OUTPUT_EXTENSION="${OPTARG}" ;;
-        c) _report "The -c option (which combined 2 cards) is now removed. Please simply list as many camera cards as inputs as you need." ;;
+        c) _report "The -c option (which combined 2 cards) is now removed. Please simply list as many camera cards as inputs as you need." ; exit ;;
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
         n) REPORT_ONLY="Y" ;;
