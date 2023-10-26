@@ -223,10 +223,10 @@ _print_table(){
     START_VALUE=0
     END_VALUE=0
     echo
-    echo "Index#  File Name                    Modification Date     Duration            Timecode"
+    echo "Card#   Index#  File Name                    Modification Date     Duration            Timecode"
     while IFS=, read -r CARD_NUM CARD_TYPE VIDEO_NUM FILE_NUM MEDIA_TYPE DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TIMECODE FILE_NAME ; do
         FILEBASENAME="$(basename "${FILE_NAME}")"
-        printf '%-7s %-27s %20s %16s %16s\n'  "${VIDEO_NUM}" "${FILEBASENAME}" "${MOD_TS%.*}" "${DURATION}" "${TIMECODE}"
+        printf '%-7s %-7s %-27s %20s %16s %16s\n'  "${CARD_NUM}" "${VIDEO_NUM}" "${FILEBASENAME}" "${MOD_TS%.*}" "${DURATION}" "${TIMECODE}"
         echo "[CHAPTER]" >> "${CHAPTER_LIST}"
         echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
         DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
