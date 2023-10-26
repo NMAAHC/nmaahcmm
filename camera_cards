@@ -162,11 +162,11 @@ _make_inventory(){
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}")
+            done < <(find "${CARD}" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}" | sort)
             while read FILE ; do
                 echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},audio,${FILE}" >> "${FILE_INVENTORY}"
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}")
+            done < <(find "${CARD}" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}" | sort)
         elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
             while read FILE ; do
                 if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
@@ -182,31 +182,31 @@ _make_inventory(){
                     ((FILE_NUM++))
                 fi
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -type f)
+            done < <(find "${CARD}" -type f | sort)
         elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f)
+            done < <(find "${CARD}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f | sort)
         else
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f)
+            done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f | sort)
         fi
         while read FILE ; do
             echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,,,,,,${FILE}" >> "${FILE_INVENTORY}"
             ((FILE_NUM++))
-        done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}")
+        done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}" | sort)
         # grab everything else
         while read FILE ; do
             if [[ -z "$(grep ",${FILE}$" "${FILE_INVENTORY}")" ]] ; then
                 echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},other,,,,,,${FILE}" >> "${FILE_INVENTORY}"
                 ((FILE_NUM++))
             fi
-        done < <(find "${CARD}" ! -name ".DS_Store" -type f)
+        done < <(find "${CARD}" ! -name ".DS_Store" -type f | sort)
         ((CARD_NUM++))
     done
 }
