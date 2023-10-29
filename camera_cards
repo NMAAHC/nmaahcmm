@@ -232,29 +232,30 @@ _print_table(){
     echo
     echo "Card#   Index#  File Name                    Modification Date     Duration            Timecode"
     while IFS=, read -r CARD_NUM CARD_TYPE VIDEO_NUM FILE_NUM MEDIA_TYPE DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TIMECODE FILE_NAME AUDIO_CODEC AUDIO_SAMPLE_FMT ; do
+        FILEBASENAME="$(basename "${FILE_NAME}")"
         if [[ -z "${CLIP_SELECTION}" || "$(_check_if_in_list "${VIDEO_NUM}" "${CLIP_SELECTION}")" == "y" ]] ; then
+            # this clip is selected for the output
             VIDEO_NUM_EXT="${VIDEO_NUM}*"
+            echo "[CHAPTER]" >> "${CHAPTER_LIST}"
+            echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
+            DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
+            END_VALUE=$((END_VALUE + DURATION_S))
+            echo "START=${START_VALUE}" >> "${CHAPTER_LIST}"
+            echo "END=${END_VALUE}" >> "${CHAPTER_LIST}"
+            START_VALUE=$((START_VALUE + DURATION_S))
+            if [[ -n "${MOD_TS}" && -n "${TIMECODE}" ]] ; then
+                echo "title=${FILEBASENAME}: ${TIMECODE} - ${MOD_TS}" >> "${CHAPTER_LIST}"
+            elif [[ -n "${MOD_TS}" ]] ; then
+                echo "title=${FILEBASENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
+            elif [[ -n "${TIMECODE}" ]] ; then
+                echo "title=${FILEBASENAME}: ${TIMECODE}" >> "${CHAPTER_LIST}"
+            else
+                echo "title=${FILEBASENAME}" >> "${CHAPTER_LIST}"
+            fi
         else
             VIDEO_NUM_EXT="${VIDEO_NUM}"
         fi
-        FILEBASENAME="$(basename "${FILE_NAME}")"
         printf '%-7s %-7s %-27s %20s %16s %16s\n'  "${CARD_NUM}" "${VIDEO_NUM_EXT}" "${FILEBASENAME}" "${MOD_TS%.*}" "${DURATION}" "${TIMECODE}"
-        echo "[CHAPTER]" >> "${CHAPTER_LIST}"
-        echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
-        DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
-        END_VALUE=$((END_VALUE + DURATION_S))
-        echo "START=${START_VALUE}" >> "${CHAPTER_LIST}"
-        echo "END=${END_VALUE}" >> "${CHAPTER_LIST}"
-        START_VALUE=$((START_VALUE + DURATION_S))
-        if [[ -n "${MOD_TS}" && -n "${TIMECODE}" ]] ; then
-            echo "title=${FILEBASENAME}: ${TIMECODE} - ${MOD_TS}" >> "${CHAPTER_LIST}"
-        elif [[ -n "${MOD_TS}" ]] ; then
-            echo "title=${FILEBASENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
-        elif [[ -n "${TIMECODE}" ]] ; then
-            echo "title=${FILEBASENAME}: ${TIMECODE}" >> "${CHAPTER_LIST}"
-        else
-            echo "title=${FILEBASENAME}" >> "${CHAPTER_LIST}"
-        fi
     done < <(tail -n +2 "${FILE_INVENTORY}" | grep ",video,")
     echo
 }
