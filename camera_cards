@@ -209,7 +209,7 @@ _make_inventory(){
         done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}" | sort)
         # grab everything else
         while read FILE ; do
-            if [[ -z "$(grep ",${FILE}$" "${FILE_INVENTORY}")" ]] ; then
+            if [[ -z "$(grep ",${FILE}," "${FILE_INVENTORY}")" ]] ; then
                 echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},other,,,,,,${FILE},," >> "${FILE_INVENTORY}"
                 ((FILE_NUM++))
             fi
