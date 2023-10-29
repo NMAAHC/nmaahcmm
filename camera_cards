@@ -246,8 +246,8 @@ _print_table(){
         echo "START=${START_VALUE}" >> "${CHAPTER_LIST}"
         echo "END=${END_VALUE}" >> "${CHAPTER_LIST}"
         START_VALUE=$((START_VALUE + DURATION_S))
-        if [[ -n "${MOD_TS}" && -n "${TC}" ]] ; then
-            echo "title=${FILEBASENAME}: ${TC} - ${MOD_TS}" >> "${CHAPTER_LIST}"
+        if [[ -n "${MOD_TS}" && -n "${TIMECODE}" ]] ; then
+            echo "title=${FILEBASENAME}: ${TIMECODE} - ${MOD_TS}" >> "${CHAPTER_LIST}"
         elif [[ -n "${MOD_TS}" ]] ; then
             echo "title=${FILEBASENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
         elif [[ -n "${TIMECODE}" ]] ; then
