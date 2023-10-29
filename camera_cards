@@ -139,12 +139,12 @@ _read_inventory(){
                 _report -w "The _read_inventory function was called to find a column called ${COL_NAME} but it isn't found in the inventory."
             fi
             if [[ -n "${FILTER}" ]] ; then
-                tail -n +1 "${FILE_INVENTORY}" | grep "$FILTER" | cut -d "," -f "${COL_NUM}"
+                tail -n +2 "${FILE_INVENTORY}" | grep "$FILTER" | cut -d "," -f "${COL_NUM}"
             else
-                tail -n +1 "${FILE_INVENTORY}" | cut -d "," -f "${COL_NUM}"
+                tail -n +2 "${FILE_INVENTORY}" | cut -d "," -f "${COL_NUM}"
             fi
         else
-            tail -n +1 "${FILE_INVENTORY}" | grep "$FILTER"
+            tail -n +2 "${FILE_INVENTORY}" | grep "$FILTER"
         fi
     else
         _report -w "The _read_inventory function was called but there's no inventory at ${FILE_INVENTORY}."
@@ -514,7 +514,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         if [[ -z "${CLIP_SELECTION}" || "$(_check_if_in_list "${SEG_NUMBER}" "${CLIP_SELECTION}")" == "y" ]] ; then
             echo "file '${FILE_NAME}'" >> "${TEMP_CONCATLIST}"
         fi
-    done < "${FILE_INVENTORY}"
+    done < <(tail -n +2 "${FILE_INVENTORY}")
 
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
