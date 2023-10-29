@@ -196,6 +196,12 @@ _make_inventory(){
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
             done < <(find "${CARD}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f | sort)
+        elif [[ "${CAMERA_CARD_TYPE}" ==  "MXF" ]] ; then
+            while read FILE ; do
+                _catalog_video "${FILE}"
+                ((VIDEO_NUM++))
+                ((FILE_NUM++))
+            done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f | sort)
         else
             while read FILE ; do
                 _catalog_video "${FILE}"
