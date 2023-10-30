@@ -139,12 +139,12 @@ _read_inventory(){
                 _report -w "The _read_inventory function was called to find a column called ${COL_NAME} but it isn't found in the inventory."
             fi
             if [[ -n "${FILTER}" ]] ; then
-                tail -n +1 "${FILE_INVENTORY}" | grep "$FILTER" | cut -d "," -f "${COL_NUM}"
+                tail -n +2 "${FILE_INVENTORY}" | grep "$FILTER" | cut -d "," -f "${COL_NUM}"
             else
-                tail -n +1 "${FILE_INVENTORY}" | cut -d "," -f "${COL_NUM}"
+                tail -n +2 "${FILE_INVENTORY}" | cut -d "," -f "${COL_NUM}"
             fi
         else
-            tail -n +1 "${FILE_INVENTORY}" | grep "$FILTER"
+            tail -n +2 "${FILE_INVENTORY}" | grep "$FILTER"
         fi
     else
         _report -w "The _read_inventory function was called but there's no inventory at ${FILE_INVENTORY}."
@@ -155,10 +155,10 @@ _make_inventory(){
     _catalog_video(){
         FILE="${1}"
         IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
-        IFS="," read -r Z AUDIO_CODEC AUDIO_SAMPLE_FMT < <(ffprobe -sexagesimal -v 0 "${FILE}" -show_entries codec_name,sample_fmt -of csv | grep "^stream,")
+        IFS="," read -r Z AUDIO_CODEC AUDIO_SAMPLE_FMT < <(ffprobe -sexagesimal -v 0 "${FILE}" -select_streams a:0 -show_entries stream=codec_name,sample_fmt -of csv | grep "^stream,")
         echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${DURATION},${COMPANY_NAME},${PRODUCT_NAME},${MOD_TS},${TC},${FILE},${AUDIO_CODEC},${AUDIO_SAMPLE_FMT}" >> "${FILE_INVENTORY}"
     }
-    echo "CARD_NUM,CARD_TYPE,VIDEO_NUM,FILE_NUM,MEDIA_TYPE,DURATION,COMPANY_NAME,PRODUCT_NAME,MOD_TS,TIMECODE,FILE_NAME" > "${FILE_INVENTORY}"
+    echo "CARD_NUM,CARD_TYPE,VIDEO_NUM,FILE_NUM,MEDIA_TYPE,DURATION,COMPANY_NAME,PRODUCT_NAME,MOD_TS,TIMECODE,FILE_NAME,AUDIO_CODEC,AUDIO_SAMPLE_FMT" > "${FILE_INVENTORY}"
     CARD_NUM=1
     VIDEO_NUM=1
     FILE_NUM=1
@@ -196,6 +196,12 @@ _make_inventory(){
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
             done < <(find "${CARD}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f | sort)
+        elif [[ "${CAMERA_CARD_TYPE}" ==  "MXF" ]] ; then
+            while read FILE ; do
+                _catalog_video "${FILE}"
+                ((VIDEO_NUM++))
+                ((FILE_NUM++))
+            done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f | sort)
         else
             while read FILE ; do
                 _catalog_video "${FILE}"
@@ -209,7 +215,7 @@ _make_inventory(){
         done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}" | sort)
         # grab everything else
         while read FILE ; do
-            if [[ -z "$(grep ",${FILE}$" "${FILE_INVENTORY}")" ]] ; then
+            if [[ -z "$(grep ",${FILE}," "${FILE_INVENTORY}")" ]] ; then
                 echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},other,,,,,,${FILE},," >> "${FILE_INVENTORY}"
                 ((FILE_NUM++))
             fi
@@ -232,53 +238,55 @@ _print_table(){
     echo
     echo "Card#   Index#  File Name                    Modification Date     Duration            Timecode"
     while IFS=, read -r CARD_NUM CARD_TYPE VIDEO_NUM FILE_NUM MEDIA_TYPE DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TIMECODE FILE_NAME AUDIO_CODEC AUDIO_SAMPLE_FMT ; do
+        FILEBASENAME="$(basename "${FILE_NAME}")"
         if [[ -z "${CLIP_SELECTION}" || "$(_check_if_in_list "${VIDEO_NUM}" "${CLIP_SELECTION}")" == "y" ]] ; then
+            # this clip is selected for the output
             VIDEO_NUM_EXT="${VIDEO_NUM}*"
+            echo "[CHAPTER]" >> "${CHAPTER_LIST}"
+            echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
+            DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
+            END_VALUE=$((END_VALUE + DURATION_S))
+            echo "START=${START_VALUE}" >> "${CHAPTER_LIST}"
+            echo "END=${END_VALUE}" >> "${CHAPTER_LIST}"
+            START_VALUE=$((START_VALUE + DURATION_S))
+            if [[ -n "${MOD_TS}" && -n "${TIMECODE}" ]] ; then
+                echo "title=${FILEBASENAME}: ${TIMECODE} - ${MOD_TS}" >> "${CHAPTER_LIST}"
+            elif [[ -n "${MOD_TS}" ]] ; then
+                echo "title=${FILEBASENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
+            elif [[ -n "${TIMECODE}" ]] ; then
+                echo "title=${FILEBASENAME}: ${TIMECODE}" >> "${CHAPTER_LIST}"
+            else
+                echo "title=${FILEBASENAME}" >> "${CHAPTER_LIST}"
+            fi
         else
             VIDEO_NUM_EXT="${VIDEO_NUM}"
         fi
-        FILEBASENAME="$(basename "${FILE_NAME}")"
         printf '%-7s %-7s %-27s %20s %16s %16s\n'  "${CARD_NUM}" "${VIDEO_NUM_EXT}" "${FILEBASENAME}" "${MOD_TS%.*}" "${DURATION}" "${TIMECODE}"
-        echo "[CHAPTER]" >> "${CHAPTER_LIST}"
-        echo "TIMEBASE=1/100000" >> "${CHAPTER_LIST}"
-        DURATION_S="$(_convert_hhmmssmmm2ns "${DURATION}")"
-        END_VALUE=$((END_VALUE + DURATION_S))
-        echo "START=${START_VALUE}" >> "${CHAPTER_LIST}"
-        echo "END=${END_VALUE}" >> "${CHAPTER_LIST}"
-        START_VALUE=$((START_VALUE + DURATION_S))
-        if [[ -n "${MOD_TS}" && -n "${TC}" ]] ; then
-            echo "title=${FILEBASENAME}: ${TC} - ${MOD_TS}" >> "${CHAPTER_LIST}"
-        elif [[ -n "${MOD_TS}" ]] ; then
-            echo "title=${FILEBASENAME}: ${MOD_TS}" >> "${CHAPTER_LIST}"
-        elif [[ -n "${TIMECODE}" ]] ; then
-            echo "title=${FILEBASENAME}: ${TIMECODE}" >> "${CHAPTER_LIST}"
-        else
-            echo "title=${FILEBASENAME}" >> "${CHAPTER_LIST}"
-        fi
     done < <(tail -n +2 "${FILE_INVENTORY}" | grep ",video,")
     echo
 }
 
 _identify_card_type(){
     CARD="${1}"
+    CARD_NAME="$(basename "${1}")"
     if [[ -n "$(find "${CARD}" -type d -iname "BDMV" | head -n 1)" ]] ; then
-        _report -g "Camera card type identified: AVCHD (e.g. Canon C100)"
+        _report -g "Camera card type identified: ${CARD_NAME} is AVCHD (e.g. Canon C100)"
         CAMERA_CARD_TYPE="AVCHD"
         CAMERA_CARD_DIR="$(find "${CAMERA_CARD_DIR[0]}" -type d -iname "BDMV" | head -n 1)" # set CAMERA_CARD_DIR path to the standard AVCHD directory structure
         EXTENSION="mts"
         RSYNC_OPTIONS=(-iname "*.cpi")
     elif [[ -n "$(find "${CARD}" -type d -iname "CLIPS001")" ]] ; then
-        _report -g "Camera card type identified: Canon XF (e.g. Canon C300)"
+        _report -g "Camera card type identified: ${CARD_NAME} is Canon XF (e.g. Canon C300)"
         CAMERA_CARD_TYPE="MXF"
         EXTENSION="mxf"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
     elif [[ -n "$(find "${CARD}" -type f -iname "LASTCLIP.TXT")" ]] ; then
-        _report -g "Camera card type identified: P2 (Panasonic brand)"
+        _report -g "Camera card type identified: ${CARD_NAME} is P2 (Panasonic brand)"
         CAMERA_CARD_TYPE="P2"
         EXTENSION="mxf"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.txt" -o -ipath "VOICE" \))
     elif [[ -n "$(find "${CARD}" \( -type d -iname "XDROOT" \) -o \( -type f -name "DISCMETA.XML" \) )" ]] ; then
-        _report -g "Camera card type identified: XAVC (Sony brand)"
+        _report -g "Camera card type identified: ${CARD_NAME} is XAVC (Sony brand)"
         CAMERA_CARD_TYPE="XAVC"
         EXTENSION="mxf"
         # example (from an XDCam disc loaded with proav disabled):
@@ -305,7 +313,7 @@ _identify_card_type(){
         #│   └── C0003S0
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
     elif [[ -n "$(find "${CARD}" -type d -iname "BPAV")" ]] ; then
-        _report -g "Camera card type identified: XDCAM EX (e.g. Canon XF100)"
+        _report -g "Camera card type identified: ${CARD_NAME} is XDCAM EX (e.g. Canon XF100)"
         CAMERA_CARD_TYPE="XDCAMEX"
         EXTENSION="mp4"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
@@ -494,12 +502,14 @@ if [[ "${AIP}" == "YES" ]] ; then
     CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${OUTPUT_EXTENSION}"
 
     # create list of files to concatenate, formatted for ffmpeg
+    unset AUDIO_STRATEGY
     while read INVENTORY_ROW ; do
         SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
         FILE_NAME="$(echo "${INVENTORY_ROW}" | cut -d "," -f 11)"
         AUDIO_CODEC="$(echo "${INVENTORY_ROW}" | cut -d "," -f 12)"
         AUDIO_SAMPLE_FMT="$(echo "${INVENTORY_ROW}" | cut -d "," -f 13)"
-        if [[ "${AUDIO_CODEC}" == "pcm_bluray" && "${EXTENSION}" != "m2t" ]] ; then
+        echo "HEYY ${AUDIO_CODEC} ${AUDIO_SAMPLE_FMT} ${OUTPUT_EXTENSION} "
+        if [[ "${AUDIO_CODEC}" == "pcm_bluray" && "${OUTPUT_EXTENSION}" != "m2t" ]] ; then
             if [[ "${AUDIO_SAMPLE_FMT}" == "s16" ]] ; then
                 _report -b "Note: A file contains ${AUDIO_CODEC}(${AUDIO_SAMPLE_FMT}) audio but the output is output is not m2t, we'll transcode to pcm_s16le."
                 AUDIO_STRATEGY=(-c:a pcm_s16le)
@@ -507,13 +517,11 @@ if [[ "${AIP}" == "YES" ]] ; then
                 _report -b "Note: A file contains ${AUDIO_CODEC}(${AUDIO_SAMPLE_FMT}) audio but the output is output is not m2t, we'll transcode to pcm_s24le."
                 AUDIO_STRATEGY=(-c:a pcm_s24le)
             fi
-        else
-            AUDIO_STRATEGY=(-c:a copy)
         fi
         if [[ -z "${CLIP_SELECTION}" || "$(_check_if_in_list "${SEG_NUMBER}" "${CLIP_SELECTION}")" == "y" ]] ; then
             echo "file '${FILE_NAME}'" >> "${TEMP_CONCATLIST}"
         fi
-    done < "${FILE_INVENTORY}"
+    done < <(_read_inventory -f ",video,\|,audio,")
 
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
