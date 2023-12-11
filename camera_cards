@@ -153,12 +153,20 @@ _read_inventory(){
 
 _make_inventory(){
     _catalog_video(){
+        OPTIND=1
+        while getopts ":x:" OPT; do
+            case "${OPT}" in
+                x) ASSOCIATED_XML="${OPTARG}" ;;
+            esac
+        done
+        shift $(( OPTIND - 1 ))
         FILE="${1}"
         IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
         IFS="," read -r Z AUDIO_CODEC AUDIO_SAMPLE_FMT < <(ffprobe -sexagesimal -v 0 "${FILE}" -select_streams a:0 -show_entries stream=codec_name,sample_fmt -of csv | grep "^stream,")
-        echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${DURATION},${COMPANY_NAME},${PRODUCT_NAME},${MOD_TS},${TC},${FILE},${AUDIO_CODEC},${AUDIO_SAMPLE_FMT}" >> "${FILE_INVENTORY}"
+        echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${DURATION},${COMPANY_NAME},${PRODUCT_NAME},${MOD_TS},${TC},${FILE},${AUDIO_CODEC},${AUDIO_SAMPLE_FMT},${ASSOCIATED_XML}" >> "${FILE_INVENTORY}"
+        
     }
-    echo "CARD_NUM,CARD_TYPE,VIDEO_NUM,FILE_NUM,MEDIA_TYPE,DURATION,COMPANY_NAME,PRODUCT_NAME,MOD_TS,TIMECODE,FILE_NAME,AUDIO_CODEC,AUDIO_SAMPLE_FMT" > "${FILE_INVENTORY}"
+    echo "CARD_NUM,CARD_TYPE,VIDEO_NUM,FILE_NUM,MEDIA_TYPE,DURATION,COMPANY_NAME,PRODUCT_NAME,MOD_TS,TIMECODE,FILE_NAME,AUDIO_CODEC,AUDIO_SAMPLE_FMT,XML_PATH,XML_DATA" > "${FILE_INVENTORY}"
     CARD_NUM=1
     VIDEO_NUM=1
     FILE_NUM=1
@@ -198,7 +206,13 @@ _make_inventory(){
             done < <(find "${CARD}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f | sort)
         elif [[ "${CAMERA_CARD_TYPE}" ==  "MXF" ]] ; then
             while read FILE ; do
-                _catalog_video "${FILE}"
+                XMLPATH_MAYBE="${FILE%.*}.XML"
+                if [[ -f "${XMLPATH_MAYBE}" ]] ; then
+                    XMLPATH="${XMLPATH_MAYBE}"
+                else
+                    unset XMLPATH
+                fi
+                _catalog_video -x "${XMLPATH}" "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
             done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f | sort)
