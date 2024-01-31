@@ -1,47 +1,37 @@
 #!/bin/bash
 
+# Define your alternate MKV_TAG_SET profiles here
 MKV_TAG_SET_JPC=(
-    "TITLE"
-    "DESCRIPTION"
-    "DATE_DIGITIZED"
-    "ORIGINAL_MEDIA_FORMAT"
-    "_IDENTIFIER"
-    "_FILE_CREATOR"
-    "_TECHNICAL_TRANSFER_NOTES"
-    "_CODING_HISTORY"
-    "_ORIGINAL_PROEJCTION_SPEED"
+    "jpc_tag1"
+    "jpc_tag2"
+    "jpc_tag3"
 )
 
 MKV_TAG_SET_NMAAHC=(
-    "TITLE"
-    "DESCRIPTION"
-    "DATE_DIGITIZED"
-    "ORIGINAL_MEDIA_FORMAT"
-    "_IDENTIFIER"
-    "_FILE_CREATOR"
-    "_TECHNICAL_TRANSFER_NOTES"
-    "_CODING_HISTORY"
-    "_ORIGINAL_PROEJCTION_SPEED"    
+    "nmaahc_tag1"
+    "nmaahc_tag2"
+    "nmaahc_tag3"
 )
 
 MKV_TAG_SET_OFFICIAL=(
-    "ORIGINAL_MEDIA_FORMAT"
-    "SUBJECT"
-    "DESCRIPTION"
-    "KEYWORDS"
-    "DATE_DIGITIZED"
-    "COPYRIGHT"
-    "TITLE"
-    "SUBTITLE"
+    "official_tag1"
+    "official_tag2"
+    "official_tag3"
+)
+
+MKV_TAG_SET_SMITHSONIAN=(
+    "smithsonian_tag1"
+    "smithsonian_tag2"
+    "smithsonian_tag3"
 )
 
 _usage(){
     echo
     echo "$(basename "${0}")"
     echo
-    echo "This application will embedded key:value pairs ("tags") into a Matroka file in accordance with NMAAHC guidelines."
+    echo "This application will embed key:value pairs ("tags") into a Matroska file in accordance with NMAAHC guidelines."
     echo
-    echo "Usage: $(basename ${0}) /path/to/file"
+    echo "Usage: $(basename ${0}) [-p|--profile <profile>] /path/to/file"
     echo "  "
     echo
     echo "Some key:value pairs have controlled vocabulary."
@@ -56,13 +46,13 @@ _usage(){
     ex. Black Journal: Alice Coltrane"
     echo
     echo " content_description - free text. Please provide a brief description of the content in this file. 
-    ex. A segment from the public television series Black Journal focusing the life and music of Alice Coltrane 
+    ex. A segment from the public television series Black Journal focusing on the life and music of Alice Coltrane 
         and her children in the wake of the death of her husband, famed jazz musician John Coltrane.
         This film was shot sometime during 1970; three years after the death of John Coltrane. 
         She discusses her musical career and how she balances that with being a mother and paying tribute to her late husband, 
         but also not wanting to be defined as an extension of John Coltrane's music."
     echo
-    echo " originating_format - controlled vocab. Please choose the original format this file was dervived from.
+    echo " originating_format - controlled vocab. Please choose the original format this file was derived from.
     controlled vocab list:
         1 inch videotape
         2 inch videotape
@@ -82,11 +72,11 @@ _usage(){
         Super 16mm film
         35mm film"
     echo    
-    echo " original_projection_speed - if the orginating format for this file was motion picture film, please provide a projection speed.
+    echo " original_projection_speed - if the originating format for this file was motion picture film, please provide a projection speed.
     ex. 24fps, 18fps, etc." 
     echo
     echo "coding_history - please provide a coding history for this file. 
-    ex. O=VHS, C=Color, S=Analog, VS= NTSC, F=24, A=4:3, R=640×480, 
+    ex. O=VHS, C=Color, S=Analog, VS=NTSC, F=24, A=4:3, R=640×480, 
     T=Sony SVO-5800, O=FFV1mkv, C=Color, V=Composite, S=Analog Stereo, 
     F=24, A=4:3, W=10-bit, R=640×480, M=YUV422p10, T=Blackmagic UltraStudio 4K Mini SN123456, ffmpeg vrecord, in-house, 
     O=FFV1mkv, W=10-bit, R640x480, MYUV422p10 N=Emily Nabasny"
@@ -96,7 +86,7 @@ _usage(){
         Canon C300
         Canon C100"
     echo
-    echo "camera_card_script - please enter the script used to repackage the original camera card into a NMAAHC AIP"
+    echo "camera_card_script - please enter the script used to repackage the original camera card into an NMAAHC AIP"
     echo
     echo "originator
     ex. Smithsonian NMAAHC"
@@ -105,32 +95,52 @@ _usage(){
     echo
     exit
 }
-[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
 
-_maketemp(){
-    mktemp -q -t "$(basename "${0}")"
-    if [ "${?}" -ne 0 ]; then
-        echo "${0}: Can't create temp file, exiting..."
-        exit 1
-    fi
-}
+# Define your other functions and variables here
 
-MKV_TAG_SET=(
-    "identifier"
-    "alternate_identifier"
-    "title"
-    "content_description"
-    "originating_format"
-    "original_projection_speed"
-    "coding_history"
-    "camera_make_model" 
-    "camera_card_script"
-    "originator"
-    )
+selected_profile=""
 
-DEPENDENCIES=(mkvpropedit xmlstarlet)
+# Parse command line options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -p|--profile)
+            case "$2" in
+                jpc)
+                    MKV_TAG_SET=("${MKV_TAG_SET_JPC[@]}")
+                    selected_profile="jpc"
+                    ;;
+                nmaahc)
+                    MKV_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
+                    selected_profile="nmaahc"
+                    ;;
+                official)
+                    MKV_TAG_SET=("${MKV_TAG_SET_OFFICIAL[@]}")
+                    selected_profile="official"
+                    ;;
+                smithsonian)
+                    MKV_TAG_SET=("${MKV_TAG_SET_SMITHSONIAN[@]}")
+                    selected_profile="smithsonian"
+                    ;;
+                *)
+                    echo "Invalid profile: $2"
+                    exit 1
+                    ;;
+            esac
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ -n "$selected_profile" ]; then
+    echo "Chosen profile: $selected_profile"
+    echo "Tags for $selected_profile profile: ${MKV_TAG_SET[@]}"
+fi
 
 MKV_FILE="${1}"
+
 #todo _check_if_mkv "${MKV_FILE}"
 MKV_FILE_NAME="$(basename "${MKV_FILE}")"
 TAG_TEMPLATE="$(_maketemp).txt"
