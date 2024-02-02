@@ -9,7 +9,7 @@ MKV_TAG_SET_JPC=(
     "_FILE_CREATOR"
     "_TECHNICAL_TRANSFER_NOTES"
     "_CODING_HISTORY"
-    "_ORIGINAL_PROEJCTION_SPEED"
+    "_ORIGINAL_PROJECTION_SPEED"
 )
 
 MKV_TAG_SET_NMAAHC=(
@@ -21,7 +21,7 @@ MKV_TAG_SET_NMAAHC=(
     "_FILE_CREATOR"
     "_TECHNICAL_TRANSFER_NOTES"
     "_CODING_HISTORY"
-    "_ORIGINAL_PROEJCTION_SPEED"    
+    "_ORIGINAL_PROJECTION_SPEED"    
 )
 
 MKV_TAG_SET_OFFICIAL=(
@@ -35,34 +35,52 @@ MKV_TAG_SET_OFFICIAL=(
     "SUBTITLE"
 )
 
+# Define color variables
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+GREENISH_BLUE=$(tput setaf 38)
+
 _usage(){
-    echo
-    echo "$(basename "${0}")"
-    echo
-    echo "This application will embedded key:value pairs ("tags") into a Matroka file in accordance with NMAAHC guidelines."
-    echo
-    echo "Usage: $(basename ${0}) /path/to/file"
-    echo "  "
-    echo
-    echo "Some key:value pairs have controlled vocabulary."
-    echo
-    echo " identifier - free text. Enter in NMAAHC Object ID#. 
-    ex. 2012.79.1.16.1a"
-    echo
-    echo " alternate_identifier - free text. Enter in NMAAHC TR#. 
-    ex. TR2011-71.173"
-    echo
-    echo " title - free text. Please provide a title for this file. 
-    ex. Black Journal: Alice Coltrane"
-    echo
-    echo " content_description - free text. Please provide a brief description of the content in this file. 
+    cat <<EOF
+
+$(basename "${0}")
+
+This application will embed key:value pairs ("tags") into a Matroska file in accordance with NMAAHC guidelines.
+
+Usage: $(basename "${0}") [-p|--profile <profile>] /path/to/file
+
+Some key:value pairs have controlled vocabulary.
+
+Tags:
+    ${BOLD}${GREENISH_BLUE}_IDENTIFIER${RESET}
+    Free text.
+    Enter in NMAAHC Object ID#. 
+    ex. 2012.79.1.16.1a
+
+    ${BOLD}${GREENISH_BLUE}_ALTERNATE_IDENTIFIER${RESET}
+    Free text. 
+    Enter in NMAAHC TR#. 
+    ex. TR2011-71.173
+
+    ${BOLD}${GREENISH_BLUE}TITLE${RESET}
+    Free text. 
+    Please provide a title for this file. 
+    ex. Black Journal: Alice Coltrane
+
+    ${BOLD}${GREENISH_BLUE}DESCRIPTION${RESET}
+    Free text. 
+    Please provide a brief description of the content in this file. 
     ex. A segment from the public television series Black Journal focusing the life and music of Alice Coltrane 
-        and her children in the wake of the death of her husband, famed jazz musician John Coltrane.
-        This film was shot sometime during 1970; three years after the death of John Coltrane. 
-        She discusses her musical career and how she balances that with being a mother and paying tribute to her late husband, 
-        but also not wanting to be defined as an extension of John Coltrane's music."
-    echo
-    echo " originating_format - controlled vocab. Please choose the original format this file was dervived from.
+    and her children in the wake of the death of her husband, famed jazz musician John Coltrane.
+    This film was shot sometime during 1970; three years after the death of John Coltrane. 
+    She discusses her musical career and how she balances that with being a mother and paying tribute to her late husband, 
+    but also not wanting to be defined as an extension of John Coltrane's music.
+
+    ${BOLD}${GREENISH_BLUE}DATE_DIGITIZED${RESET}
+
+    ${BOLD}${GREENISH_BLUE}ORIGINAL_MEDIA_FORMAT${RESET}
+    Controlled vocab. 
+    Please choose the original format this file was derived from.
     controlled vocab list:
         1 inch videotape
         2 inch videotape
@@ -80,33 +98,48 @@ _usage(){
         Super 8mm film
         16mm film
         Super 16mm film
-        35mm film"
-    echo    
-    echo " original_projection_speed - if the orginating format for this file was motion picture film, please provide a projection speed.
-    ex. 24fps, 18fps, etc." 
-    echo
-    echo "coding_history - please provide a coding history for this file. 
+        35mm film
+
+    ${BOLD}${GREENISH_BLUE}_ORIGINAL_PROJECTION_SPEED${RESET}
+    If the originating format for this file was motion picture film, please provide a projection speed.
+    ex. 24fps, 18fps, etc.
+
+    ${BOLD}${GREENISH_BLUE}_CODING_HISTORY${RESET}
+    Please provide a coding history for this file. 
     ex. O=VHS, C=Color, S=Analog, VS= NTSC, F=24, A=4:3, R=640×480, 
     T=Sony SVO-5800, O=FFV1mkv, C=Color, V=Composite, S=Analog Stereo, 
     F=24, A=4:3, W=10-bit, R=640×480, M=YUV422p10, T=Blackmagic UltraStudio 4K Mini SN123456, ffmpeg vrecord, in-house, 
-    O=FFV1mkv, W=10-bit, R640x480, MYUV422p10 N=Emily Nabasny"
-    echo
-    echo "camera_make_model - for files created from digital camera cards. controlled vocab.
+    O=FFV1mkv, W=10-bit, R640x480, MYUV422p10 N=Emily Nabasny
+
+    ${BOLD}${GREENISH_BLUE}_TECHNICAL_TRANSFER_NOTES${RESET}
+
+    ${BOLD}${GREENISH_BLUE}_CAMERERA_MAKE_MODEL${RESET}
+    Controlled vocab.
+    For files created from digital camera cards. 
     controlled vocab list:
         Canon C300
-        Canon C100"
-    echo
-    echo "camera_card_script - please enter the script used to repackage the original camera card into a NMAAHC AIP"
-    echo
-    echo "originator
-    ex. Smithsonian NMAAHC"
-    echo
-    echo "See the nmaachmm README for more information on package definitions."
-    echo
-    exit
-}
-[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
+        Canon C100
 
+    ${BOLD}${GREENISH_BLUE}_CAMERA_CARD_SCRIPT${RESET}
+    Please enter the script used to repackage the original camera card into an NMAAHC AIP
+
+    ${BOLD}${GREENISH_BLUE}_FILE_CREATOR${RESET}
+    ex. Smithsonian NMAAHC
+
+Tags beginning with an underscore are not part of the "official" set of Matroska tags.
+
+See the nmaachmm README for more information on package definitions.
+
+EOF
+exit
+}
+
+# Check if no arguments provided
+if [[ $# -eq 0 ]]; then
+    _usage
+fi
+
+# Define the _maketemp function to create temporary files
 _maketemp(){
     mktemp -q -t "$(basename "${0}")"
     if [ "${?}" -ne 0 ]; then
@@ -115,22 +148,73 @@ _maketemp(){
     fi
 }
 
-MKV_TAG_SET=(
-    "identifier"
-    "alternate_identifier"
-    "title"
-    "content_description"
-    "originating_format"
-    "original_projection_speed"
-    "coding_history"
-    "camera_make_model" 
-    "camera_card_script"
-    "originator"
-    )
+selected_profile=""
+selected_tag_set=""
 
-DEPENDENCIES=(mkvpropedit xmlstarlet)
+# Parse command line options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -p|--profile)
+            case "$2" in
+                jpc)
+                    selected_tag_set=("${MKV_TAG_SET_JPC[@]}")
+                    selected_profile="jpc"
+                    ;;
+                nmaahc)
+                    selected_tag_set=("${MKV_TAG_SET_NMAAHC[@]}")
+                    selected_profile="nmaahc"
+                    ;;
+                official)
+                    selected_tag_set=("${MKV_TAG_SET_OFFICIAL[@]}")
+                    selected_profile="official"
+                    ;;
+                *)
+                    echo -e "\033[1;31m\nYou must specify a profile using -p or --profile followed by 'jpc', 'nmaahc', or 'official'.\n\033[0m"
+                    echo -e "\nHere are the profiles and their respective tags:\n"
+                    echo -e "\"jpc\" profile tags:"
+                    for TAG in "${MKV_TAG_SET_JPC[@]}" ; do
+                        echo -e "\t- $TAG"
+                    done
+                    echo -e "\n\"nmaahc\" profile tags:"
+                    for TAG in "${MKV_TAG_SET_NMAAHC[@]}" ; do
+                        echo -e "\t- $TAG"
+                    done
+                    echo -e "\n\"official\" profile tags:"
+                    for TAG in "${MKV_TAG_SET_OFFICIAL[@]}" ; do
+                        echo -e "\t- $TAG"
+                    done
+                    exit 1
+                    ;;
+            esac
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ -z "$selected_profile" ]; then
+    echo -e "\033[1;31m\nYou must specify a profile using -p or --profile followed by 'jpc', 'nmaahc', or 'official'.\n\033[0m"
+    echo -e "Here are the profiles and their respective tags:\n"
+    echo -e "\"jpc\" profile tags:"
+    for TAG in "${MKV_TAG_SET_JPC[@]}" ; do
+        echo -e "\t- $TAG"
+    done
+    echo -e "\n\"nmaahc\" profile tags:"
+    for TAG in "${MKV_TAG_SET_NMAAHC[@]}" ; do
+        echo -e "\t- $TAG"
+    done
+    echo -e "\n\"official\" profile tags:"
+    for TAG in "${MKV_TAG_SET_OFFICIAL[@]}" ; do
+        echo -e "\t- $TAG"
+    done
+    echo -e "\nFor further information on the use of mkvnote, please check the usage manual by typing 'mkvnote' in the terminal and pressing Enter."
+    exit 1
+fi
 
 MKV_FILE="${1}"
+
 #todo _check_if_mkv "${MKV_FILE}"
 MKV_FILE_NAME="$(basename "${MKV_FILE}")"
 TAG_TEMPLATE="$(_maketemp).txt"
@@ -145,7 +229,7 @@ mkvextract tags "${MKV_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or no
 echo >> "${TAG_TEMPLATE}"
 echo "# These tags already exist in the file. If you edit them here they will be overwritten when saved." >> "${TAG_TEMPLATE}"
 
-for TAG in "${MKV_TAG_SET[@]}" ; do
+for TAG in "${selected_tag_set[@]}" ; do
     echo "${TAG}=[]" >> "${TAG_TEMPLATE}"
 done
 
