@@ -1,0 +1,8 @@
+# Feel welcome to catalog 2012_79_2_49_1a_PM.mkv here and then save this document. The resulting metadata (if any) will be embedded into the file. You may add new tags as long as the structure is: tag_name=[tag_value].
+# These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file.
+# Empty tags will be ignored.
+
+# These tags already exist in the file. If you edit them here they will be overwritten when saved.
+ENCODER=[Lavf59.16.100]
+
+# These tags already exist in the file. If you edit them here they will be overwritten when saved.
