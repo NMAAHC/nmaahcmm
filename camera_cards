@@ -347,12 +347,13 @@ _check_if_in_list(){
 
 # getopts loop
 OPTIND=1
-while getopts ":m:N:o:f:ctanh" OPT; do
+while getopts ":m:N:o:f:F:ctanh" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         N) CLIP_SELECTION="${OPTARG}" ;;
         o) AIP_DESTINATION="${OPTARG}" ;;
         f) OUTPUT_EXTENSION="${OPTARG}" ;;
+        F) FFMPEG_PATH="${OPTARG}" ;;
         c) _report "The -c option (which combined 2 cards) is now removed. Please simply list as many camera cards as inputs as you need." ; exit ;;
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
@@ -391,6 +392,10 @@ if [[ "${REPORT_ONLY}" = "Y" ]] ; then
     exit 0
 fi
 
+# determine FFMPEG_PATH
+if [[ -z "${FFMPEG_PATH}" ]] ; then
+    FFMPEG_PATH="$(which ffmpeg)"
+fi
 # ask for MEDIAID if it wasn't supplied
 if [[ -z "${MEDIAID}" ]] ; then
     _report -b -n "Enter a unique package name or 'q' to quit: "
@@ -524,10 +529,10 @@ if [[ "${AIP}" == "YES" ]] ; then
     done < <(_read_inventory -f ",video,\|,audio,")
 
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
-    ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
+    "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
     STREAMHASH="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
-    ffmpeg -i "${CONCATENATED_VIDEO_FILE}" -map 0 -c copy -f streamhash -hash md5 "${STREAMHASH}"
+    "${FFMPEG_PATH}" -i "${CONCATENATED_VIDEO_FILE}" -map 0 -c copy -f streamhash -hash md5 "${STREAMHASH}"
     # tests for video file existing
     FFMPEG_EXIT_CODE="${?}"
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
@@ -543,7 +548,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         while read FILE ; do
             echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
         done < <(_read_inventory -f ",audio," "FILE_NAME")
-        ffmpeg -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_AUDIO_FILE}"
+        "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${CONCATENATED_AUDIO_FILE}"
         _write_package_log "CONCATENATED AUDIO FILE" "${CONCATENATED_AUDIO_FILE}"
 
         # merge video and audio
@@ -558,7 +563,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         RENAMED_CONCATENATED_VIDEO_FILE="${CONCATENATED_VIDEO_FILE//concatenated/concatenated_video}"
         mv "${CONCATENATED_VIDEO_FILE}" "${RENAMED_CONCATENATED_VIDEO_FILE}"
         CONCATENATED_FILE_MERGED="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
-        ffmpeg -i "${RENAMED_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE_MERGED}"
+        "${FFMPEG_PATH}" -i "${RENAMED_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${CONCATENATED_FILE_MERGED}"
         _write_package_log "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE_MERGED}"
         _report -g "Audio + video joining process ended"
     fi
@@ -638,7 +643,7 @@ else
     if [[ "${AIP}" == "YES" ]] ; then # check for losslessness of concatenated file by comparing bitstream md5s
         OUTPUT_STREAMHASH="$(_maketemp)"
         _report -b "Checking streamhash between input and output..."
-        ffmpeg -y -loglevel quiet -report -i "${CONCATENATED_VIDEO_FILE}" -map 0 -c copy -f streamhash -hash md5 "${OUTPUT_STREAMHASH}"
+        "${FFMPEG_PATH}" -y -loglevel quiet -report -i "${CONCATENATED_VIDEO_FILE}" -map 0 -c copy -f streamhash -hash md5 "${OUTPUT_STREAMHASH}"
         if [[ $(cat "${STREAMHASH}") != $(cat "${OUTPUT_STREAMHASH}") ]] ; then
             _report -r "Concatenation process was not lossless! Review final merged file at ${CONCATENATED_VIDEO_FILE}"
             _write_package_log "POSSIBLE_ERROR_REVIEW" "Concatenation process was not lossless based on bitstream md5s"
