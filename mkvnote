@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Defines sets of predefined tag names specific to different standards: JPC and NMAAHC.
+# These tags represent the metadata fields that can be assigned values during the tagging process.
+
 MKV_TAG_SET_JPC=(
     "COLLECTION"
     "TITLE"
@@ -28,6 +31,7 @@ MKV_TAG_SET_NMAAHC=(
     "TERMS_OF_USE"
     "_TECHNICAL_NOTES"
     "_ORIGINAL_FPS"
+    "_TAGTAG"
 )
 
 # Define color variables
@@ -38,15 +42,15 @@ GREENISH_BLUE=$(tput setaf 38)
 _usage(){
     cat <<EOF
 
-$(basename "${0}")
+    $(basename "${0}")
 
-This application will embed key:value pairs ("tags") into a Matroska file in accordance with NMAAHC guidelines.
+    This application will embed key:value pairs ("tags") into a Matroska file in accordance with NMAAHC guidelines.
 
-Usage: $(basename "${0}") [-p|--profile <profile>] /path/to/file
+    Usage: $(basename "${0}") [-p|--profile <profile>] /path/to/file
 
-Some key:value pairs have controlled vocabulary.
+    Some key:value pairs have controlled vocabulary.
 
-Tags:
+    Tags:
     ${BOLD}${GREENISH_BLUE}_IDENTIFIER${RESET}
     Free text.
     Enter in NMAAHC Object ID#. 
@@ -121,15 +125,15 @@ Tags:
     ${BOLD}${GREENISH_BLUE}_FILE_CREATOR${RESET}
     ex. Smithsonian NMAAHC
 
-Tags beginning with an underscore are not part of the "official" set of Matroska tags.
+    Tags beginning with an underscore are not part of the "official" set of Matroska tags.
 
-See the nmaachmm README for more information on package definitions.
+    See the nmaachmm README for more information on package definitions.
 
 EOF
 exit
 }
 
-# Check if no arguments provided
+#Checks if the script was run without any arguments and calls the usage function if true.
 if [[ $# -eq 0 ]]; then
     _usage
 fi
