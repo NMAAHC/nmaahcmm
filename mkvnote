@@ -42,6 +42,8 @@ MKV_TAG_SET_NMAAHC=(
 BOLD=$(tput bold) # Sets bold style for text.
 RESET=$(tput sgr0) # Resets text style to default.
 GB=$(tput setaf 38) # Sets color of text to greenish-blue.
+ERROR=$(tput setaf 1) # Sets color of text to red.
+
 # Function _usage prints the script's usage instructions to the console.
 # It's invoked when the script is run without arguments or if the user needs help.
 
@@ -152,7 +154,7 @@ fi
 _maketemp(){
     mktemp -q -t "$(basename "${0}")"
     if [ "${?}" -ne 0 ]; then
-        echo "${0}: Can't create temp file, exiting..."
+        echo "${0}: ${ERROR}Can't create temp file, exiting...${RESET}"
         exit 1
     fi
 }
