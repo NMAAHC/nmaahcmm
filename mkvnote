@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Defines sets of predefined tag names specific to different standards: JPC and NMAAHC.
-# These tags represent the metadata fields that can be assigned values during the tagging process.
+# The shebang above specifies that this script should be run with bash.
+
+# Declaration of arrays containing tag names for two different sets of metadata standards: JPC and NMAAHC.
+# These tags are predefined fields that will be used to store specific pieces of information about the video files.
 
 MKV_TAG_SET_JPC=(
     "COLLECTION"
@@ -34,10 +36,14 @@ MKV_TAG_SET_NMAAHC=(
     "_TAGTAG" # Unique to the NMAAHC set, suggesting an additional, possibly custom, tag.
 )
 
-# Define color variables
+# Color variables for formatting output text. Utilizes `tput` for setting text styles and colors.
+# These variables enhance readability and user interface experience.
+
 BOLD=$(tput bold) # Sets bold style for text.
 RESET=$(tput sgr0) # Resets text style to default.
 GB=$(tput setaf 38) # Sets color of text to greenish-blue.
+# Function _usage prints the script's usage instructions to the console.
+# It's invoked when the script is run without arguments or if the user needs help.
 
 _usage(){
     cat <<EOF
