@@ -31,13 +31,13 @@ MKV_TAG_SET_NMAAHC=(
     "TERMS_OF_USE"
     "_TECHNICAL_NOTES"
     "_ORIGINAL_FPS"
-    "_TAGTAG"
+    "_TAGTAG" # Unique to the NMAAHC set, suggesting an additional, possibly custom, tag.
 )
 
 # Define color variables
-BOLD=$(tput bold)
-RESET=$(tput sgr0)
-GREENISH_BLUE=$(tput setaf 38)
+BOLD=$(tput bold) # Sets bold style for text.
+RESET=$(tput sgr0) # Resets text style to default.
+GREENISH_BLUE=$(tput setaf 38) # Sets color of text to greenish-blue.
 
 _usage(){
     cat <<EOF
@@ -133,12 +133,16 @@ EOF
 exit
 }
 
-#Checks if the script was run without any arguments and calls the usage function if true.
+# Checks if the script was run without any arguments.
+# If no arguments are provided, the _usage function is called to display usage information and the script exits.
+
 if [[ $# -eq 0 ]]; then
     _usage
 fi
 
-# Define the _maketemp function to create temporary files
+# Function _maketemp creates a temporary file and checks for success.
+# It's used for creating temporary files for storing intermediate data.
+
 _maketemp(){
     mktemp -q -t "$(basename "${0}")"
     if [ "${?}" -ne 0 ]; then
