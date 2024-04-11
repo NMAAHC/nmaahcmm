@@ -164,6 +164,9 @@ if [[ "${#}" -eq 0 ]]; then
     _usage
 fi
 
+# Assigning the MKV file path as the first argument after getopts are processed.
+MKV_FILE="${1}"
+
 # Parsing command line options to set the profile and corresponding tag set.
 if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
     SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")
@@ -223,7 +226,6 @@ if [ -z "${SELECTED_PROFILE}" ]; then
     done
 fi
 
-MKV_FILE="${1}"
 
 #todo _check_if_mkv "${MKV_FILE}"
 MKV_FILE_NAME="$(basename "${MKV_FILE}")"
