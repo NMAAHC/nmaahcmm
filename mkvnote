@@ -226,7 +226,9 @@ if [ -z "${SELECTED_PROFILE}" ]; then
     done
 fi
 
+# After ensuring a profile is selected, the script proceeds to handle the .mkv file provided by the user.
 
+# A placeholder for a function call to check if the provided file is indeed an MKV file. This is an important validation step to ensure the script operates on valid input.
 #todo _check_if_mkv "${MKV_FILE}"
 MKV_FILE_NAME="$(basename "${MKV_FILE}")"
 TAG_TEMPLATE="$(_maketemp).txt"
