@@ -144,7 +144,7 @@ exit
 # Checks if the script was run without any arguments.
 # If no arguments are provided, the _usage function is called to display usage information and the script exits.
 
-if [[ $# -eq 0 ]]; then
+if [[ "${#}" -eq 0 ]]; then
     _usage
 fi
 
