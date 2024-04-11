@@ -275,4 +275,4 @@ done < <(grep "=\[.*\]$" "${TAG_TEMPLATE}") # Filters only lines matching the ta
 mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
 
 # A fun message to indicate the completion of the tagging process, potentially using the cowsay program.
-cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}."
+cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}.${RESET}"
