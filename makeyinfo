@@ -1,0 +1,138 @@
+#!/bin/zsh
+# set -x 
+
+# Function to begin the day and collect information
+# btd() {
+  # Define ANSI escape codes for text colors and styles
+  GREEN='\033[0;32m'    # Sets text color to green
+  ERROR='\033[0;31m'      # Sets text color to red
+  ORANGE='\033[38;5;208m'  # Sets text color to orange
+  NC='\033[0m'          # Resets text color to default (No Color)
+  BOLD='\033[1m'        # Makes text bold
+  NORMAL='\033[0m'      # Resets text style to normal
+
+# Define the path to the home directory
+HOME_DIR="/Users/$(USER)"
+
+# Get the current date in the format YYYYMMDD
+DATE=$(date +"%Y%m%d")
+
+# # make a temp file for the json data
+# _maketemp(){
+#     mktemp -q -t "$(basename "${0}")"
+#     if [ "${?}" -ne 0 ]; then
+#         echo "${0}: ${ERROR}Can't create temp file, exiting...${RESET}"
+#         exit 1
+#     fi
+# }
+# JSON_TEMP="$(_maketemp).json"
+
+# DIALOG_CMD_1="dialog --json --moveable --width 1000 --background color=#bc85fa --icon /Users/bleakley/Desktop/aNMAAHC_horiz_Smithsonian_purple.png --iconsize 400 --title none --messagefont size=20 --messagealignment left --messageposition center --message 'Hello $USER!\n\n Please choose a directory in which to create all other directories.\n\n Default value is the current user desktop.' --infobox 'hey hey hey, welcome' --textfield 'Directory creation:, fileselect',value='/Users/$USER/Desktop',filetype='folder' --button2text 'Cancel'"
+
+# USER_INPUT_1=$(eval "$DIALOG_CMD_1")
+# #echo "USER INPUT is: $USER_INPUT_1"
+
+# CHOSEN_DIRECTORY=$(echo "$USER_INPUT_1" | jq -r '."Directory creation:"')
+# #echo "CHOSEN_DIRECTORY is: $CHOSEN_DIRECTORY"
+
+# if [[ -z "$CHOSEN_DIRECTORY" || ! -d "$CHOSEN_DIRECTORY" ]]; then
+#     echo
+#     echo "${ERROR}${BOLD}Error: No valid directory chosen or the chosen directory does not exist."
+#     exit 1
+# fi
+
+# run the dialog
+DIALOG_CMD_2="dialog --moveable --width 75% --height 75% --background color=#0f011f --icon /Users/bleakley/Desktop/NMAAHC_vert_purple.png --iconsize 300 --overlayicon /Users/bleakley/Desktop/NMAAHC_vert_purple.png --title none --messagefont size=13.5 --messagealignment left --messageposition top --message '**"$USER"**, you know the drill.' --infobox 'hey hey mkv, why you gonna do this to me?' --textfield 'Format:, prompt=1-inch' --textfield 'Technical Notes, prompt=oh you can't handle!' --textfield 'VTR:, prompt=1' --textfield 'First object number:, prompt=16' --textfield 'Last object number:, prompt=87' --buttonstyle center --button1text 'Make My Directories!' --button2text 'Stop! I need to fix something!'"
+
+USER_INPUT_2=$(eval "$DIALOG_CMD_2")
+
+echo "${USER_INPUT_2}" > "${JSON_TEMP}"
+
+# Read JSON file
+series=$(jq -r '."Series number, if applicable:"' "${JSON_TEMP}")
+first_object=$(jq -r '."First object number:"' "${JSON_TEMP}")
+collection_year=$(jq -r '."Collection year:"' "${JSON_TEMP}")
+collection_number=$(jq -r '."Collection number:"' "${JSON_TEMP}")
+last_object=$(jq -r '."Last object number:"' "${JSON_TEMP}")
+
+# Iterate from the first object number to the last object number
+for (( i=$first_object; i<=$last_object; i++ ))
+do
+  # Define the directory name
+  if [[ -n $series && $series != "null" && $series != "" ]]; then
+    dir_name="${collection_year}_${collection_number}_${series}_${i}"
+  else
+    dir_name="${collection_year}_${collection_number}_${i}"
+  fi
+
+  # Create the directory
+  mkdir -p "${CHOSEN_DIRECTORY}/${dir_name}"
+done
+
+echo "Directories have been created successfully."
+
+
+# }
+#   # Create the folder name
+#   FOLDER_NAME="_$DATE"
+
+#   # Check if the folder already exists
+#   if [ -d "$HOME_DIR/$FOLDER_NAME" ]; then
+#     # Folder already exists, provide a message
+#     echo ""
+#     echo -e "${ORANGE}Folder '$FOLDER_NAME' already exists. Not a problem!${NC}"
+#   else
+#     # Create the folder in the home directory
+#     if mkdir -p "$HOME_DIR/$FOLDER_NAME"; then
+#       # Folder created successfully
+#       echo ""
+#       echo -e "${GREEN}${BOLD}Folder '$FOLDER_NAME' created successfully.${NC}"
+#     else
+#       # Error message for folder creation failure
+#       echo ""
+#       echo -e "${RED}${BOLD}Failed to create folder.${NC}"
+#       exit 1
+#     fi
+#   fi
+
+#   # Continue with the rest of the script
+
+#   # Create the TXT file name
+#   TXT_FILE_NAME="$FOLDER_NAME.txt"
+
+#   # Define the `swiftDialog` command for creating a graphical dialog
+#   # DIALOG_CMD="dialog --ontop --moveable --big --background color=#169122 --title 'NMAAHC Colleciton Config' --message 'Use this configuration file to create named directories for collection digitzation work.' --selecttitle 'Please choose a directory location',radio --select values --buttonstyle center --button1text 'ONWARD!!' --button2text 'Cancel'" " --infobox "### Aditional Info\n\n#### To upload your key:value tag data in .csv \n - choose a .csv file to upload \n - choose a directory where the .mkv you wish to tag are \n - click the 'File Style' button on the bottom left \n - be cool \n#### To tag file via this gui \n - click the 'Tag-On' button on the bottom left \n - follow the instructions" --textfield "select a .csv file with your tag data, fileselect, filetype=.csv" --textfield "select a folder where your .mkv files are, fileselect, filetype=folder" --button1text "Tag-On!!" --button2text "Cancel" -3 --infobuttontext "File Style"
+
+#   # Execute the DIALOG_CMD and capture its output in a variable
+#   USER_INPUT=$(eval "$DIALOG_CMD")
+
+#   # Extract the user input from the captured output
+#   USER_THOUGHTS=$(echo "$USER_INPUT" | jq -r '."Begin The Day Thoughts"')
+#   USER_NAME=$(echo "$USER_INPUT" | jq -r '.Name.selectedValue')
+
+#   # Check if the user canceled the dialog or closed it
+#   if [ -z "$USER_THOUGHTS" ]; then
+#     # Information collection canceled
+#     echo -e "\n${RED}${BOLD}Information collection canceled.${NC}"
+#     exit 1
+#   fi
+
+#   # Save the user input as unformatted text to the TXT file using a here document
+#   cat <<EOF >> "$HOME_DIR/$FOLDER_NAME/$TXT_FILE_NAME"
+# ### $FOLDER_NAME ###
+
+# *** BEGIN THE DAY ***
+
+# NAME: "$USER_NAME"
+
+# Begin The Day Thoughts: "$USER_THOUGHTS"
+
+# EOF
+
+#   # Provide a message indicating successful information saving
+#   echo ""
+#   echo -e "\n${GREEN}${BOLD}Begin The Day information saved to $HOME_DIR/$FOLDER_NAME/ THANK YOU!!${NC}"
+# }
+
+# # Call the "begin" function to begin the day and collect information
+# btd
