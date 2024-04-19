@@ -203,7 +203,7 @@ if [ -z "${SELECTED_PROFILE}" ]; then
     while true; do
         echo -e "${GB}${BOLD}\nYou must select a tag profile."
         echo -e "Press 1 for JPC, 2 for NMAAHC, or 0 to exit.\n"
-        read -p "Enter your choice: " choice
+        read -p "Enter your choice: ${RESET}" choice
         case "$choice" in
             1)
                 SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")
