@@ -165,7 +165,7 @@ if [[ "${#}" -eq 0 ]]; then
 fi
 
 # Assigning the MKV file path as the first argument after getopts are processed.
-MKV_FILE="${1}"
+INPUT_FILE="${1}"
 
 # Parsing command line options to set the profile and corresponding tag set.
 if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
@@ -229,16 +229,16 @@ fi
 # After ensuring a profile is selected, the script proceeds to handle the .mkv file provided by the user.
 
 # A placeholder for a function call to check if the provided file is indeed an MKV file. This is an important validation step to ensure the script operates on valid input.
-#todo _check_if_mkv "${MKV_FILE}"
+#todo _check_if_mkv "${INPUT_FILE}"
 
-MKV_FILE_NAME="$(basename "${MKV_FILE}")" # Extracts the file name from the MKV file path.
+INPUT_FILE_NAME="$(basename "${INPUT_FILE}")" # Extracts the file name from the MKV file path.
 
 # Creates a temporary text file to hold the tags and a temporary XML file for drafting the MKV metadata. The tag template will be used for user input, while the XML draft will be used for embedding metadata into the MKV file.
 
 EXISTING_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
 
-mkvextract tags "${MKV_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -o "=" -v "String" -n >> "${EXISTING_TAGS}"
+mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -o "=" -v "String" -n >> "${EXISTING_TAGS}"
 
 IS_FIRST="Y"
 while IFS="=" read -r EXISTING_KEY EXISTING_VALUE ; do
@@ -268,7 +268,7 @@ DIALOG_FORM="$(_maketemp).xml"
 
 cat << EOF> "${DIALOG_FORM}"
 {
-  "title" : "NMAAHC MKV Tagging for ${MKV_FILE_NAME}",
+  "title" : "NMAAHC MKV Tagging for ${INPUT_FILE_NAME}",
   "ontop" : 1,
   "moveable" : 1,
   "width" : "75%",
@@ -287,7 +287,7 @@ EOF
 DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
 
 if [[ "${DIALOG_RESULT}" == "JSON import failed" ]] ; then
-    echo "Error loading the form with ${MKV_FILE}"
+    echo "Error loading the form with ${INPUT_FILE}"
     exit
 elif [[ -z "${DIALOG_RESULT}" ]] ; then
     echo "cancelled"
@@ -311,8 +311,8 @@ else
     done < <(echo "${DIALOG_RESULT}" | grep -v " : $" | sed 's/* : / : /g')
 
     # Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
-    mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
+    mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}"
 
     # A fun message to indicate the completion of the tagging process, potentially using the cowsay program.
-    cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}.${RESET}"
+    cowsay "Cool. Done. Enjoy. Tag-on. ${INPUT_FILE}.${RESET}"
 fi
