@@ -151,8 +151,8 @@ while getopts ":hp:" opt ; do
     case "${opt}" in
         p) SELECTED_PROFILE="${OPTARG}" ;;
         h) _usage ;;
-        :) echo "Option -${OPTARG} requires an argument" ; _usage ; exit 1 ;;
-        *) echo "bad option -${OPTARG}" ; _usage ; exit 1 ;;
+        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;
+        *) echo "bad option -${OPTARG}" ; _usage ;;
     esac
 done
 shift "$((OPTIND-1))"
@@ -235,7 +235,6 @@ MKV_FILE_NAME="$(basename "${MKV_FILE}")" # Extracts the file name from the MKV 
 
 # Creates a temporary text file to hold the tags and a temporary XML file for drafting the MKV metadata. The tag template will be used for user input, while the XML draft will be used for embedding metadata into the MKV file.
 
-TAG_SET="" # Initialize as empty
 EXISTING_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
 
@@ -293,8 +292,6 @@ if [[ "${DIALOG_RESULT}" == "JSON import failed" ]] ; then
     echo "Error loading the form with ${MKV_FILE}"
     exit
 fi
-
-echo "${DIALOG_RESULT}"
 
 # Starts the XML draft for MKV metadata embedding with a root Tags element.
 echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
