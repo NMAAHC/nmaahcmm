@@ -269,7 +269,6 @@ DIALOG_FORM="$(_maketemp).xml"
 cat << EOF> "${DIALOG_FORM}"
 {
   "title" : "NMAAHC MKV Tagging for ${MKV_FILE_NAME}",
-  "icon" : "/Applications/Remote Desktop.app",
   "ontop" : 1,
   "moveable" : 1,
   "width" : "75%",
