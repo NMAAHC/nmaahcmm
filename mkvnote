@@ -295,26 +295,26 @@ elif [[ -z "${DIALOG_RESULT}" ]] ; then
     echo "cancelled"
     exit
 else
-# Starts the XML draft for MKV metadata embedding with a root Tags element.
-echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
+    # Starts the XML draft for MKV metadata embedding with a root Tags element.
+    echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
 
-# Reads the edited tag template line by line, extracting tag names and values entered by the user.
-# Only lines that conform to the expected format (tag_name=[tag_value]) are processed.
-while read TAG_LINE ; do
-    # Extracts the tag name by splitting the line at the colon and taking the first part.
-    TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
-    # Extracts the tag value by splitting the line at the colon and taking the second part.
-    TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
-    # If the tag value is not empty, the tag is added to the XML draft for embedding.
-    # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
-    if [[ -n "${TAG_VALUE// /}" ]] ; then
-        xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
-    fi
-done < <(echo "${DIALOG_RESULT}" | grep -v " : $" | sed 's/* : / : /g')
+    # Reads the edited tag template line by line, extracting tag names and values entered by the user.
+    # Only lines that conform to the expected format (tag_name=[tag_value]) are processed.
+    while read TAG_LINE ; do
+        # Extracts the tag name by splitting the line at the colon and taking the first part.
+        TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
+        # Extracts the tag value by splitting the line at the colon and taking the second part.
+        TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
+        # If the tag value is not empty, the tag is added to the XML draft for embedding.
+        # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
+        if [[ -n "${TAG_VALUE// /}" ]] ; then
+            xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
+        fi
+    done < <(echo "${DIALOG_RESULT}" | grep -v " : $" | sed 's/* : / : /g')
 
-# Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
-mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
+    # Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
+    mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
 
-# A fun message to indicate the completion of the tagging process, potentially using the cowsay program.
-cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}.${RESET}"
+    # A fun message to indicate the completion of the tagging process, potentially using the cowsay program.
+    cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}.${RESET}"
 fi
