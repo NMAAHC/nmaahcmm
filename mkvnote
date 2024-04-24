@@ -291,8 +291,10 @@ echo "${DIALOG_LIST[@]}"
 if [[ "${DIALOG_RESULT}" == "JSON import failed" ]] ; then
     echo "Error loading the form with ${MKV_FILE}"
     exit
-fi
-
+elif [[ -z "${DIALOG_RESULT}" ]] ; then
+    echo "cancelled"
+    exit
+else
 # Starts the XML draft for MKV metadata embedding with a root Tags element.
 echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
 
@@ -315,3 +317,4 @@ mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
 
 # A fun message to indicate the completion of the tagging process, potentially using the cowsay program.
 cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}.${RESET}"
+fi
