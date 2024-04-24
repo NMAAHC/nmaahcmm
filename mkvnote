@@ -249,7 +249,7 @@ while IFS="=" read -r EXISTING_KEY EXISTING_VALUE ; do
     ")
         fi
         IS_FIRST="N"
-        DIALOG_LIST+=("{ \"title\" : \"${EXISTING_KEY}\", \"value\" : \"${EXISTING_VALUE}\", \"prompt\" : \"Existing tag\"}")
+        DIALOG_LIST+=("{\"title\" : \"${EXISTING_KEY}\", \"value\" : \"${EXISTING_VALUE}\", \"prompt\" : \"Existing tag\"}")
     fi
 done < "${EXISTING_TAGS}"
 
@@ -287,7 +287,6 @@ EOF
 
 DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
 
-echo "${DIALOG_LIST[@]}" 
 if [[ "${DIALOG_RESULT}" == "JSON import failed" ]] ; then
     echo "Error loading the form with ${MKV_FILE}"
     exit
