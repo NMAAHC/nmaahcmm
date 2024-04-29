@@ -1,68 +1,93 @@
 #!/bin/bash
 
+# The shebang above specifies that this script should be run with bash.
+
+# Declaration of arrays containing tag names for two different sets of metadata standards: JPC and NMAAHC.
+# These tags are predefined fields that will be used to store specific pieces of information about the video files.
+
 MKV_TAG_SET_JPC=(
+    "COLLECTION"
     "TITLE"
+    "CATALOG_NUMBER"
     "DESCRIPTION"
     "DATE_DIGITIZED"
-    "ORIGINAL_MEDIA_FORMAT"
-    "_IDENTIFIER"
-    "_FILE_CREATOR"
-    "_TECHNICAL_TRANSFER_NOTES"
-    "_CODING_HISTORY"
-    "_ORIGINAL_PROEJCTION_SPEED"
+    "ENCODING_SETTINGS"
+    "ENCODED_BY"
+    "ORIGINAL_MEDIA_TYPE"
+    "DATE_TAGGED"
+    "TERMS_OF_USE"
+    "_TECHNICAL_NOTES"
+    "_ORIGINAL_FPS"
 )
 
 MKV_TAG_SET_NMAAHC=(
+    "COLLECTION"
     "TITLE"
+    "CATALOG_NUMBER"
     "DESCRIPTION"
     "DATE_DIGITIZED"
-    "ORIGINAL_MEDIA_FORMAT"
-    "_IDENTIFIER"
-    "_FILE_CREATOR"
-    "_TECHNICAL_TRANSFER_NOTES"
-    "_CODING_HISTORY"
-    "_ORIGINAL_PROEJCTION_SPEED"    
+    "ENCODING_SETTINGS"
+    "ENCODED_BY"
+    "ORIGINAL_MEDIA_TYPE"
+    "DATE_TAGGED"
+    "TERMS_OF_USE"
+    "_TECHNICAL_NOTES"
+    "_ORIGINAL_FPS"
+    "_TAGTAG" # Unique to the NMAAHC set, suggesting an additional, possibly custom, tag.
 )
 
-MKV_TAG_SET_OFFICIAL=(
-    "ORIGINAL_MEDIA_FORMAT"
-    "SUBJECT"
-    "DESCRIPTION"
-    "KEYWORDS"
-    "DATE_DIGITIZED"
-    "COPYRIGHT"
-    "TITLE"
-    "SUBTITLE"
-)
+# Color variables for formatting output text. Utilizes `tput` for setting text styles and colors.
+# These variables enhance readability and user interface experience.
+
+BOLD=$(tput bold) # Sets bold style for text.
+RESET=$(tput sgr0) # Resets text style to default.
+GB=$(tput setaf 38) # Sets color of text to greenish-blue.
+ERROR=$(tput setaf 1) # Sets color of text to red.
+
+# Function _usage prints the script's usage instructions to the console.
+# It's invoked when the script is run without arguments or if the user needs help.
 
 _usage(){
-    echo
-    echo "$(basename "${0}")"
-    echo
-    echo "This application will embedded key:value pairs ("tags") into a Matroka file in accordance with NMAAHC guidelines."
-    echo
-    echo "Usage: $(basename ${0}) /path/to/file"
-    echo "  "
-    echo
-    echo "Some key:value pairs have controlled vocabulary."
-    echo
-    echo " identifier - free text. Enter in NMAAHC Object ID#. 
-    ex. 2012.79.1.16.1a"
-    echo
-    echo " alternate_identifier - free text. Enter in NMAAHC TR#. 
-    ex. TR2011-71.173"
-    echo
-    echo " title - free text. Please provide a title for this file. 
-    ex. Black Journal: Alice Coltrane"
-    echo
-    echo " content_description - free text. Please provide a brief description of the content in this file. 
+    cat <<EOF
+
+    $(basename "${0}")
+
+    This application will embed key:value pairs ("tags") into a Matroska file in accordance with NMAAHC guidelines.
+
+    Usage: $(basename "${0}") [-p|--profile <profile>] /path/to/file
+
+    Some key:value pairs have controlled vocabulary.
+
+    Tags:
+    ${BOLD}${GB}_IDENTIFIER${RESET}
+    Free text.
+    Enter in NMAAHC Object ID#. 
+    ex. 2012.79.1.16.1a
+
+    ${BOLD}${GB}_ALTERNATE_IDENTIFIER${RESET}
+    Free text. 
+    Enter in NMAAHC TR#. 
+    ex. TR2011-71.173
+
+    ${BOLD}${GB}TITLE${RESET}
+    Free text. 
+    Please provide a title for this file. 
+    ex. Black Journal: Alice Coltrane
+
+    ${BOLD}${GB}DESCRIPTION${RESET}
+    Free text. 
+    Please provide a brief description of the content in this file. 
     ex. A segment from the public television series Black Journal focusing the life and music of Alice Coltrane 
-        and her children in the wake of the death of her husband, famed jazz musician John Coltrane.
-        This film was shot sometime during 1970; three years after the death of John Coltrane. 
-        She discusses her musical career and how she balances that with being a mother and paying tribute to her late husband, 
-        but also not wanting to be defined as an extension of John Coltrane's music."
-    echo
-    echo " originating_format - controlled vocab. Please choose the original format this file was dervived from.
+    and her children in the wake of the death of her husband, famed jazz musician John Coltrane.
+    This film was shot sometime during 1970; three years after the death of John Coltrane. 
+    She discusses her musical career and how she balances that with being a mother and paying tribute to her late husband, 
+    but also not want   
+
+    ${BOLD}${GB}DATE_DIGITIZED${RESET}
+
+    ${BOLD}${GB}ORIGINAL_MEDIA_FORMAT${RESET}
+    Controlled vocab. 
+    Please choose the original format this file was derived from.
     controlled vocab list:
         1 inch videotape
         2 inch videotape
@@ -80,90 +105,215 @@ _usage(){
         Super 8mm film
         16mm film
         Super 16mm film
-        35mm film"
-    echo    
-    echo " original_projection_speed - if the orginating format for this file was motion picture film, please provide a projection speed.
-    ex. 24fps, 18fps, etc." 
-    echo
-    echo "coding_history - please provide a coding history for this file. 
+        35mm film
+
+    ${BOLD}${GB}_ORIGINAL_PROJECTION_SPEED${RESET}
+    If the originating format for this file was motion picture film, please provide a projection speed.
+    ex. 24fps, 18fps, etc.
+
+    ${BOLD}${GB}_CODING_HISTORY${RESET}
+    Please provide a coding history for this file. 
     ex. O=VHS, C=Color, S=Analog, VS= NTSC, F=24, A=4:3, R=640×480, 
     T=Sony SVO-5800, O=FFV1mkv, C=Color, V=Composite, S=Analog Stereo, 
     F=24, A=4:3, W=10-bit, R=640×480, M=YUV422p10, T=Blackmagic UltraStudio 4K Mini SN123456, ffmpeg vrecord, in-house, 
-    O=FFV1mkv, W=10-bit, R640x480, MYUV422p10 N=Emily Nabasny"
-    echo
-    echo "camera_make_model - for files created from digital camera cards. controlled vocab.
+    O=FFV1mkv, W=10-bit, R640x480, MYUV422p10 N=Emily Nabasny
+
+    ${BOLD}${GB}_TECHNICAL_TRANSFER_NOTES${RESET}
+
+    ${BOLD}${GB}_CAMERERA_MAKE_MODEL${RESET}
+    Controlled vocab.
+    For files created from digital camera cards. 
     controlled vocab list:
         Canon C300
-        Canon C100"
-    echo
-    echo "camera_card_script - please enter the script used to repackage the original camera card into a NMAAHC AIP"
-    echo
-    echo "originator
-    ex. Smithsonian NMAAHC"
-    echo
-    echo "See the nmaachmm README for more information on package definitions."
-    echo
-    exit
+        Canon C100
+
+    ${BOLD}${GB}_CAMERA_CARD_SCRIPT${RESET}
+    Please enter the script used to repackage the original camera card into an NMAAHC AIP
+
+    ${BOLD}${GB}_FILE_CREATOR${RESET}
+    ex. Smithsonian NMAAHC
+
+    Tags beginning with an underscore are not part of the "official" set of Matroska tags.
+
+    See the nmaachmm README for more information on package definitions.
+
+EOF
+exit
 }
-[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
+
+# Variable initialization for selected profile and tag set.
+SELECTED_PROFILE=""
+SELECTED_TAG_SET=()
+
+# command-line options to set media id and original variables
+OPTIND=1
+while getopts ":hp:" opt ; do
+    case "${opt}" in
+        p) SELECTED_PROFILE="${OPTARG}" ;;
+        h) _usage ;;
+        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;
+        *) echo "bad option -${OPTARG}" ; _usage ;;
+    esac
+done
+shift "$((OPTIND-1))"
+
+# Checks if the script was run without any arguments.
+# If no arguments are provided, the _usage function is called to display usage information and the script exits.
+
+if [[ "${#}" -eq 0 ]]; then
+    _usage
+fi
+
+# Assigning the MKV file path as the first argument after getopts are processed.
+MKV_FILE="${1}"
+
+# Parsing command line options to set the profile and corresponding tag set.
+if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
+    SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")
+elif [[ "${SELECTED_PROFILE}" == "nmaahc" ]] ; then
+    SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
+else
+    unset SELECTED_PROFILE # clear the invalid profiles since it's not one of the ones listed in the if/elif conditions above
+    echo -e "${BOLD}${ERROR}\nNote: Invalid profile or no profile specified with -p. You will be prompted to select a profile.${RESET}"
+fi
+
+# Function _maketemp creates a temporary file and checks for success.
+# It's used for creating temporary files for storing intermediate data.
 
 _maketemp(){
     mktemp -q -t "$(basename "${0}")"
     if [ "${?}" -ne 0 ]; then
-        echo "${0}: Can't create temp file, exiting..."
+        echo "${0}: ${ERROR}Can't create temp file, exiting...${RESET}"
         exit 1
     fi
 }
 
-MKV_TAG_SET=(
-    "identifier"
-    "alternate_identifier"
-    "title"
-    "content_description"
-    "originating_format"
-    "original_projection_speed"
-    "coding_history"
-    "camera_make_model" 
-    "camera_card_script"
-    "originator"
-    )
+# Display available tag options and prompt for selection if no profile was selected
+if [ -z "${SELECTED_PROFILE}" ]; then
+    echo -e "${GB}\nAvailable tag profiles and their respective tags:${RESET}"
+    echo -e "${BOLD}\n1) JPC profile tags:${RESET}"
+    for TAG in "${MKV_TAG_SET_JPC[@]}"; do
+        echo -e "    - $TAG"
+    done
+    echo -e "${BOLD}\n2) NMAAHC profile tags:${RESET}"
+    for TAG in "${MKV_TAG_SET_NMAAHC[@]}"; do
+        echo -e "    - $TAG"
+    done
 
-DEPENDENCIES=(mkvpropedit xmlstarlet)
+    while true; do
+        echo -e "${GB}${BOLD}\nYou must select a tag profile."
+        echo -e "Press 1 for JPC, 2 for NMAAHC, or 0 to exit.\n"
+        read -p "Enter your choice: ${RESET}" choice
+        case "$choice" in
+            1)
+                SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")
+                SELECTED_PROFILE="jpc"
+                break # Exit the loop after selection
+                ;;
+            2)
+                SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
+                SELECTED_PROFILE="nmaahc"
+                break # Exit the loop after selection
+                ;;
+            0)
+                echo -e "${ERROR}\nExiting...${RESET}"
+                exit 0
+                ;;
+            *)
+                echo "Invalid choice. Please try again."
+                ;;
+        esac
+    done
+fi
 
-MKV_FILE="${1}"
+# After ensuring a profile is selected, the script proceeds to handle the .mkv file provided by the user.
+
+# A placeholder for a function call to check if the provided file is indeed an MKV file. This is an important validation step to ensure the script operates on valid input.
 #todo _check_if_mkv "${MKV_FILE}"
-MKV_FILE_NAME="$(basename "${MKV_FILE}")"
-TAG_TEMPLATE="$(_maketemp).txt"
+
+MKV_FILE_NAME="$(basename "${MKV_FILE}")" # Extracts the file name from the MKV file path.
+
+# Creates a temporary text file to hold the tags and a temporary XML file for drafting the MKV metadata. The tag template will be used for user input, while the XML draft will be used for embedding metadata into the MKV file.
+
+EXISTING_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
 
-echo "# Feel welcome to catalog ${MKV_FILE_NAME} here and then save this document. The resulting metadata (if any) will be embedded into the file. You may add new tags as long as the structure is: tag_name=[tag_value]." > "${TAG_TEMPLATE}"
-echo "# These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file." >> "${TAG_TEMPLATE}"
-echo "# Empty tags will be ignored." >> "${TAG_TEMPLATE}"
-echo >> "${TAG_TEMPLATE}"
-echo "# These tags already exist in the file. If you edit them here they will be overwritten when saved." >> "${TAG_TEMPLATE}"
-mkvextract tags "${MKV_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -o "=[" -v "String" -o "]" -n >> "${TAG_TEMPLATE}"
-echo >> "${TAG_TEMPLATE}"
-echo "# These tags already exist in the file. If you edit them here they will be overwritten when saved." >> "${TAG_TEMPLATE}"
+mkvextract tags "${MKV_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -o "=" -v "String" -n >> "${EXISTING_TAGS}"
 
-for TAG in "${MKV_TAG_SET[@]}" ; do
-    echo "${TAG}=[]" >> "${TAG_TEMPLATE}"
-done
-
-# present a tag template for user edits
-open "${TAG_TEMPLATE}"
-echo "A cataloging record is opened for ${MKV_FILE}. Edit that and save it, click any key to continue... B)"
-read
-
-# start mkv metadata xml
-echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
-
-# add metadata from tag template to mkv metadata xml
-while read TAG_LINE ; do
-    TAG_NAME="$(echo "${TAG_LINE}" | cut -d "=" -f1)"
-    TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "[" -f2 | cut -d "]" -f1)"
-    if [[ -n "${TAG_VALUE// /}" ]] ; then
-        xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
+IS_FIRST="Y"
+while IFS="=" read -r EXISTING_KEY EXISTING_VALUE ; do
+    
+    if [[ ! ${DIALOG_LIST[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
+        if [[ ! "${IS_FIRST}" = "Y" ]] ; then
+            DIALOG_LIST+=(",
+    ")
+        fi
+        IS_FIRST="N"
+        DIALOG_LIST+=("{\"title\" : \"${EXISTING_KEY}\", \"value\" : \"${EXISTING_VALUE}\", \"prompt\" : \"Existing tag\"}")
     fi
-done < <(grep "=\[.*\]$" "${TAG_TEMPLATE}")
-mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
-cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}."
+done < "${EXISTING_TAGS}"
+
+for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
+    
+    if [[ "$(grep -c "^${PROFILE_TAG}=" "${EXISTING_TAGS}")" = "0" && ! ${DIALOG_LIST[*]} =~ "\"${PROFILE_TAG}\"" ]] ; then
+        if [[ ! "${IS_FIRST}" = "Y" ]] ; then
+            DIALOG_LIST+=(",
+    ") 
+        fi
+        IS_FIRST="N"
+        DIALOG_LIST+=("{\"title\" : \"${PROFILE_TAG}\", \"prompt\" : \"A ${SELECTED_PROFILE} profile tag\"}") 
+    fi
+done
+DIALOG_FORM="$(_maketemp).xml"
+
+cat << EOF> "${DIALOG_FORM}"
+{
+  "title" : "NMAAHC MKV Tagging for ${MKV_FILE_NAME}",
+  "icon" : "/Applications/Remote Desktop.app",
+  "ontop" : 1,
+  "moveable" : 1,
+  "width" : "75%",
+  "height" : "75%",
+  "background" : "color=#800080",
+  "message" : "These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.",
+  "infobox" : "### Aditional Info\n\n#### To upload your key:value tag data in .csv \n - choose a .csv file to upload \n - choose a directory where the .mkv you wish to tag are \n - click the 'File Style' button on the bottom left \n - be cool \n#### To tag file via this gui \n - click the 'Tag-On' button on the bottom left \n - follow the instructions",
+  "textfield" : [
+      ${DIALOG_LIST[@]}
+    ],
+    "button1text" : "Tag-On!!",
+    "button2text" : "Cancel"
+}
+EOF
+
+DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
+
+if [[ "${DIALOG_RESULT}" == "JSON import failed" ]] ; then
+    echo "Error loading the form with ${MKV_FILE}"
+    exit
+elif [[ -z "${DIALOG_RESULT}" ]] ; then
+    echo "cancelled"
+    exit
+else
+    # Starts the XML draft for MKV metadata embedding with a root Tags element.
+    echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
+
+    # Reads the edited tag template line by line, extracting tag names and values entered by the user.
+    # Only lines that conform to the expected format (tag_name=[tag_value]) are processed.
+    while read TAG_LINE ; do
+        # Extracts the tag name by splitting the line at the colon and taking the first part.
+        TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
+        # Extracts the tag value by splitting the line at the colon and taking the second part.
+        TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
+        # If the tag value is not empty, the tag is added to the XML draft for embedding.
+        # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
+        if [[ -n "${TAG_VALUE// /}" ]] ; then
+            xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
+        fi
+    done < <(echo "${DIALOG_RESULT}" | grep -v " : $" | sed 's/* : / : /g')
+
+    # Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
+    mkvpropedit --tags "global:${XML_DRAFT}" "${MKV_FILE}"
+
+    # A fun message to indicate the completion of the tagging process, potentially using the cowsay program.
+    cowsay "Cool. Done. Enjoy. Tag-on. ${MKV_FILE}.${RESET}"
+fi
