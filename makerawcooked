@@ -1,15 +1,14 @@
 #!/bin/zsh
-# set -x 
 
-# Function to begin the day and collect information
-# btd() {
-  # Define ANSI escape codes for text colors and styles
-  GREEN='\033[0;32m'    # Sets text color to green
-  ERROR='\033[0;31m'      # Sets text color to red
-  ORANGE='\033[38;5;208m'  # Sets text color to orange
-  NC='\033[0m'          # Resets text color to default (No Color)
-  BOLD='\033[1m'        # Makes text bold
-  NORMAL='\033[0m'      # Resets text style to normal
+# set -x
+
+# Define ANSI escape codes for text colors and styles
+GREEN='\033[0;32m'    # Sets text color to green
+ERROR='\033[0;31m'      # Sets text color to red
+ORANGE='\033[38;5;208m'  # Sets text color to orange
+NC='\033[0m'          # Resets text color to default (No Color)
+BOLD='\033[1m'        # Makes text bold
+NORMAL='\033[0m'      # Resets text style to normal
 
 # Get the current date in the format YYYYMMDD
 DATE=$(date +"%Y%m%d")
@@ -23,54 +22,95 @@ _maketemp(){
     fi
 }
 
-JSON_TEMP="$(_maketemp).json"
+DIALOG_FORM="$(_maketemp).json"
 
-DIALOG_CMD_1="dialog --json --moveable --width 1000 --height 800 --background color=#bc85fa --icon images/makeymake/NMAAHC_horiz_Smithsonian_purple.png --iconsize 400 --title none --messagefont color=white size=20 --messagealignment left --messageposition center --message 'Hello $USER!\n\n Please choose a directory containing the dpx that you would like to run rawcooked on. Choose at least 3 .dpx files in to serve as stills. These .dpx will be transcoded into .png at the same resolution and attached to the .mkv containing your rawcooked dpx. IF there is a film inspection report or another file that you would like attached to the report, please add in in the appropriate fields.' --infobox 'rawcooked --all' --textfield 'DPX:,required,fileselect',prompt='path/to/DPXdirectory',filetype='folder' --textfield 'DPX still #1:, fileselect',prompt='path/to/DPXstill',filetype='file' --textfield 'DPX still #2:,required,fileselect',prompt='path/to/DPXstill',filetype='file' --textfield 'DPX still #3:,required,fileselect',prompt='path/to/DPXstill' --textfield 'DPX still #4:,fileselect',prompt='path/to/DPXstill',filetype='file' filetype='file' --textfield 'DPX still #5:, fileselect',prompt='path/to/DPXstill',filetype='file' --selecttitle 'Attach a film inspection report:,required' --selectvalues 'Yes,No' --selectdefault --button1text 'RAWCOOK!' --button2text 'Cancel'"
+cat << EOF > "${DIALOG_FORM}"
+{
+    "moveable" : 0,
+    "ontop" : 1,
+    "json" : 1,
+    "width" : "1000",
+    "height" : "800",
+    "icon" : "images/makeymake/NMAAHC_horiz_Smithsonian_purple.png",
+    "background" : "color=#1b0237",
+    "iconsize" : "400",
+    "title" : "none",
+    "button1text" : "RAWCOOK!",
+    "button2text" : "Cancel",
+    "messagefont" : "color=white,size=15",
+    "messagealignment" : "left",
+    "messageposition" : "top",
+    "message" : "Hello $USER!\n\nPlease choose a directory containing the .dpx files that you would like to run rawcooked on.\n\n\nChoose at least 3 .dpx files in to serve as stills. These .dpx will be transcoded into .png at the same resolution and attached to the .mkv containing your rawcooked dpx.\n\n\nIf there is a film inspection report or another file that you would like attached to the .mkv, please complete the appropriate fields",
+    "infobox" : "rawcooked --all",
+    "textfield" : [
+        {"title" : "DPX:", "required" : true, "fileselect" : true, "filetype" : "folder", "prompt" : "path/to/DPXdirectory"},
+        {"title" : "DPX still #1:", "required" : true, "fileselect" : true, "filetype" : ".dpx", "prompt" : "path/to/DPXstill"},
+        {"title" : "DPX still #2:", "required" : true, "fileselect" : true, "filetype" : ".dpx", "prompt" : "path/to/DPXstill"},
+        {"title" : "DPX still #3:", "required" : true, "fileselect" : true, "filetype" : ".dpx", "prompt" : "path/to/DPXstill"},
+        {"title" : "DPX still #4:", "fileselect" : true, "filetype" : ".dpx", "prompt" : "path/to/DPXstill"},
+        {"title" : "DPX still #5:", "fileselect" : true, "filetype" : ".dpx", "prompt" : "path/to/DPXstill"},
+        {"title" : "Film inspection report", "fileselect" : true, "prompt" : "path/to/InspectionReport"},
+        {"title" : "additional file attachment 1", "fileselect" : true, "prompt" : "path/to/fileAttachement1"},
+        {"title" : "additional file attachment 2", "fileselect" : true, "prompt" : "path/to/fileAttachement2"}
+        ],
+    "selectitems" : [
+        {"title" : "HD access file:", "required" : true, "values" : ["Yes","No"], "default" : "Yes"},
+        {"title" : "SD access file:", "required" : true, "values" : ["Yes","No"], "default" : "Yes"}
+        ]          
+}
+EOF
 
-USER_INPUT_1=$(eval "$DIALOG_CMD_1")
-#echo "USER INPUT is: $USER_INPUT_1"
+DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
 
-CHOSEN_DIRECTORY=$(echo "$USER_INPUT_1" | jq -r '."Directory creation:"')
-#echo "CHOSEN_DIRECTORY is: $CHOSEN_DIRECTORY"
+echo $DIALOG_RESULT
 
-if [[ -z "$CHOSEN_DIRECTORY" || ! -d "$CHOSEN_DIRECTORY" ]]; then
-    echo
-    echo "${ERROR}${BOLD}Error: No valid directory chosen or the chosen directory does not exist."
-    exit 1
-fi
+DPX_DIR=$(jq -r '.DPX:' "${DIALOG_RESULT}")
+echo $DPX_DIR
 
-# run the dialog
-DIALOG_CMD_2="dialog --json --moveable --width 75% --height 75% --background color=#0f011f --icon images/makeymake/NMAAHC_vert_purple.png --iconsize 300 --overlayicon /Users/bleakley/Desktop/NMAAHC_vert_purple.png --title none --messagefont size=13.5 color=white --messagealignment left --messageposition top --message 'Your diectories will be created in **"$CHOSEN_DIRECTORY"**\n\n- The below information will create directories 2017_55_1_1 through 2017_55_1_12 on the user desktop:\n\n | Information       | Value |
-|-------------------|-------|
-| Collection year   | 2017  |
-| Collection number | 55    |
-| Series            | 2     |
-| First object      | 1     |
-| Last object       | 12    | **"$USER"**, please enter the following information for the collection being worked on:\n- **Collection ID:** The collection year and number together make up the NMAAHC collection ID. For example, 2012.79 represents the Pearl Bowser collection. The year indicates when the collection was acquired, and the number signifies the order it was acquired in that year. Do not include any leading zeros.\n- **Series Number:** Some collections, particularly archival ones, are assigned series numbers. In the Bowser collection, Series 1 is for film, Series 2 is for video, and Series 3 is for audio. Do not include any leading zeros. If there is no series in your collection, leave this blank.\n- **First Object:** Enter the number of the first object for which you would like a directory created. Do not include any leading zeros.\n- **Last Object:** Enter the number of the last object for which you want a directory created. The script will create directories for all numbers within the range of the first and last numbers.\n\n' --infobox 'hey hey hey, now you are here' --textfield 'Collection year:, prompt=2012' --textfield 'Collection number:, prompt=79' --textfield 'Series number, if applicable:, prompt=1' --textfield 'First object number:, prompt=16' --textfield 'Last object number:, prompt=87' --buttonstyle center --button1text 'Make My Directories!' --button2text 'Stop! I need to fix something!'"
+# USER_INPUT_1=$(eval "$DIALOG_CMD_1")
 
-USER_INPUT_2=$(eval "$DIALOG_CMD_2")
 
-echo "${USER_INPUT_2}" > "${JSON_TEMP}"
+# CHOSEN_DIRECTORY=$(echo "$USER_INPUT_1" | jq -r '."Directory creation:"')
+# #echo "CHOSEN_DIRECTORY is: $CHOSEN_DIRECTORY"
 
-# Read JSON file
-COLLECTION_YEAR=$(jq -r '."Collection year:"' "${JSON_TEMP}")
-COLLECTION_NUMBER=$(jq -r '."Collection number:"' "${JSON_TEMP}")
-SERIES=$(jq -r '."Series number, if applicable:"' "${JSON_TEMP}")
-FIRST_OBJECT=$(jq -r '."First object number:"' "${JSON_TEMP}")
-LAST_OBJECT=$(jq -r '."Last object number:"' "${JSON_TEMP}")
+# if [[ -z "$CHOSEN_DIRECTORY" || ! -d "$CHOSEN_DIRECTORY" ]]; then
+#     echo
+#     echo "${ERROR}${BOLD}Error: No valid directory chosen or the chosen directory does not exist."
+#     exit 1
+# fi
 
-# Iterate from the first object number to the last object number
-for (( i=$first_object; i<=$last_object; i++ ))
-do
-  # Define the directory name
-  if [[ -n $series && $series != "null" && $series != "" ]]; then
-    dir_name="${collection_year}_${collection_number}_${series}_${i}"
-  else
-    dir_name="${collection_year}_${collection_number}_${i}"
-  fi
+# # run the dialog
+# DIALOG_CMD_2="dialog --json --moveable --width 75% --height 75% --background color=#0f011f --icon images/makeymake/NMAAHC_vert_purple.png --iconsize 300 --overlayicon /Users/bleakley/Desktop/NMAAHC_vert_purple.png --title none --messagefont size=13.5 color=white --messagealignment left --messageposition top --message 'Your diectories will be created in **"$CHOSEN_DIRECTORY"**\n\n- The below information will create directories 2017_55_1_1 through 2017_55_1_12 on the user desktop:\n\n | Information       | Value |
+# |-------------------|-------|
+# | Collection year   | 2017  |
+# | Collection number | 55    |
+# | Series            | 2     |
+# | First object      | 1     |
+# | Last object       | 12    | **"$USER"**, please enter the following information for the collection being worked on:\n- **Collection ID:** The collection year and number together make up the NMAAHC collection ID. For example, 2012.79 represents the Pearl Bowser collection. The year indicates when the collection was acquired, and the number signifies the order it was acquired in that year. Do not include any leading zeros.\n- **Series Number:** Some collections, particularly archival ones, are assigned series numbers. In the Bowser collection, Series 1 is for film, Series 2 is for video, and Series 3 is for audio. Do not include any leading zeros. If there is no series in your collection, leave this blank.\n- **First Object:** Enter the number of the first object for which you would like a directory created. Do not include any leading zeros.\n- **Last Object:** Enter the number of the last object for which you want a directory created. The script will create directories for all numbers within the range of the first and last numbers.\n\n' --infobox 'hey hey hey, now you are here' --textfield 'Collection year:, prompt=2012' --textfield 'Collection number:, prompt=79' --textfield 'Series number, if applicable:, prompt=1' --textfield 'First object number:, prompt=16' --textfield 'Last object number:, prompt=87' --buttonstyle center --button1text 'Make My Directories!' --button2text 'Stop! I need to fix something!'"
 
-  # Create the directory
-  mkdir -p "${CHOSEN_DIRECTORY}/${dir_name}"
-done
+# USER_INPUT_2=$(eval "$DIALOG_CMD_2")
 
-echo "Directories have been created successfully."
+# echo "${USER_INPUT_2}" > "${JSON_TEMP}"
+
+# # Read JSON file
+# COLLECTION_YEAR=$(jq -r '."Collection year:"' "${JSON_TEMP}")
+# COLLECTION_NUMBER=$(jq -r '."Collection number:"' "${JSON_TEMP}")
+# SERIES=$(jq -r '."Series number, if applicable:"' "${JSON_TEMP}")
+# FIRST_OBJECT=$(jq -r '."First object number:"' "${JSON_TEMP}")
+# LAST_OBJECT=$(jq -r '."Last object number:"' "${JSON_TEMP}")
+
+# # Iterate from the first object number to the last object number
+# for (( i=$first_object; i<=$last_object; i++ ))
+# do
+#   # Define the directory name
+#   if [[ -n $series && $series != "null" && $series != "" ]]; then
+#     dir_name="${collection_year}_${collection_number}_${series}_${i}"
+#   else
+#     dir_name="${collection_year}_${collection_number}_${i}"
+#   fi
+
+#   # Create the directory
+#   mkdir -p "${CHOSEN_DIRECTORY}/${dir_name}"
+# done
+
+# echo "Directories have been created successfully."
