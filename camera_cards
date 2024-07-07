@@ -222,11 +222,11 @@ _make_inventory(){
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}" | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}" | sort)
             while read FILE ; do
                 echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},,audio,${FILE},${AUDIO_CODEC},${AUDIO_SAMPLE_FMT}" >> "${FILE_INVENTORY}"
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}" | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}" | sort)
         elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
             while read FILE ; do
                 if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
@@ -239,25 +239,25 @@ _make_inventory(){
                     echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},$(_lookup_associated_video_file),metadata,,,,,,${FILE},," >> "${FILE_INVENTORY}"
                 fi
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -type f | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -type f | sort)
         elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f | sort)
+            done < <(find "${CARD}"! -name ".DS_Store"  -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f | sort)
         elif [[ "${CAMERA_CARD_TYPE}" ==  "MXF" ]] ; then
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -iname "*.${EXTENSION}" -type f | sort)
         else
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -iname "*.${EXTENSION}" -type f | sort)
         fi
         if [[ -n "${RSYNC_OPTIONS[@]}" ]] ; then
             while read FILE ; do
@@ -265,7 +265,7 @@ _make_inventory(){
                     echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},$(_lookup_associated_video_file),metadata,,,,,,${FILE},," >> "${FILE_INVENTORY}"
                     ((FILE_NUM++))
                 fi
-            done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}" | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -type f "${RSYNC_OPTIONS[@]}" | sort)
         fi
         # grab everything else
         while read FILE ; do
