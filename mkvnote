@@ -166,6 +166,7 @@ fi
 
 # Assigning the MKV file path as the first argument after getopts are processed.
 INPUT_FILE="${1}"
+EXTENSION="${INPUT_FILE##*.}"
 
 # Parsing command line options to set the profile and corresponding tag set.
 if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
@@ -187,6 +188,83 @@ _maketemp(){
         exit 1
     fi
 }
+
+if [[ "${EXTENSION}" == "csv" ]] ; then
+    CSV_XML="$(_maketemp).xml"
+    csvprintf -X -f "${INPUT_FILE}" > "${CSV_XML}"
+    CSV_TABLE="$(csvtomd "${INPUT_FILE}" | tr '\n' '<br/>')"
+    ELEMENT_LIST="$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -n "${CSV_XML}")"
+    FILENAME_FOUND=0
+    echo "Examining the csv: ${CSV_XML}."
+    while read ELEMENT_VALUE ; do
+        echo "Found ${ELEMENT_VALUE}."
+        ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"
+        if [[ "${ELEMENT_VALUE}" == "filename" ]] ; then
+            FILENAME_FOUND=1
+        fi
+    done < <(echo "${ELEMENT_LIST}")
+    if [[ "${FILENAME_FOUND}" = "0" ]] ; then
+        echo "${BOLD}${ERROR}Error, $(basename "${INPUT_FILE}") does not contain a column called 'filename'. Exiting.${RESET}"
+        exit
+    fi
+
+    MISSING_FILE=0
+    while read FILE_IN_CSV ; do
+        if [[ ! -f "${FILE_IN_CSV}" ]] ; then
+            echo "${BOLD}${ERROR}Error, $(basename "${FILE_IN_CSV}") is referenced in the csv but not found.${RESET}"
+            MISSING_FILE=1
+            MISSING_FILE_LIST+="${FILE_IN_CSV} "
+        fi
+    done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
+    if [[ "${MISSING_FILE}" != "0" ]] ; then
+        echo "${BOLD}${ERROR}Error, Some files in the csv, such as ${MISSING_FILE_LIST}, are not found. Exiting.${RESET}"
+        exit
+    else
+        echo "${BOLD}Nice. All files from the csv are found. Let's tag.${RESET}"
+    fi
+
+    XML_DRAFT="$(_maketemp).xml"
+    while read FILE_IN_CSV ; do
+        echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
+        while read TAG_LINE ; do
+            # Extracts the tag name by splitting the line at the colon and taking the first part.
+            TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
+            # Extracts the tag value by splitting the line at the colon and taking the second part.
+            TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
+            # If the tag value is not empty, the tag is added to the XML draft for embedding.
+            # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
+            if [[ -n "${TAG_VALUE// /}" ]] ; then
+                xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
+            fi
+        done < <(xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*" -v "name()" -o ":" -v "." -n "${CSV_XML}")
+        echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
+        xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*[not(filename)]" -v "name()" -o ":" -v "." -n "${CSV_XML}"
+        echo
+        mkvpropedit --tags "global:${XML_DRAFT}" "${FILE_IN_CSV}"
+    done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
+
+    exit
+    DIALOG_FORM="$(_maketemp).xml"
+
+    cat << EOF> "${DIALOG_FORM}"
+{
+  "title" : "NMAAHC MKV Tagging for ${INPUT_FILE_NAME}",
+  "ontop" : 1,
+  "moveable" : 1,
+  "width" : "75%",
+  "height" : "75%",
+  "background" : "color=#800080",
+  "message" : "These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.\n\n${CSV_TABLE}",
+  "infobox" : "### Aditional Info\n\n#### To upload your key:value tag data in .csv \n - choose a .csv file to upload \n - choose a directory where the .mkv you wish to tag are \n - click the 'File Style' button on the bottom left \n - be cool \n#### To tag file via this gui \n - click the 'Tag-On' button on the bottom left \n - follow the instructions",
+    "button1text" : "Tag-On!!",
+    "button2text" : "Cancel"
+}
+EOF
+
+    DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
+    echo $DIALOG_RESULT
+    exit
+fi
 
 # Display available tag options and prompt for selection if no profile was selected
 if [ -z "${SELECTED_PROFILE}" ]; then
@@ -285,6 +363,8 @@ cat << EOF > "${DIALOG_FORM}"
 EOF
 
 DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
+
+echo "$DIALOG_RESULT"
 
 if [[ "${DIALOG_RESULT}" == "JSON import failed" ]] ; then
     echo "Error loading the form with ${INPUT_FILE}"
