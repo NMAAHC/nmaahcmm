@@ -222,6 +222,20 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     else
         echo "${BOLD}Nice. All files from the csv are found. Let's tag.${RESET}"
     fi
+    # give an option to force ahead despite missing files
+    # add a -d option to provide a parent directory to the files referenced in the csv filenames
+    # ./mkvnote -d /over/here mkv.csv
+    # -d the parent directory of the file's referenced in the csv
+    # -D search from here down for the file and complain is not 1 is found
+    
+    # need an option to get the existing tags out to a csv, query all mkv and then compile all tags and build a csv
+    # ensure that an empty column removes the tag in the csv.
+    # put choosing of directory and upload of csv into swift
+    # default csv outputs from swiftdialog to desktop
+    
+    
+    # deal with multiline values and single quotes
+    
 
     XML_DRAFT="$(_maketemp).xml"
     while read FILE_IN_CSV ; do
