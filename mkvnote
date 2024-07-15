@@ -236,6 +236,8 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     
     # deal with multiline values and single quotes
     
+    # make sure the error log from camera card rewrapping is self explanatory, like the h264 and aac messages
+    
 
     XML_DRAFT="$(_maketemp).xml"
     while read FILE_IN_CSV ; do
