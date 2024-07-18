@@ -207,12 +207,12 @@ _make_inventory(){
             done < <(find "${CARD}" -iname "*.${EXTENSION}" -type f | sort)
         fi
         if [[ -n "${RSYNC_OPTIONS[@]}" ]] ; then
-        while read FILE ; do
-            if [[ -z "$(grep ",${FILE}," "${FILE_INVENTORY}")" ]] ; then
-            echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,,,,,,${FILE},," >> "${FILE_INVENTORY}"
-            ((FILE_NUM++))
-            fi
-        done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}" | sort)
+            while read FILE ; do
+                if [[ -z "$(grep ",${FILE}," "${FILE_INVENTORY}")" ]] ; then
+                    echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,,,,,,${FILE},," >> "${FILE_INVENTORY}"
+                    ((FILE_NUM++))
+                fi
+            done < <(find "${CARD}" -type f "${RSYNC_OPTIONS[@]}" | sort)
         fi
         # grab everything else
         while read FILE ; do
