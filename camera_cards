@@ -317,6 +317,20 @@ _identify_card_type(){
         CAMERA_CARD_TYPE="XDCAMEX"
         EXTENSION="mp4"
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.xmp" -o -iname "INDEX.MIF" -o -iname "*.cpf" \))
+    else
+        # read all the files in the package and note the extensions of video files
+        EXTENSION_REVIEW=()
+        while read FILE ; do
+            if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
+                EXTENSION_REVIEW+=("${FILE##*.}")
+            fi
+        done < <(find "${CARD}" -type f | sort)
+        # find the most common video extension
+        EXTENSION="$(printf '%s\n' "${EXTENSION_REVIEW[@]}" | sort | uniq -c | sort -k1,1nr -k2 | awk '{print $2; exit}')"
+        EXTENSION_COUNT="$(printf '%s\n' "${EXTENSION_REVIEW[@]}" | sort | uniq -c | sort -k1,1nr -k2 | awk '{print $1; exit}')"
+        _report -g "Couldn't identify a particular camera card type here. Using a GENERAL approach on the ${EXTENSION_COUNT} ${EXTENSION} files found in there."
+        _report -g "If you want to keep everything in ${CARD} in a tar.gz file then try the -t optoin."
+        CAMERA_CARD_TYPE="GENERAL"
     fi
 }
 
@@ -413,30 +427,6 @@ if [[ -z "${AIP_DESTINATION}" ]] ; then
         _report -rt "ERROR: Output directory ${AIP_DESTINATION} is not a directory. Exiting..."
         exit 1
     fi
-fi
-
-if [[ "${TAR}" == "NO" ]] && [[ -z "${CAMERA_CARD_TYPE}" ]] ; then
-    CAMERA_CARD_TYPE="GENERAL"
-    _report -b "Camera card type not identified!"
-    echo
-    printf "Select a strategy:"
-    echo
-    PS3="Selection: "
-    select STRATEGY in "1. Create AIP: concatenate video files and restructure metadata directories" "2. Tar: Compress camera files and folders into a tarball" "3. Both: Create AIP and also tar original package (produces two packages)" "quit"
-    do
-        if [[ "${STRATEGY}" == "1. Create AIP: concatenate video files and restructure metadata directories" ]] ; then
-            TAR="NO"
-            AIP="YES"
-        elif [[ "${STRATEGY}" == "2. Tar: Compress camera files and folders into a tarball" ]] ; then
-            TAR="YES"
-            AIP="NO"
-        elif [[ "${STRATEGY}" == "3. Both: Create AIP and also tar original package (produces two packages)" ]] ; then
-            TAR="YES"
-            AIP="YES"
-        fi
-        if [[ "${STRATEGY}" == "quit" ]] ; then echo "Bye" && exit 0 ; fi
-        break
-    done
 fi
 
 # note the time we start working on the AIP
