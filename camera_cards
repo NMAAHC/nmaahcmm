@@ -577,7 +577,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
         echo
         _report -g "Moving original audiovisual files to AIP..."
-        if [[ -n "$(for FILE in $(_read_inventory "FILE_NAME") ; do basename "${FILE}" ; done | sort | uniq -d)" ]] ; then # check for duplicate filenames on camera card before beginning transfer process
+        if [[ -n "$(while read FILE ; do basename "${FILE}" ; done < <(_read_inventory "FILE_NAME") | sort | uniq -d)" ]] ; then # check for duplicate filenames on camera card before beginning transfer process
             _report -r "Duplicate filenames found on original camera card! Not completing automated packaging process in order to avoid overwriting files with the same name. Please take a closer look at your original camera card's file structure to create this AIP."
             _report -r "Also note that metadata files (in the nmaahc_metadata folder of your AIP) may not have been properly generated for all files with the same filename."
             exit 1
