@@ -95,7 +95,13 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
   -n Do not actually package anything, but just show information about the input and what would happen.
   -h display this help
-  
+
+  By default, this script will try to losslessly rewrap the contents of the camera cards from input to a concatenated output; however, setting this profile option will transcode the contents instead. Setting a profile will disable lossless verification.
+  -p [xn|xp|h] where
+  -p xn     creates an NSTC XDCam/PCM output in an mov container
+  -p xp     creates an PAL XDCam/PCM output in an mov container
+  -p h      creates an h264/aac output in an mp4 container
+
   Options specific to the GENERAL camera card type:
   -k [y|n]  If the camera card is GENERAL, set '-k y' to keep a copy of all files from the original camera card with the aip. Defaults to '-k n' to not keep them.
 
@@ -365,7 +371,7 @@ _check_if_in_list(){
 
 # getopts loop
 OPTIND=1
-while getopts ":m:N:o:f:F:ctank:h" OPT; do
+while getopts ":m:N:o:f:F:ctank:p:h" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         N) CLIP_SELECTION="${OPTARG}" ;;
@@ -377,6 +383,7 @@ while getopts ":m:N:o:f:F:ctank:h" OPT; do
         a) TAR="YES" ; AIP="YES" ;;
         n) REPORT_ONLY="Y" ;;
         k) KEEP_ALL="${OPTARG}" ;;
+        p) PROFILE="${OPTARG}" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
@@ -529,7 +536,25 @@ if [[ "${AIP}" == "YES" ]] ; then
     done < <(_read_inventory -f ",video,\|,audio,")
 
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
-    "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${MIDDLE_OPTIONS[@]}" "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
+    if [[ "${PROFILE}" = "xn" ]] ; then
+        MIDDLE_OPTIONS+=(-r:v ntsc -c:v mpeg2video -intra_vlc 1 -non_linear_quant 1)
+        MIDDLE_OPTIONS+=(-pix_fmt yuv420p -flags +ildct+ilme -top 1 -dc 10 -qmin 1 -lmin QP2LAMBDA -b:v 35000k -minrate 20000k -maxrate 35000k -bufsize 36408333 -g 15 -bf 2 -aspect 16:9)
+        MIDDLE_OPTIONS+=(-ps 1 -mpv_flags strict_gop)
+        MIDDLE_OPTIONS+=(-s 1920x1080)
+        MIDDLE_OPTIONS+=(-acodec pcm_s16le -ar 48000)
+    elif [[ "${PROFILE}" = "xp" ]] ; then
+        MIDDLE_OPTIONS+=(-r:v pal -c:v mpeg2video -intra_vlc 1 -non_linear_quant 1)
+        MIDDLE_OPTIONS+=(-pix_fmt yuv420p -flags +ildct+ilme -top 1 -dc 10 -qmin 1 -lmin QP2LAMBDA -b:v 35000k -minrate 20000k -maxrate 35000k -bufsize 36408333 -g 15 -bf 2 -aspect 16:9)
+        MIDDLE_OPTIONS+=(-ps 1 -mpv_flags strict_gop)
+        MIDDLE_OPTIONS+=(-s 1920x1080)
+        MIDDLE_OPTIONS+=(-acodec pcm_s16le -ar 48000)
+    elif [[ "${PROFILE}" = "h" ]] ; then
+        MIDDLE_OPTIONS+=(-movflags faststart -pix_fmt yuv420p -c:v libx264 -force_key_frames chapters -crf 18 -vf yadif -c:a aac)
+    else
+        MIDDLE_OPTIONS+=(-c copy)
+    fi
+        
+    "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 "${MIDDLE_OPTIONS[@]}" "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
     STREAMHASH="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
     "${FFMPEG_PATH}" -i "${CONCATENATED_VIDEO_FILE}" -map 0 -c copy -f streamhash -hash md5 "${STREAMHASH}"
