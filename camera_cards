@@ -503,7 +503,6 @@ if [[ "${AIP}" == "YES" ]] ; then
         FILE_NAME="$(echo "${INVENTORY_ROW}" | cut -d "," -f 11)"
         AUDIO_CODEC="$(echo "${INVENTORY_ROW}" | cut -d "," -f 12)"
         AUDIO_SAMPLE_FMT="$(echo "${INVENTORY_ROW}" | cut -d "," -f 13)"
-        echo "HEYY ${AUDIO_CODEC} ${AUDIO_SAMPLE_FMT} ${OUTPUT_EXTENSION} "
         if [[ "${AUDIO_CODEC}" == "pcm_bluray" && "${OUTPUT_EXTENSION}" != "m2t" ]] ; then
             if [[ "${AUDIO_SAMPLE_FMT}" == "s16" ]] ; then
                 _report -b "Note: A file contains ${AUDIO_CODEC}(${AUDIO_SAMPLE_FMT}) audio but the output is output is not m2t, we'll transcode to pcm_s16le."
