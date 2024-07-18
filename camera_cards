@@ -587,9 +587,9 @@ if [[ "${AIP}" == "YES" ]] ; then
             if [[ "${KEEP_ALL}" = "Y" ]] ; then
                 echo
                 _report -g "Moving original audiovisual files to AIP..."
-            while read FILE ; do
-                rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
-            done < <(_read_inventory -f ",video,\|,audio," "FILE_NAME")
+                while read FILE ; do
+                    rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
+                done < <(_read_inventory -f ",video,\|,audio," "FILE_NAME")
             fi
         fi
     fi
