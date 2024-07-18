@@ -497,7 +497,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${OUTPUT_EXTENSION}"
 
     # create list of files to concatenate, formatted for ffmpeg
-    unset AUDIO_STRATEGY
+    unset AUDIO_STRATEGY UNKNOWN_ENCODINGS_FOUND
     while read INVENTORY_ROW ; do
         SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
         FILE_NAME="$(echo "${INVENTORY_ROW}" | cut -d "," -f 11)"
@@ -513,12 +513,18 @@ if [[ "${AIP}" == "YES" ]] ; then
             fi
         fi
         if [[ -z "${CLIP_SELECTION}" || "$(_check_if_in_list "${SEG_NUMBER}" "${CLIP_SELECTION}")" == "y" ]] ; then
+            ANY_UNKNOWN_ENCODINGS="$(ffprobe -v 0 "${FILE_NAME}" -show_streams | grep -c codec_name=unknown)"
+            if [[ "${ANY_UNKNOWN_ENCODINGS}" != "0" && "${UNKNOWN_ENCODINGS_FOUND}" != true ]] ; then
+                UNKNOWN_ENCODINGS_FOUND=true
+                MIDDLE_OPTIONS=(-ignore_unknown)
+                _report -b "Uknown encodings were found in ${FILE_NAME}. Will add -ignore_unknown while rewrapping."
+            fi
             echo "file '${FILE_NAME}'" >> "${TEMP_CONCATLIST}"
         fi
     done < <(_read_inventory -f ",video,\|,audio,")
 
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
-    "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
+    "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 -c copy "${MIDDLE_OPTIONS[@]}" "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
     STREAMHASH="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
     "${FFMPEG_PATH}" -i "${CONCATENATED_VIDEO_FILE}" -map 0 -c copy -f streamhash -hash md5 "${STREAMHASH}"
