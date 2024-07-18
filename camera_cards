@@ -180,13 +180,10 @@ _make_inventory(){
                     IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
                     echo "${CARD_NUM},${CAMERA_CARD_TYPE},${VIDEO_NUM},${FILE_NUM},video,${DURATION},${COMPANY_NAME},${PRODUCT_NAME},${MOD_TS},${TC},${FILE},${AUDIO_CODEC},${AUDIO_SAMPLE_FMT}" >> "${FILE_INVENTORY}"
                     ((VIDEO_NUM++))
-                    ((FILE_NUM++))
                 elif [[ -n $(mediainfo --Inform="General;%AudioCount%" "${FILE}") ]] ; then
                     echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},audio,,,,,,${FILE},${AUDIO_CODEC},${AUDIO_SAMPLE_FMT}" >> "${FILE_INVENTORY}"
-                    ((FILE_NUM++))
-                elif [[ -f "${FILE}" ]] ; then
+                else
                     echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},metadata,,,,,,${FILE},," >> "${FILE_INVENTORY}"
-                    ((FILE_NUM++))
                 fi
                 ((FILE_NUM++))
             done < <(find "${CARD}" -type f | sort)
