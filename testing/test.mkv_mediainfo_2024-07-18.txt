@@ -1,0 +1,131 @@
+General
+Count                                    : 357
+Count of stream of this kind             : 1
+Kind of stream                           : General
+Kind of stream                           : General
+Stream identifier                        : 0
+Unique ID                                : 330016588630037627694147127786967824673
+Unique ID                                : 330016588630037627694147127786967824673 (0xF846E20D83A712B92E51001F96C67921)
+Count of video streams                   : 1
+Video_Format_List                        : AVC
+Video_Format_WithHint_List               : AVC
+Codecs Video                             : AVC
+Complete name                            : /Users/chouc/Library/CloudStorage/OneDrive-SmithsonianInstitution/nmaahcmm/testing/test.mkv
+Folder name                              : /Users/chouc/Library/CloudStorage/OneDrive-SmithsonianInstitution/nmaahcmm/testing
+File name extension                      : test.mkv
+File name                                : test
+File extension                           : mkv
+Format                                   : Matroska
+Format                                   : Matroska
+Format/Url                               : https://matroska.org/downloads/windows.html
+Format/Extensions usually used           : mkv mk3d mka mks
+Commercial name                          : Matroska
+Format version                           : Version 4
+File size                                : 3980
+File size                                : 3.89 KiB
+File size                                : 4 KiB
+File size                                : 3.9 KiB
+File size                                : 3.89 KiB
+File size                                : 3.887 KiB
+Duration                                 : 40
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 00:00:00.040
+Duration                                 : 00:00:00:01
+Duration                                 : 00:00:00.040 (00:00:00:01)
+Overall bit rate                         : 796000
+Overall bit rate                         : 796 kb/s
+Frame rate                               : 25.000
+Frame rate                               : 25.000 FPS
+Frame count                              : 1
+IsStreamable                             : Yes
+Title                                    : Camera Card x MKVNote
+Movie name                               : Camera Card x MKVNote
+Description                              : This is a sample camera card files for oral history interview
+File last modification date              : 2024-07-18 17:59:43 UTC
+File last modification date (local)      : 2024-07-18 13:59:43
+Writing application                      : Lavf61.1.100
+Writing application                      : Lavf61.1.100
+Writing library                          : Lavf61.1.100 / Lavf60.3.100
+Writing library                          : Lavf61.1.100 / Lavf60.3.100
+Original source form                     : Canon C100 AVCHD (MTS)
+ErrorDetectionType                       : Per level 1
+CATALOG_NUMBER                           : TR2024-05
+COLLECTION                               : Sample Camera Card Files
+DATE_TAGGED.                             : 7/18/24
+PROCESSED_BY                             : Chialin Chou
+_TECHNICAL_NOTES                         : camera_cards -f mkv
+___filename                              : test.mkv
+filename                                 : test.mkv
+
+Video
+Count                                    : 381
+Count of stream of this kind             : 1
+Kind of stream                           : Video
+Kind of stream                           : Video
+Stream identifier                        : 0
+StreamOrder                              : 0
+ID                                       : 1
+ID                                       : 1
+Unique ID                                : 4782478325583120148
+Format                                   : AVC
+Format                                   : AVC
+Format/Info                              : Advanced Video Codec
+Format/Url                               : http://developers.videolan.org/x264.html
+Commercial name                          : AVC
+Format profile                           : High 4:4:4 Predictive@L1.3
+Format settings                          : CABAC / 4 Ref Frames
+Format settings, CABAC                   : Yes
+Format settings, CABAC                   : Yes
+Format settings, Reference frames        : 4
+Format settings, Reference frames        : 4 frames
+Internet media type                      : video/H264
+Codec ID                                 : V_MPEG4/ISO/AVC
+Codec ID/Url                             : http://ffdshow-tryout.sourceforge.net/
+Duration                                 : 40.000000
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 00:00:00.040
+Duration                                 : 00:00:00:01
+Duration                                 : 00:00:00.040 (00:00:00:01)
+Width                                    : 320
+Width                                    : 320 pixels
+Height                                   : 240
+Height                                   : 240 pixels
+Sampled_Width                            : 320
+Sampled_Height                           : 240
+Pixel aspect ratio                       : 1.000
+Display aspect ratio                     : 1.333
+Display aspect ratio                     : 4:3
+Frame rate mode                          : CFR
+Frame rate mode                          : Constant
+FrameRate_Mode_Original                  : VFR
+Frame rate                               : 25.000
+Frame rate                               : 25.000 FPS
+FrameRate_Num                            : 25
+FrameRate_Den                            : 1
+Frame count                              : 1
+Chroma subsampling                       : 4:4:4
+Chroma subsampling                       : 4:4:4
+Bit depth                                : 8
+Bit depth                                : 8 bits
+Scan type                                : Progressive
+Scan type                                : Progressive
+Delay                                    : 0
+Delay                                    : 00:00:00.000
+Delay                                    : 00:00:00:00
+Delay                                    : 00:00:00.000 (00:00:00:00)
+Delay, origin                            : Container
+Delay, origin                            : Container
+Writing library                          : x264 - core 164 r3108 31e19f9
+Writing library                          : x264 core 164 r3108 31e19f9
+Encoded_Library_Name                     : x264
+Encoded_Library_Version                  : core 164 r3108 31e19f9
+Encoding settings                        : cabac=1 / ref=3 / deblock=1:0:0 / analyse=0x3:0x113 / me=hex / subme=7 / psy=1 / psy_rd=1.00:0.00 / mixed_ref=1 / me_range=16 / chroma_me=1 / trellis=1 / 8x8dct=1 / cqm=0 / deadzone=21,11 / fast_pskip=1 / chroma_qp_offset=4 / threads=7 / lookahead_threads=1 / sliced_threads=0 / nr=0 / decimate=1 / interlaced=0 / bluray_compat=0 / constrained_intra=0 / bframes=3 / b_pyramid=2 / b_adapt=1 / b_bias=0 / direct=1 / weightb=1 / open_gop=0 / weightp=2 / keyint=250 / keyint_min=25 / scenecut=40 / intra_refresh=0 / rc_lookahead=40 / rc=crf / mbtree=1 / crf=23.0 / qcomp=0.60 / qpmin=0 / qpmax=69 / qpstep=4 / ip_ratio=1.40 / aq=1:1.00
+Default                                  : No
+Default                                  : No
+Forced                                   : No
+Forced                                   : No
+
