@@ -95,6 +95,9 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
   -n Do not actually package anything, but just show information about the input and what would happen.
   -h display this help
+  
+  Options specific to the GENERAL camera card type:
+  -k [y|n]  If the camera card is GENERAL, set '-k y' to keep a copy of all files from the original camera card with the aip. Defaults to '-k n' to not keep them.
 
 EOF
     exit
@@ -362,7 +365,7 @@ _check_if_in_list(){
 
 # getopts loop
 OPTIND=1
-while getopts ":m:N:o:f:F:ctanh" OPT; do
+while getopts ":m:N:o:f:F:ctank:h" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         N) CLIP_SELECTION="${OPTARG}" ;;
@@ -373,6 +376,7 @@ while getopts ":m:N:o:f:F:ctanh" OPT; do
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
         n) REPORT_ONLY="Y" ;;
+        k) KEEP_ALL="${OPTARG}" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
@@ -575,16 +579,18 @@ if [[ "${AIP}" == "YES" ]] ; then
 
     if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
         # general profile only: move all video files to AIP as separate files, in case concatenation does not work for this camera card structure
-        echo
-        _report -g "Moving original audiovisual files to AIP..."
         if [[ -n "$(while read FILE ; do basename "${FILE}" ; done < <(_read_inventory "FILE_NAME") | sort | uniq -d)" ]] ; then # check for duplicate filenames on camera card before beginning transfer process
             _report -r "Duplicate filenames found on original camera card! Not completing automated packaging process in order to avoid overwriting files with the same name. Please take a closer look at your original camera card's file structure to create this AIP."
             _report -r "Also note that metadata files (in the nmaahc_metadata folder of your AIP) may not have been properly generated for all files with the same filename."
             exit 1
         else
+            if [[ "${KEEP_ALL}" = "Y" ]] ; then
+                echo
+                _report -g "Moving original audiovisual files to AIP..."
             while read FILE ; do
                 rsync -avh --progress "${FILE}" "${AIPDIR_AIP}/"
             done < <(_read_inventory -f ",video,\|,audio," "FILE_NAME")
+            fi
         fi
     fi
 fi
