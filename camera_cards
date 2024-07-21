@@ -101,6 +101,7 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
   -n Do not actually package anything, but just show information about the input and what would happen.
   -s SUFFIX   If unset, the default suffix of '_concatenated' will be used on outputs.
+  -1          Enable single-output mode. If this is set then no metadata reports will be saved and only one concatenated media output (with no package structure) will be sent to the AIP_DESTINATION.
   -h display this help
 
   By default, this script will try to losslessly rewrap the contents of the camera cards from input to a concatenated output; however, setting this profile option will transcode the contents instead. Setting a profile will disable lossless verification.
@@ -417,7 +418,7 @@ _check_if_in_list(){
 # getopts loop
 OPTIND=1
 SUFFIX="_concatenated"
-while getopts ":m:N:o:f:F:ctans:k:p:h" OPT; do
+while getopts ":m:N:o:f:F:ctans:k:p:1h" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         N) CLIP_SELECTION="${OPTARG}" ;;
@@ -431,6 +432,7 @@ while getopts ":m:N:o:f:F:ctans:k:p:h" OPT; do
         s) SUFFIX="${OPTARG}" ;;
         k) KEEP_ALL="${OPTARG}" ;;
         p) PROFILE="${OPTARG}" ;;
+        1) SINGLE_OUTPUT="Y" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
         *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
     esac
@@ -492,7 +494,19 @@ fi
 START_TIME="$(date +%FT%T)"
 
 # define output directories
+if [[ "${SINGLE_OUTPUT}" = "Y" ]] ; then
+    AIPDIR="${AIP_DESTINATION}"
+else
 AIPDIR="${AIP_DESTINATION}/${MEDIAID}"
+fi
+if [[ "${SINGLE_OUTPUT}" = "Y" ]] ; then
+    AIPDIR_AIP="${AIPDIR}"
+    METADATADIR="${AIPDIR}"
+    LOG="${METADATADIR}/${MEDIAID}_$(basename "${0}")_$(date +%F-%H%M%S).log"
+    METADATA_REPORTS_DIR="${METADATADIR}"
+    METADATA_ORIGINAL_CAMERA_FILES_DIR="${METADATADIR}"
+    mkdir -p "${AIPDIR_AIP}"
+else
 METADATADIR="${AIPDIR}/metadata"
 LOG="${METADATADIR}/$(basename "${0}")_$(date +%F-%H%M%S).log"
 METADATA_REPORTS_DIR="${METADATADIR}/reports"
@@ -515,8 +529,10 @@ else
     _report -r "ERROR: camera_cards needs to produce either an AIP or TAR output."
     exit 1
 fi
+fi
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
+    if [[ "${SINGLE_OUTPUT}" != "Y" ]] ; then
     mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
     # copy selected original metadata files to AIP
     _report -g "Moving significant camera-generated metadata files to AIP..."
@@ -536,6 +552,7 @@ if [[ "${AIP}" == "YES" ]] ; then
 
     # generate metadata reports
     _generate_metadata
+    fi
 
     ## concatenate video files into a single file
     echo
@@ -598,6 +615,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         
     "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 "${MIDDLE_OPTIONS_ALL[@]}" "${MIDDLE_OPTIONS[@]}" "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
+    if [[ "${SINGLE_OUTPUT}" != "Y" ]] ; then
     _report -b "Calculating streamhash and checking input for errors."
     DECODER_LOG="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_decoder_log.txt"
     STREAMHASH="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
@@ -627,6 +645,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
     _write_package_log "CONCATENATED VIDEO FILE" "${CONCATENATED_VIDEO_FILE}"
     _report -g "Video concatenation process finished"
+    fi
 
     # if there are audio-only files, concatenate them and join with concatenated video file
     if [[ -n "$(_read_inventory -f ",audio," "FILE_NAME")" ]] ; then
@@ -657,6 +676,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         _report -g "Audio + video joining process ended"
     fi
 
+    if [[ "${SINGLE_OUTPUT}" != "Y" ]] ; then
     # generate md5 of concatenated file
     if [[ -f "${CONCATENATED_FILE_MERGED}" ]] ; then
         CONCATENATED_MD5_OUTPUT="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_FILE_MERGED%.*}").md5"
@@ -682,6 +702,7 @@ if [[ "${AIP}" == "YES" ]] ; then
                 done < <(_read_inventory -f ",video,\|,audio," "FILE_NAME")
             fi
         fi
+    fi
     fi
 fi
 
@@ -713,6 +734,7 @@ _write_package_log "START TIME" "${START_TIME}"
 
 # error reporting
 echo
+if [[ "${SINGLE_OUTPUT}" != "Y" ]] ; then
 if [[ ! -s "${TREE}" ]] ; then
     _report -r "Metadata generation process created one or more blank files. ${TREE} may be empty. Review metadata output at ${METADATA_REPORTS_DIR}."
     _write_package_log "POSSIBLE_ERROR_REVIEW" "Metadata generation process created one or more blank files"
@@ -740,6 +762,7 @@ else
             _report -g "Concatenated process looks lossless"
         fi
     fi
+fi
 fi
 
 # log script ending
