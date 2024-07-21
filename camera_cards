@@ -19,6 +19,8 @@ _generate_metadata(){
     # create tree of all files in package
     TREE="${METADATA_REPORTS_DIR}/${MEDIAID}_tree.txt"
     tree -DaNs --du --timefmt "%Y-%m-%dT%H:%M:%SZ" "${CAMERA_CARD_DIR[@]}" > "${TREE}"
+    SAVE_FILE_INVENTORY="${METADATA_REPORTS_DIR}/${MEDIAID}_card_inventory.csv"
+    cp -n "${FILE_INVENTORY}" "${SAVE_FILE_INVENTORY}"
     # create mediainfo, exiftool, ffprobe reports
     while read -r FILE ; do
         FN="$(basename "${FILE}")"
