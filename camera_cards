@@ -600,8 +600,30 @@ if [[ "${AIP}" == "YES" ]] ; then
         
     "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 "${MIDDLE_OPTIONS[@]}" "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
     # calculate md5 for each stream in the file
+    _report -b "Calculating streamhash and checking input for errors."
+    DECODER_LOG="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_decoder_log.txt"
     STREAMHASH="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_streamhash.md5"
-    "${FFMPEG_PATH}" -i "${CONCATENATED_VIDEO_FILE}" -map 0 -c copy -f streamhash -hash md5 "${STREAMHASH}"
+    "${FFMPEG_PATH}" -debug_ts -f concat -safe 0 -i "${TEMP_CONCATLIST}" -map 0 -c copy -f streamhash -hash md5 "${STREAMHASH}" 2> "${DECODER_LOG}"
+
+    # decode error summary
+    FIRST_VIDEO_FILE="$(_read_inventory -f ",video," "FILE_NAME" | head -n 1)"
+    VIDEO_FORMAT="$(ffprobe -v 0 -i "${FIRST_VIDEO_FILE}" -show_entries format=format_name -of default=nw=1:nk=1)"
+    VIDEO_ENCODING="$(ffprobe -v 0 -i "${FIRST_VIDEO_FILE}" -select_streams v:0 -show_entries stream=codec_name -of default=nw=1:nk=1 | head -n 1)"
+    DEMUXER_ERROR_SUMMARY="$(grep -B 1 "^\[${VIDEO_FORMAT} @" "${DECODER_LOG}" | grep "^\[${VIDEO_FORMAT} @\|pts_time")"
+    DECODER_ERROR_SUMMARY="$(grep -B 1 "^\[${VIDEO_ENCODING} @" "${DECODER_LOG}" | grep "^\[${VIDEO_ENCODING} @\|pts_time")"
+    if [[ -n "${DECODER_ERROR_SUMMARY}" ]] ; then
+        DECODER_LOG_SUMMARY="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_decoder_log_summary.txt"
+        _report -r "Warning there's some decoding errors. If a timestamp is referenced here please review that portion of the output."
+        echo "${DECODER_ERROR_SUMMARY}"
+        echo "${DECODER_ERROR_SUMMARY}" > "${DECODER_LOG_SUMMARY}"
+    fi
+    if [[ -n "${DEMUXER_ERROR_SUMMARY}" ]] ; then
+        DEMUXER_LOG_SUMMARY="${METADATA_REPORTS_DIR}/$(basename "${CONCATENATED_VIDEO_FILE%.*}")_demuxer_log_summary.txt"
+        _report -r "Warning there's some demuxer errors. If a timestamp is referenced here please review that portion of the output."
+        echo "${DEMUXER_ERROR_SUMMARY}"
+        echo "${DEMUXER_ERROR_SUMMARY}" > "${DEMUXER_LOG_SUMMARY}"
+    fi
+
     # tests for video file existing
     FFMPEG_EXIT_CODE="${?}"
     if [[ ! -s "${CONCATENATED_VIDEO_FILE}" ]] ; then ((FFMPEG_ERRORS++)) ; fi
