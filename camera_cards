@@ -517,12 +517,7 @@ else
 fi
 ### procedure for creating structured AIPs (concatenating video files and restructuring metadata directories)
 if [[ "${AIP}" == "YES" ]] ; then
-    if [[ "${TAR}" == "YES" ]] ; then
-        AIPDIR_AIP="${AIPDIR}/objects/AIP"
-    else
-        AIPDIR_AIP="${AIPDIR}/objects"
-    fi
-    mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}" "${AIPDIR_AIP}"
+    mkdir -p "${METADATA_ORIGINAL_CAMERA_FILES_DIR}"
     # copy selected original metadata files to AIP
     _report -g "Moving significant camera-generated metadata files to AIP..."
     CAMERA_CARD_METADATA2KEEP=()
