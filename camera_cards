@@ -100,6 +100,7 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -t tar camera files and folders into a tarball, compressed with gzip
   -a create packaged AIP; this is the default option, but you can use this flag to specify you want an AIP alongside a tarball (e.g. '-ta')
   -n Do not actually package anything, but just show information about the input and what would happen.
+  -s SUFFIX   If unset, the default suffix of '_concatenated' will be used on outputs.
   -h display this help
 
   By default, this script will try to losslessly rewrap the contents of the camera cards from input to a concatenated output; however, setting this profile option will transcode the contents instead. Setting a profile will disable lossless verification.
@@ -415,7 +416,8 @@ _check_if_in_list(){
 
 # getopts loop
 OPTIND=1
-while getopts ":m:N:o:f:F:ctank:p:h" OPT; do
+SUFFIX="_concatenated"
+while getopts ":m:N:o:f:F:ctans:k:p:h" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         N) CLIP_SELECTION="${OPTARG}" ;;
@@ -426,6 +428,7 @@ while getopts ":m:N:o:f:F:ctank:p:h" OPT; do
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
         n) REPORT_ONLY="Y" ;;
+        s) SUFFIX="${OPTARG}" ;;
         k) KEEP_ALL="${OPTARG}" ;;
         p) PROFILE="${OPTARG}" ;;
         h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
@@ -550,7 +553,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         fi
     fi
     _report -g "Concatenating video files into a ${OUTPUT_EXTENSION} file."
-    CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated.${OUTPUT_EXTENSION}"
+    CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}${SUFFIX}.${OUTPUT_EXTENSION}"
 
     # create list of files to concatenate, formatted for ffmpeg
     unset AUDIO_STRATEGY UNKNOWN_ENCODINGS_FOUND
@@ -634,7 +637,7 @@ if [[ "${AIP}" == "YES" ]] ; then
     if [[ -n "$(_read_inventory -f ",audio," "FILE_NAME")" ]] ; then
         _report -g "Concatenating audio files..."
         FIRST_FILE="$(_read_inventory -f ",audio," "FILE_NAME" | head -n 1)"
-        CONCATENATED_AUDIO_FILE="${AIPDIR_AIP}/${MEDIAID}_concatenated_audio.${FIRST_FILE#*.}"
+        CONCATENATED_AUDIO_FILE="${AIPDIR_AIP}/${MEDIAID}${SUFFIX}_audio.${FIRST_FILE#*.}"
         > "${TEMP_CONCATLIST}" # clear concatlist from video concatenation
         while read FILE ; do
             echo "file '${FILE}'" >> "${TEMP_CONCATLIST}"
@@ -653,7 +656,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         # rename concatenated video file to avoid collision with audio file
         RENAMED_CONCATENATED_VIDEO_FILE="${CONCATENATED_VIDEO_FILE//concatenated/concatenated_video}"
         mv "${CONCATENATED_VIDEO_FILE}" "${RENAMED_CONCATENATED_VIDEO_FILE}"
-        CONCATENATED_FILE_MERGED="${AIPDIR_AIP}/${MEDIAID}_concatenated.${FIRST_FILE#*.}"
+        CONCATENATED_FILE_MERGED="${AIPDIR_AIP}/${MEDIAID}${SUFFIX}.${FIRST_FILE#*.}"
         "${FFMPEG_PATH}" -i "${RENAMED_CONCATENATED_VIDEO_FILE}" -i "${CONCATENATED_AUDIO_FILE}" -c:v copy -c:a copy "${MIDDLE_OPTIONS_ALL[@]}" "${CONCATENATED_FILE_MERGED}"
         _write_package_log "JOINED FILE (AUDIO AND VIDEO)" "${CONCATENATED_FILE_MERGED}"
         _report -g "Audio + video joining process ended"
