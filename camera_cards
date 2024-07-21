@@ -30,6 +30,10 @@ _generate_metadata(){
         mediaconch -mi -ft "${FILE}" >> "${MEDIAINFO_OUTPUT}"
         exiftool "${FILE}" >> "${EXIFTOOL_OUTPUT}"
         ffprobe -v 0 "${FILE}" -show_format -show_streams -show_data -show_error -show_versions -show_chapters -noprivate -of xml="q=1:x=1" > "${FFPROBE_OUTPUT}"
+        if [[ ! -s "${MEDIAINFO_OUTPUT}" ]] || [[ ! -s "${EXIFTOOL_OUTPUT}" ]] || [[ ! -s "${FFPROBE_OUTPUT}" ]] ; then
+            _report -r "Metadata generation process created one or more blank files. Input files may be empty. Review metadata output at ${METADATA_REPORTS_DIR}."
+            _write_package_log "POSSIBLE_ERROR_REVIEW" "Metadata generation process created one or more blank files"
+        fi
     done < <(_read_inventory -f ",video,\|,audio," "FILE_NAME")
     _report -g "Metadata reports generated for ${MEDIAID}"
 }
@@ -650,12 +654,9 @@ _write_package_log "START TIME" "${START_TIME}"
 
 # error reporting
 echo
-_report -b "Checking for errors during the camera_cards process..."
-if [[ ! -s "$TREE" ]] || [[ -z $(cat "${MEDIAINFO_OUTPUT}") ]] || [[ -z $(cat "${EXIFTOOL_OUTPUT}") ]] || [[ -z $(cat "${FFPROBE_OUTPUT}") ]] ; then
-    _report -r "Metadata generation process created one or more blank files. Input files may be empty. Review metadata output at ${METADATA_REPORTS_DIR}."
+if [[ ! -s "${TREE}" ]] ; then
+    _report -r "Metadata generation process created one or more blank files. ${TREE} may be empty. Review metadata output at ${METADATA_REPORTS_DIR}."
     _write_package_log "POSSIBLE_ERROR_REVIEW" "Metadata generation process created one or more blank files"
-else
-    _report -g "Metadata generation process looks ok"
 fi
 if [[ "${FFMPEG_EXIT_CODE}" -gt 0 ]] || [[ "${FFMPEG_ERRORS}" -gt 0 ]] ; then
     _report -r "FFmpeg may have encountered errors - review terminal output for more detail."
