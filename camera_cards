@@ -148,7 +148,7 @@ _read_inventory(){
             if [[ ${RANGE} == *"-"* ]] ; then
                 IFS=- read START END <<< "${RANGE}"
                 [ -z "${START}" ] && continue
-                [ -z "${END}" ] && end=$start
+                [ -z "${END}" ] && END="${START}"
                 for (( i=START ; i <= END ; i++ )); do
                     if [[ -z "${EXPANDED}" ]] ; then
                         EXPANDED+="${i}"
@@ -398,7 +398,7 @@ _check_if_in_list(){
         if [[ ${RANGE} == *"-"* ]] ; then
             IFS=- read START END <<< "${RANGE}"
             [ -z "${START}" ] && continue
-            [ -z "${END}" ] && end=$start
+            [ -z "${END}" ] && END="${START}"
             for (( i=START ; i <= END ; i++ )); do
                 LIST_EXPANDED+=",${i}"
             done
