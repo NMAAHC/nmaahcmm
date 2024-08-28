@@ -1,227 +1,236 @@
 #!/bin/bash
 
-# The shebang above specifies that this script should be run with bash.
+# The shebang above specifies that this script should be run with the Bash shell.
+# It tells the system that the script should be interpreted using Bash.
 
-# Declaration of arrays containing tag names for two different sets of metadata standards: JPC and NMAAHC.
-# These tags are predefined fields that will be used to store specific pieces of information about the video files.
-
+# Declaration of an array named MKV_TAG_SET_JPC to hold tag names specific to the JPC profile.
+# These tags are metadata fields that describe various aspects of a video file.
 MKV_TAG_SET_JPC=(
-    "COLLECTION"
-    "TITLE"
-    "CATALOG_NUMBER"
-    "DESCRIPTION"
-    "DATE_DIGITIZED"
-    "ENCODING_SETTINGS"
-    "ENCODED_BY"
-    "ORIGINAL_MEDIA_TYPE"
-    "DATE_TAGGED"
-    "TERMS_OF_USE"
-    "_TECHNICAL_NOTES"
-    "_ORIGINAL_FPS"
+    "COLLECTION"             # The collection to which the video belongs.
+    "TITLE"                  # The title of the video, likely matching the archive's system (e.g., ASpace).
+    "CATALOG_NUMBER"         # Unique identifier or catalog number for the video, often the filename.
+    "DESCRIPTION"                # Brief description of the video's content.
+    "DATE_DIGITIZED"         # The date when the video was digitized, in yyyy-mm-dd format.
+    "ENCODING_SETTINGS"      # Details about the encoding process, including hardware and software used.
+    "ENCODED_BY"             # Information about the entity or person who encoded the video.
+    "ORIGINAL_MEDIA_TYPE"    # The original format of the media before digitization.
+    "DATE_TAGGED"            # The date when these tags were applied or updated.
+    "TERMS_OF_USE"           # Legal or usage terms associated with the video.
+    "_TECHNICAL_NOTES"       # Any technical notes related to the video or digitization process.
+    "_ORIGINAL_FPS"          # The original frames per second for motion picture film, if applicable.
 )
 
+# Declaration of an array named MKV_TAG_SET_NMAAHC to hold tag names specific to the NMAAHC profile.
+# This set includes all tags from the JPC profile with an additional custom tag `_TAGTAG`.
 MKV_TAG_SET_NMAAHC=(
-    "COLLECTION"
-    "TITLE"
-    "CATALOG_NUMBER"
-    "DESCRIPTION"
-    "DATE_DIGITIZED"
-    "ENCODING_SETTINGS"
-    "ENCODED_BY"
-    "ORIGINAL_MEDIA_TYPE"
-    "DATE_TAGGED"
-    "TERMS_OF_USE"
-    "_TECHNICAL_NOTES"
-    "_ORIGINAL_FPS"
-    "_TAGTAG" # Unique to the NMAAHC set, suggesting an additional, possibly custom, tag.
+    "COLLECTION"             # (Same as above) The collection to which the video belongs.
+    "TITLE"                  # (Same as above) The title of the video, likely matching the archive's system.
+    "CATALOG_NUMBER"         # (Same as above) Unique identifier or catalog number for the video.
+    "DESCRIPTION"            # (Same as above) Brief description of the video's content.
+    "DATE_DIGITIZED"         # (Same as above) The date when the video was digitized.
+    "ENCODING_SETTINGS"      # (Same as above) Details about the encoding process.
+    "ENCODED_BY"             # (Same as above) Information about the entity or person who encoded the video.
+    "ORIGINAL_MEDIA_TYPE"    # (Same as above) The original format of the media before digitization.
+    "DATE_TAGGED"            # (Same as above) The date when these tags were applied or updated.
+    "TERMS_OF_USE"           # (Same as above) Legal or usage terms associated with the video.
+    "_TECHNICAL_NOTES"       # (Same as above) Technical notes related to the video.
+    "_ORIGINAL_FPS"          # (Same as above) The original frames per second for the film.
+    "_TAGTAG"                # Additional custom tag unique to NMAAHC, indicating extra metadata.
 )
 
-# Color variables for formatting output text. Utilizes `tput` for setting text styles and colors.
-# These variables enhance readability and user interface experience.
+# Setting up color and style variables using `tput`.
+# These variables define text appearance in the script’s output (bold, color, etc.).
+BOLD=$(tput bold)          # Sets text style to bold for emphasis.
+RESET=$(tput sgr0)         # Resets text style to the default, removing any bold or color.
+GB=$(tput setaf 38)        # Sets the text color to greenish-blue for regular output.
+ERROR=$(tput setaf 1)      # Sets the text color to red for error messages.
 
-BOLD=$(tput bold) # Sets bold style for text.
-RESET=$(tput sgr0) # Resets text style to default.
-GB=$(tput setaf 38) # Sets color of text to greenish-blue.
-ERROR=$(tput setaf 1) # Sets color of text to red.
-
-# Function _usage prints the script's usage instructions to the console.
-# It's invoked when the script is run without arguments or if the user needs help.
-
+# Definition of the `_usage` function to provide usage information for the script.
+# This function outputs a detailed help message when the script is run incorrectly or with `-h`.
 _usage(){
     cat <<EOF
 
     $(basename "${0}")
 
-    This application will embed key:value pairs ("tags") into a Matroska file in accordance with NMAAHC guidelines.
-
+    This application will embed key:value pairs ("tags") into a Matroska file.
+   
     Usage: $(basename "${0}") [-p|--profile <profile>] /path/to/file
 
-    Some key:value pairs have controlled vocabulary.
+    Tag keys are pre-defined in sets: JPC or NMAAHC
 
-    Tags:
-    ${BOLD}${GB}_IDENTIFIER${RESET}
-    Free text.
-    Enter in NMAAHC Object ID#. 
-    ex. 2012.79.1.16.1a
+    JPC:
+        "COLLECTION"
+        "TITLE"
+        "CATALOG_NUMBER"
+        "DESCRIPTION"
+        "DATE_DIGITIZED"
+        "ENCODING_SETTINGS"
+        "ENCODED_BY"
+        "ORIGINAL_MEDIA_TYPE"
+        "DATE_TAGGED"
+        "TERMS_OF_USE"
+        "_TECHNICAL_NOTES"
+        "_ORIGINAL_FPS"
 
-    ${BOLD}${GB}_ALTERNATE_IDENTIFIER${RESET}
-    Free text. 
-    Enter in NMAAHC TR#. 
-    ex. TR2011-71.173
+    NMAAHC:
+        "COLLECTION"
+        "TITLE"
+        "CATALOG_NUMBER"
+        "DESCRIPTION"
+        "DATE_DIGITIZED"
+        "ENCODING_SETTINGS"
+        "ENCODED_BY"
+        "ORIGINAL_MEDIA_TYPE"
+        "DATE_TAGGED"
+        "TERMS_OF_USE"
+        "_TECHNICAL_NOTES"
+        "_ORIGINAL_FPS"
+        "_TAGTAG"
 
-    ${BOLD}${GB}TITLE${RESET}
-    Free text. 
-    Please provide a title for this file. 
-    ex. Black Journal: Alice Coltrane
+    Tags beginning with an underscore are not part of the official set of Matroska tags as defined here:
+    https://www.matroska.org/technical/tagging.html
 
-    ${BOLD}${GB}DESCRIPTION${RESET}
-    Free text. 
-    Please provide a brief description of the content in this file. 
-    ex. A segment from the public television series Black Journal focusing the life and music of Alice Coltrane 
-    and her children in the wake of the death of her husband, famed jazz musician John Coltrane.
-    This film was shot sometime during 1970; three years after the death of John Coltrane. 
-    She discusses her musical career and how she balances that with being a mother and paying tribute to her late husband, 
-    but also not want   
+    The script needs swiftdialog to run. It can be installed here:
+    https://github.com/swiftDialog/swiftDialog/releases
 
-    ${BOLD}${GB}DATE_DIGITIZED${RESET}
+    Calling the script will bring up a dialog window in which to enter values for the tag set you have chosen.
 
-    ${BOLD}${GB}ORIGINAL_MEDIA_FORMAT${RESET}
-    Controlled vocab. 
-    Please choose the original format this file was derived from.
-    controlled vocab list:
-        1 inch videotape
-        2 inch videotape
-        ½ inch videotape
-        U-matic
-        Betacam
-        Betamax
-        Digital Betacam
-        VHS
-        MiniDV
-        D2
-        DVD
-        Hi-8
-        8mm film
-        Super 8mm film
-        16mm film
-        Super 16mm film
-        35mm film
+    The script can also be run in batch mode by feeding it a .csv
 
-    ${BOLD}${GB}_ORIGINAL_PROJECTION_SPEED${RESET}
-    If the originating format for this file was motion picture film, please provide a projection speed.
-    ex. 24fps, 18fps, etc.
+    filename	director    rating
+    test.mkv	dave	    pg
+    test2.mkv	blake	    no
+    test3.mkv	immy	    g
 
-    ${BOLD}${GB}_CODING_HISTORY${RESET}
-    Please provide a coding history for this file. 
-    ex. O=VHS, C=Color, S=Analog, VS= NTSC, F=24, A=4:3, R=640×480, 
-    T=Sony SVO-5800, O=FFV1mkv, C=Color, V=Composite, S=Analog Stereo, 
-    F=24, A=4:3, W=10-bit, R=640×480, M=YUV422p10, T=Blackmagic UltraStudio 4K Mini SN123456, ffmpeg vrecord, in-house, 
-    O=FFV1mkv, W=10-bit, R640x480, MYUV422p10 N=Emily Nabasny
+    The filename should be the full path of the file.
 
-    ${BOLD}${GB}_TECHNICAL_TRANSFER_NOTES${RESET}
+    Usage: $(basename "${0}") mycsv.csv
 
-    ${BOLD}${GB}_CAMERERA_MAKE_MODEL${RESET}
-    Controlled vocab.
-    For files created from digital camera cards. 
-    controlled vocab list:
-        Canon C300
-        Canon C100
-
-    ${BOLD}${GB}_CAMERA_CARD_SCRIPT${RESET}
-    Please enter the script used to repackage the original camera card into an NMAAHC AIP
-
-    ${BOLD}${GB}_FILE_CREATOR${RESET}
-    ex. Smithsonian NMAAHC
-
-    Tags beginning with an underscore are not part of the "official" set of Matroska tags.
-
-    See the nmaachmm README for more information on package definitions.
+    Tag definitions for JPC:
+    Tag                     Example
+    COLLECTION              The name of the collection that the content or object is from ; ex. Johnson Publishing Company Archive / Pearl Bowser Collection
+    TITLE                   Should be the same as ASpace ; ex. Ebony/Jet Showcase #1001 / A Pinch of Soul
+    CATALOG_NUMBER          Often the file name ; ex. JPC_AV_12345 / 2012.79.2.54.1a
+    DESCRIPTION             Please be brief! Ok to leave blank! ex. In the 1980s a young journalist moves to New York City / Broadcast of the 1978 American Black Achievement Awards
+    DATE_DIGITIZED          yyyy-mm-dd ; ex. 2024-10-10
+    ENCODER_SETTINGS        Source VTR: model name, serial number, video signal type (Composite, SDI, etc.), audio signal type (analog balanced, analog unbalanced, embedded, etc.) ;
+                            TBC/Framesync: model name, serial number, video signal type, audio signal type ;
+                            ADC: model name, serial number, video signal type, audio signal type (if audio is embedded  at this point simply say "embedded") ;
+                            Capture Device: model name, serial number, data connection type (Thunderbolt/PCIe/SATA/etc) ;
+                            Computer: model name, serial number, computer os version, capture software (including version), encoding software (ffmpeg version not required)
+    ENCODED_BY              Entity, name, country ; ex. Smithsonian NMAAHC, James Smithson, US (use ISO 3166-1 alpha-2 codes)
+    ORIGINAL_MEDIA_TYPE     Format (from PB Core), manufacturer, model ; ex. U-matic, Sony, KSP-30 (don't guess or estimate the manufacturer or model - the format is plenty sufficient if the others are ambiguous)
+    DATE_TAGGED             yyyy-mm-dd, this is the date the mkv tags were embedded or updated ; ex. 2024-10-18
+    TERMS_OF_USE            Not definitive, nor authoritative ; ex. Some or all of this video maybe subject to copyright or other intellectual property rights. Proper usage is the responsibility of the user.
+    _TECHNICAL_NOTES        Free text for capturing anything concerning the inspection, conservation, digitization of the tape. ex. 
+    _ORIGINAL_FPS           For motion picture film, the frames per second at which the film was meant to be projected. most common - 16, 18, 24 ; ex. 24
 
 EOF
 exit
 }
+# The function ends with the `exit` command, ensuring that the script stops after displaying usage info.
 
-# Variable initialization for selected profile and tag set.
-SELECTED_PROFILE=""
-SELECTED_TAG_SET=()
+# Initialize variables to store the selected profile and corresponding tag set.
+SELECTED_PROFILE=""        # This variable will hold the name of the profile selected by the user (either 'jpc' or 'nmaahc').
+SELECTED_TAG_SET=()        # This array will store the tags associated with the selected profile.
 
-# command-line options to set media id and original variables
-OPTIND=1
+# Start processing command-line options using `getopts`.
+# The options are `-p` for selecting a profile and `-h` for displaying help.
+
+OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
 while getopts ":hp:" opt ; do
     case "${opt}" in
-        p) SELECTED_PROFILE="${OPTARG}" ;;
-        h) _usage ;;
-        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;
-        *) echo "bad option -${OPTARG}" ; _usage ;;
+        p) SELECTED_PROFILE="${OPTARG}" ;;   # If the `-p` option is provided, set the selected profile to the argument passed with `-p`.
+        h) _usage ;;                         # If the `-h` option is provided, call the `_usage` function to display usage information and exit.
+        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;  # Handle the case where an option requires an argument but none is provided.
+        *) echo "bad option -${OPTARG}" ; _usage ;;   # Handle any invalid options by displaying an error message and calling `_usage`.
     esac
 done
-shift "$((OPTIND-1))"
+shift "$((OPTIND-1))"      # Shift the positional parameters so that `$1` points to the first non-option argument.
 
-# Checks if the script was run without any arguments.
-# If no arguments are provided, the _usage function is called to display usage information and the script exits.
-
+# Check if the script was run without any arguments after processing options.
+# If no arguments are provided, the `_usage` function is called to display usage information and the script exits.
 if [[ "${#}" -eq 0 ]]; then
     _usage
 fi
 
-# Assigning the MKV file path as the first argument after getopts are processed.
+# Assign the first argument (after options) to `INPUT_FILE`, which represents the path to the file to be tagged.
 INPUT_FILE="${1}"
+# Extract the file extension from `INPUT_FILE` to determine the file type.
 EXTENSION="${INPUT_FILE##*.}"
 
-# Parsing command line options to set the profile and corresponding tag set.
+# Determine the selected profile and set the corresponding tag set.
 if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
-    SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")
+    SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")     # If the profile is 'jpc', use the `MKV_TAG_SET_JPC` array.
 elif [[ "${SELECTED_PROFILE}" == "nmaahc" ]] ; then
-    SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
+    SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")  # If the profile is 'nmaahc', use the `MKV_TAG_SET_NMAAHC` array.
 else
-    unset SELECTED_PROFILE # clear the invalid profiles since it's not one of the ones listed in the if/elif conditions above
+    unset SELECTED_PROFILE # If an invalid profile is specified or none is provided, unset the profile variable.
+    # Display a message indicating the invalid profile selection and prompt the user to select a profile interactively.
     echo -e "${BOLD}${ERROR}\nNote: Invalid profile or no profile specified with -p. You will be prompted to select a profile.${RESET}"
 fi
 
-# Function _maketemp creates a temporary file and checks for success.
-# It's used for creating temporary files for storing intermediate data.
-
+# Function `_maketemp` creates a temporary file and checks for success.
+# This function is used to generate a temporary file that will be used for storing intermediate data, such as XML drafts.
 _maketemp(){
-    mktemp -q -t "$(basename "${0}")"
-    if [ "${?}" -ne 0 ]; then
+    mktemp -q -t "$(basename "${0}")"    # Creates a temporary file with a name based on the script's name.
+    if [ "${?}" -ne 0 ]; then            # Checks if the `mktemp` command failed (non-zero exit status).
+        # If the temporary file creation fails, an error message is displayed, and the script exits.
         echo "${0}: ${ERROR}Can't create temp file, exiting...${RESET}"
         exit 1
     fi
 }
 
+# Check if the input file has a `.csv` extension, indicating a batch mode operation.
 if [[ "${EXTENSION}" == "csv" ]] ; then
+    # If the input file is a CSV, create a temporary XML file for storing converted data.
     CSV_XML="$(_maketemp).xml"
+    # Convert the CSV to XML format using `csvprintf` and redirect the output to the temporary XML file.
     csvprintf -X -f "${INPUT_FILE}" > "${CSV_XML}"
+    # Convert the CSV to markdown format using `csvtomd`, then replace newline characters with `<br/>` for HTML formatting.
     CSV_TABLE="$(csvtomd "${INPUT_FILE}" | tr '\n' '<br/>')"
+    # Extract the list of XML element names (tags) from the first row of the CSV.
     ELEMENT_LIST="$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -n "${CSV_XML}")"
-    FILENAME_FOUND=0
+    FILENAME_FOUND=0    # Initialize a flag to check if the 'filename' column is present in the CSV.
     echo "Examining the csv: ${CSV_XML}."
+    # Iterate through the list of XML elements (column names) from the CSV.
     while read ELEMENT_VALUE ; do
-        echo "Found ${ELEMENT_VALUE}."
-        ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"
+        echo "Found ${ELEMENT_VALUE}."  # Output the name of each element found.
+        ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"   # Append each element name to `ADDITIONAL_COLUMNS` with an underscore prefix.
         if [[ "${ELEMENT_VALUE}" == "filename" ]] ; then
-            FILENAME_FOUND=1
+            FILENAME_FOUND=1   # If the element name is 'filename', set the flag to indicate its presence.
         fi
     done < <(echo "${ELEMENT_LIST}")
+
+    # If the 'filename' column is not found in the CSV, display an error message and exit the script.
     if [[ "${FILENAME_FOUND}" = "0" ]] ; then
         echo "${BOLD}${ERROR}Error, $(basename "${INPUT_FILE}") does not contain a column called 'filename'. Exiting.${RESET}"
         exit
     fi
 
-    MISSING_FILE=0
+    MISSING_FILE=0    # Initialize a flag to track missing files listed in the CSV.
+    # Iterate through the 'filename' column values in the CSV to check if the corresponding files exist.
     while read FILE_IN_CSV ; do
         if [[ ! -f "${FILE_IN_CSV}" ]] ; then
+            # If a file listed in the CSV is not found, display an error message and set the missing file flag.
             echo "${BOLD}${ERROR}Error, $(basename "${FILE_IN_CSV}") is referenced in the csv but not found.${RESET}"
             MISSING_FILE=1
-            MISSING_FILE_LIST+="${FILE_IN_CSV} "
+            MISSING_FILE_LIST+="${FILE_IN_CSV} "  # Append the missing file name to the list of missing files.
         fi
     done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
+
+    # If any files are missing, display a summary of the missing files and exit the script.
     if [[ "${MISSING_FILE}" != "0" ]] ; then
         echo "${BOLD}${ERROR}Error, Some files in the csv, such as ${MISSING_FILE_LIST}, are not found. Exiting.${RESET}"
         exit
     else
+        # If all files are found, display a success message and proceed with the tagging process.
         echo "${BOLD}Nice. All files from the csv are found. Let's tag.${RESET}"
     fi
+    # The script continues to process the CSV for tagging if all checks pass.
+    # Additional options and functionality related to tagging via CSV could be added here, as indicated by the comments.
+
+    #### Dave's note ####
     # give an option to force ahead despite missing files
     # add a -d option to provide a parent directory to the files referenced in the csv filenames
     # ./mkvnote -d /over/here mkv.csv
@@ -233,33 +242,57 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     # put choosing of directory and upload of csv into swift
     # default csv outputs from swiftdialog to desktop
     
-    
     # deal with multiline values and single quotes
     
     # make sure the error log from camera card rewrapping is self explanatory, like the h264 and aac messages
-    
 
+    # Create a temporary XML file using the `_maketemp` function.
+    # This file will be used to draft the XML structure needed for embedding tags into each MKV file.
     XML_DRAFT="$(_maketemp).xml"
+
+    # Begin processing each file listed in the 'filename' column of the CSV.
     while read FILE_IN_CSV ; do
+        # Initialize the XML draft for the current file by creating a basic structure with root `<Tags>` and `<Tag>` elements.
         echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
+
+        # Loop through each tag line associated with the current file in the CSV.
         while read TAG_LINE ; do
-            # Extracts the tag name by splitting the line at the colon and taking the first part.
+            # Extract the tag name by splitting the line at the first colon and trimming any trailing spaces.
             TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
-            # Extracts the tag value by splitting the line at the colon and taking the second part.
+            
+            # Extract the tag value by splitting the line at the first colon and trimming any leading spaces.
             TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
-            # If the tag value is not empty, the tag is added to the XML draft for embedding.
-            # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
+            
+            # If the tag value is not empty, proceed to add it to the XML draft.
             if [[ -n "${TAG_VALUE// /}" ]] ; then
-                xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
+                # Use `xmlstarlet` to add the tag name and value to the XML draft.
+                # The command edits the XML structure, ensuring each tag is uniquely added under a `<Simple>` element.
+                xml ed --omit-decl --inplace \
+                    --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" \
+                    --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
+                    --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
+                    "${XML_DRAFT}"
             fi
         done < <(xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*" -v "name()" -o ":" -v "." -n "${CSV_XML}")
+        # The inner loop reads each tag line corresponding to the current file and updates the XML draft with valid tags.
+
+        # Display a message indicating that the current file is being tagged, showing the file name.
         echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
+        
+        # Display the tags being applied to the current file by selecting relevant tags from the XML draft.
         xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*[not(filename)]" -v "name()" -o ":" -v "." -n "${CSV_XML}"
-        echo
+        echo  # Add an empty line for better readability in the output.
+
+        # Use `mkvpropedit` to embed the prepared XML metadata into the current MKV file.
+        # The `--tags` option specifies the XML draft file containing the tags, and `global` applies them to the entire MKV file.
         mkvpropedit --tags "global:${XML_DRAFT}" "${FILE_IN_CSV}"
+
+    # End the outer loop, moving on to the next file listed in the CSV.
     done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
 
+    # Exit the script after processing all files listed in the CSV.
     exit
+
     DIALOG_FORM="$(_maketemp).xml"
 
     cat << EOF> "${DIALOG_FORM}"
