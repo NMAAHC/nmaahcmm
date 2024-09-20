@@ -11,7 +11,7 @@ MKV_TAG_SET_JPC=(
     "CATALOG_NUMBER"         # Unique identifier or catalog number for the video, often the filename.
     "DESCRIPTION"                # Brief description of the video's content.
     "DATE_DIGITIZED"         # The date when the video was digitized, in yyyy-mm-dd format.
-    "ENCODING_SETTINGS"      # Details about the encoding process, including hardware and software used.
+    "ENCODER_SETTINGS"      # Details about the encoding process, including hardware and software used.
     "ENCODED_BY"             # Information about the entity or person who encoded the video.
     "ORIGINAL_MEDIA_TYPE"    # The original format of the media before digitization.
     "DATE_TAGGED"            # The date when these tags were applied or updated.
@@ -28,7 +28,7 @@ MKV_TAG_SET_NMAAHC=(
     "CATALOG_NUMBER"         # (Same as above) Unique identifier or catalog number for the video.
     "DESCRIPTION"            # (Same as above) Brief description of the video's content.
     "DATE_DIGITIZED"         # (Same as above) The date when the video was digitized.
-    "ENCODING_SETTINGS"      # (Same as above) Details about the encoding process.
+    "ENCODER_SETTINGS"      # (Same as above) Details about the encoding process.
     "ENCODED_BY"             # (Same as above) Information about the entity or person who encoded the video.
     "ORIGINAL_MEDIA_TYPE"    # (Same as above) The original format of the media before digitization.
     "DATE_TAGGED"            # (Same as above) The date when these tags were applied or updated.
@@ -64,7 +64,7 @@ _usage(){
         "CATALOG_NUMBER"
         "DESCRIPTION"
         "DATE_DIGITIZED"
-        "ENCODING_SETTINGS"
+        "ENCODER_SETTINGS"
         "ENCODED_BY"
         "ORIGINAL_MEDIA_TYPE"
         "DATE_TAGGED"
@@ -78,7 +78,7 @@ _usage(){
         "CATALOG_NUMBER"
         "DESCRIPTION"
         "DATE_DIGITIZED"
-        "ENCODING_SETTINGS"
+        "ENCODER_SETTINGS"
         "ENCODED_BY"
         "ORIGINAL_MEDIA_TYPE"
         "DATE_TAGGED"
