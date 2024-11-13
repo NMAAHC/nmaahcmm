@@ -9,9 +9,9 @@ MKV_TAG_SET_JPC=(
     "COLLECTION"             # The collection to which the video belongs.
     "TITLE"                  # The title of the video, likely matching the archive's system (e.g., ASpace).
     "CATALOG_NUMBER"         # Unique identifier or catalog number for the video, often the filename.
-    "DESCRIPTION"                # Brief description of the video's content.
+    "DESCRIPTION"            # Brief description of the video's content.
     "DATE_DIGITIZED"         # The date when the video was digitized, in yyyy-mm-dd format.
-    "ENCODER_SETTINGS"      # Details about the encoding process, including hardware and software used.
+    "ENCODER_SETTINGS"       # Details about the encoding process, including hardware and software used.
     "ENCODED_BY"             # Information about the entity or person who encoded the video.
     "ORIGINAL_MEDIA_TYPE"    # The original format of the media before digitization.
     "DATE_TAGGED"            # The date when these tags were applied or updated.
@@ -28,7 +28,7 @@ MKV_TAG_SET_NMAAHC=(
     "CATALOG_NUMBER"         # (Same as above) Unique identifier or catalog number for the video.
     "DESCRIPTION"            # (Same as above) Brief description of the video's content.
     "DATE_DIGITIZED"         # (Same as above) The date when the video was digitized.
-    "ENCODER_SETTINGS"      # (Same as above) Details about the encoding process.
+    "ENCODER_SETTINGS"       # (Same as above) Details about the encoding process.
     "ENCODED_BY"             # (Same as above) Information about the entity or person who encoded the video.
     "ORIGINAL_MEDIA_TYPE"    # (Same as above) The original format of the media before digitization.
     "DATE_TAGGED"            # (Same as above) The date when these tags were applied or updated.
@@ -367,61 +367,112 @@ XML_DRAFT="$(_maketemp).xml"
 
 mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -o "=" -v "String" -n >> "${EXISTING_TAGS}"
 
-IS_FIRST="Y"
 while IFS="=" read -r EXISTING_KEY EXISTING_VALUE ; do
-    
-    if [[ ! ${DIALOG_LIST[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
-        if [[ ! "${IS_FIRST}" = "Y" ]] ; then
-            DIALOG_LIST+=(",
-    ")
-        fi
-        IS_FIRST="N"
-        DIALOG_LIST+=("{\"title\" : \"${EXISTING_KEY}\", \"value\" : \"${EXISTING_VALUE}\", \"prompt\" : \"Existing tag\"}")
+    DIALOG_LIST+="${EXISTING_KEY} "
+    if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
+        DIALOG_LIST_EMBEDDED+=("    <hbox>
+        <vbox width-request=\"200\">
+            <text xalign=\"0\">
+                <label>${EXISTING_KEY}</label>
+            </text>
+        </vbox>
+        <vbox width-request=\"800\">
+            <entry width=\"700\" space-fill=\"false\">
+                <default>${EXISTING_VALUE}</default>
+                <variable>${EXISTING_KEY}</variable>
+            </entry>
+        </vbox>
+    </hbox>
+")
     fi
+    
 done < "${EXISTING_TAGS}"
 
 for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
-    
-    if [[ "$(grep -c "^${PROFILE_TAG}=" "${EXISTING_TAGS}")" = "0" && ! ${DIALOG_LIST[*]} =~ "\"${PROFILE_TAG}\"" ]] ; then
-        if [[ ! "${IS_FIRST}" = "Y" ]] ; then
-            DIALOG_LIST+=(",
-    ") 
-        fi
-        IS_FIRST="N"
-        DIALOG_LIST+=("{\"title\" : \"${PROFILE_TAG}\", \"prompt\" : \"A ${SELECTED_PROFILE} profile tag\"}") 
-    fi
+    PROFILE_KEY="${PROFILE_TAG%%=*}"
+    if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${PROFILE_TAG}[[:space:]] ]] ; then
+        DIALOG_LIST_PROFILE+=("    <hbox>
+        <vbox width-request=\"200\">
+            <text xalign=\"0\">
+                <label>${PROFILE_KEY}</label>
+            </text>
+        </vbox>
+        <vbox width-request=\"800\">
+            <entry width=\"700\" space-fill=\"false\">
+                <variable>${PROFILE_KEY}</variable>
+            </entry>
+        </vbox>
+    </hbox>
+")
+    fi 
 done
+
+echo '
+style "bgWhite" { bg[NORMAL] = "#FFFFFF" }
+style "fgWhite" { fg[NORMAL] = "white"  font_name = "Mono 16"}
+style "fgBlack" { fg[NORMAL] = "black" }
+style "bgMain" { bg[NORMAL] = "#671E75" }
+style "bgRed" { bg[NORMAL] = "red" }
+style "fgRed" { fg[NORMAL] = "red" }
+style "bgGreen" { bg[NORMAL] = "#BB55BB" }
+style "fgGreen" { fg[NORMAL] = "green" }
+style "bgBlue" { bg[NORMAL] = "#0000FF" }
+style "fgBlue" { fg[NORMAL] = "#0000FF" }
+style "custom-font" { font_name = "Sans 64" }
+
+widget "mkvnotemain" style "bgMain"
+
+widget_class "*<GtkFrame>.GtkLabel" style "fgWhite"
+widget_class "*<GtkFrame>.*.GtkLabel" style "fgWhite"
+
+' > /tmp/gtkrc_mono
+export GTK2_RC_FILES=/tmp/gtkrc_mono
+
 DIALOG_FORM="$(_maketemp).xml"
 
 cat << EOF > "${DIALOG_FORM}"
-{
-  "title" : "NMAAHC MKV Tagging for ${INPUT_FILE_NAME}",
-  "ontop" : 1,
-  "moveable" : 1,
-  "width" : "75%",
-  "height" : "75%",
-  "background" : "color=#800080",
-  "message" : "These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.",
-  "infobox" : "### Aditional Info\n\n#### To upload your key:value tag data in .csv \n - choose a .csv file to upload \n - choose a directory where the .mkv you wish to tag are \n - click the 'File Style' button on the bottom left \n - be cool \n#### To tag file via this gui \n - click the 'Tag-On' button on the bottom left \n - follow the instructions",
-  "textfield" : [
-      ${DIALOG_LIST[@]}
-    ],
-    "button1text" : "Tag-On!!",
-    "button2text" : "Cancel"
-}
+<window title="Welcome to mkvnote!" default-width="1100" name="mkvnotemain">
+    <vbox>
+        <frame Intro>
+            <text xalign="0" width-request="1000">
+                <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
+            </text>
+        </frame>
+        <vbox>
+            <frame Already Embedded>
+                ${DIALOG_LIST_EMBEDDED[@]}
+            </frame>
+            <frame ${SELECTED_PROFILE} profile>
+                ${DIALOG_LIST_PROFILE[@]}
+            </frame>
+          </vbox>
+          <hbox space-expand="false" space-fill="false">
+              <button>
+                  <label>Settings</label>
+                  <input file stock="gtk-index"></input>
+                  <variable export="false">settings_button</variable>
+              </button>
+              <hbox space-expand="true" space-fill="true"><text><label>""</label></text></hbox>
+              <button>
+                  <label>Tag-On!</label>
+                  <input file stock="gtk-media-record"></input>
+                  <variable export="false">record_button</variable>
+              </button>
+              <button cancel>
+              </button>
+          </hbox>
+      </vbox>
+</window>
 EOF
 
-DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
+DIALOG_RESULT="$(export MAIN_DIALOG="$(cat "${DIALOG_FORM}")" ; gtkdialog --center --program MAIN_DIALOG)"
 
-echo "$DIALOG_RESULT"
+EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//g;s/"$//g')"
 
-if [[ "${DIALOG_RESULT}" == "JSON import failed" ]] ; then
-    echo "Error loading the form with ${INPUT_FILE}"
+if [[ "${EXIT_STATUS}" == "Cancel" ]] ; then
+    echo "Nevermind then o_o"
     exit
-elif [[ -z "${DIALOG_RESULT}" ]] ; then
-    echo "cancelled"
-    exit
-else
+elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
     # Starts the XML draft for MKV metadata embedding with a root Tags element.
     echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
 
@@ -429,15 +480,15 @@ else
     # Only lines that conform to the expected format (tag_name=[tag_value]) are processed.
     while read TAG_LINE ; do
         # Extracts the tag name by splitting the line at the colon and taking the first part.
-        TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
+        TAG_NAME="$(echo "${TAG_LINE}" | cut -d "=" -f1)"
         # Extracts the tag value by splitting the line at the colon and taking the second part.
-        TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
+        TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "=" -f2- | sed 's/^"//g;s/"$//g')"
         # If the tag value is not empty, the tag is added to the XML draft for embedding.
         # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
         if [[ -n "${TAG_VALUE// /}" ]] ; then
             xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
         fi
-    done < <(echo "${DIALOG_RESULT}" | grep -v " : $" | sed 's/* : / : /g')
+    done < <(echo "${DIALOG_RESULT}" | grep -v "^EXIT=")
 
     # Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
     mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}"
