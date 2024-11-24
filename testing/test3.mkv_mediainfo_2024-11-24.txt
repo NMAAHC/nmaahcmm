@@ -1,0 +1,137 @@
+General
+Count                                    : 358
+Count of stream of this kind             : 1
+Kind of stream                           : General
+Kind of stream                           : General
+Stream identifier                        : 0
+Unique ID                                : 330016588630037627694147127786967824673
+Unique ID                                : 330016588630037627694147127786967824673 (0xF846E20D83A712B92E51001F96C67921)
+Count of video streams                   : 1
+Video_Format_List                        : AVC
+Video_Format_WithHint_List               : AVC
+Codecs Video                             : AVC
+Complete name                            : /Users/chouc/github/nmaahc/nmaahcmm/testing/test3.mkv
+Folder name                              : /Users/chouc/github/nmaahc/nmaahcmm/testing
+File name extension                      : test3.mkv
+File name                                : test3
+File extension                           : mkv
+Format                                   : Matroska
+Format                                   : Matroska
+Format/Url                               : https://matroska.org/downloads/windows.html
+Format/Extensions usually used           : mkv mk3d mka mks
+Commercial name                          : Matroska
+Format version                           : Version 4
+File size                                : 6520
+File size                                : 6.37 KiB
+File size                                : 6 KiB
+File size                                : 6.4 KiB
+File size                                : 6.37 KiB
+File size                                : 6.367 KiB
+Duration                                 : 40
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 00:00:00.040
+Duration                                 : 00:00:00:01
+Duration                                 : 00:00:00.040 (00:00:00:01)
+Overall bit rate                         : 1304000
+Overall bit rate                         : 1 304 kb/s
+Frame rate                               : 25.000
+Frame rate                               : 25.000 FPS
+Frame count                              : 1
+IsStreamable                             : Yes
+Title                                    : Segment Master Reel #4 for Season 7
+Movie name                               : Segment Master Reel #4 for Season 7
+Encoded by                               : Smithsonian NMAAHC, David Sohl, US
+Description                              : 00:01:05 - Queen Latifah (aka Dana Owens) interviewed by Elliott Francis. 00:08:00 - "People Are Talking About" segment covering Earvin "Magic" Johnson's wedding with Earlitha "Cookie" Kelly. 00:09:16 - Faith Ringgold interviewed by Sherri Paysinger. 00:16:38 - "People Are Talking About" segment covering art exhibition 'Memory and Metaphor: The Art of Romare Bearden' 00:18:05 - Robert Peabo Bryson interviewed by Sherri Paysinger. 00:25:20 - Alfonso Ribeiro, Karyn Parson and Tatyana Ali interviewed by Sherri Paysinger. 00:32:39 - "People Are Talking About" segment covering Debbie Allen's star on the Hollywood Walk of Fame. 00:34:17 - Ice-T (aka Tracy Marrow) interviewed via satellite by Elliott Francis. 00:40:10 - Cliff Levingston interviewed by Elliott Francis.
+Tagged date                              : 10/11/24
+Mastered date                            : 11/16/23 UTC
+File last modification date              : 2024-11-24 21:31:37 UTC
+File last modification date (local)      : 2024-11-24 16:31:37
+Writing application                      : Lavf61.1.100
+Writing application                      : Lavf61.1.100
+Writing library                          : Lavf61.1.100
+Writing library                          : Lavf61.1.100
+Encoding settings                        : Source VTR: Sony BVH-3100, SN 10525, composite, analog balanced ; TBC/Framesync: Sony BVH3100, SN 10525, composite, analog balanced ; ADC: Leitch DPS575 with flash firmware h2.16, SN 15230, SDI, embedded; Capture Device: Blackmagic UltraStudio 4K Extreme, S/N 12572937, Thunderbolt 3; Computer: Mac mini 2018, s/n: C07Z124AJYW0, OS 13.6.7, vrecord v2023-08-26, ffmpeg
+Original source form                     : 1 inch videotape, 3M, 480XST
+Terms of use                             : Some or all of this video maybe subject toÂ copyrightÂ or other intellectual property rights.Â Proper usage is the responsibility of the user.
+ErrorDetectionType                       : Per level 1
+00                                       : 46:16 - "Week's Best Video" segment featuring 'After The Dance' as performed by Fourplay featuring El Debarge. 00:47:35 - Lisa Fisher interviewed by Elliott Francis. 00:54:10 - Segment covering Earvin "Magic" Johnson's press conference in which he retired from the NBA and discussed contracting HIV.
+Adjustments made for each segment.       : Adjustments made for each segment.
+CATALOG_NUMBER                           : JPC_AV_01567
+COLLECTION                               : Johnson Publishing Company Archive
+Unmixed audio - interview audio in left  : Unmixed audio - interview audio in left channel, audio for clips in right channel.
+Use of the Time Base Corrector in the DP : Use of the Time Base Corrector in the DPS-575 was found in February 2024 to add a loss of image crispness; this transfer was performed before the TBS was disabled, so image is slightly degraded. ; Previewed on 11-02-2023. ; Segment notes in case. Starts with Queen Latifah, then Faith Reinggold
+_TECHNICAL_NOTES                         : ProcAmp Adjustments #testing special char@#$^&*!+-[]
+filename                                 : testing/test3.mkv
+
+Video
+Count                                    : 390
+Count of stream of this kind             : 1
+Kind of stream                           : Video
+Kind of stream                           : Video
+Stream identifier                        : 0
+StreamOrder                              : 0
+ID                                       : 1
+ID                                       : 1
+Unique ID                                : 4782478325583120148
+Format                                   : AVC
+Format                                   : AVC
+Format/Info                              : Advanced Video Codec
+Format/Url                               : http://developers.videolan.org/x264.html
+Commercial name                          : AVC
+Format profile                           : High 4:4:4 Predictive@L1.3
+Format settings                          : CABAC / 4 Ref Frames
+Format settings, CABAC                   : Yes
+Format settings, CABAC                   : Yes
+Format settings, Reference frames        : 4
+Format settings, Reference frames        : 4 frames
+Internet media type                      : video/H264
+Codec ID                                 : V_MPEG4/ISO/AVC
+Codec ID/Url                             : http://ffdshow-tryout.sourceforge.net/
+Duration                                 : 40.000000
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 40 ms
+Duration                                 : 00:00:00.040
+Duration                                 : 00:00:00:01
+Duration                                 : 00:00:00.040 (00:00:00:01)
+Width                                    : 320
+Width                                    : 320 pixels
+Height                                   : 240
+Height                                   : 240 pixels
+Sampled_Width                            : 320
+Sampled_Height                           : 240
+Pixel aspect ratio                       : 1.000
+Display aspect ratio                     : 1.333
+Display aspect ratio                     : 4:3
+Frame rate mode                          : CFR
+Frame rate mode                          : Constant
+FrameRate_Mode_Original                  : VFR
+Frame rate                               : 25.000
+Frame rate                               : 25.000 FPS
+FrameRate_Num                            : 25
+FrameRate_Den                            : 1
+Frame count                              : 1
+Chroma subsampling                       : 4:4:4
+Chroma subsampling                       : 4:4:4
+Bit depth                                : 8
+Bit depth                                : 8 bits
+Scan type                                : Progressive
+Scan type                                : Progressive
+Delay                                    : 0
+Delay                                    : 00:00:00.000
+Delay                                    : 00:00:00:00
+Delay                                    : 00:00:00.000 (00:00:00:00)
+Delay, origin                            : Container
+Delay, origin                            : Container
+Writing library                          : x264 - core 164 r3108 31e19f9
+Writing library                          : x264 core 164 r3108 31e19f9
+Encoded_Library_Name                     : x264
+Encoded_Library_Version                  : core 164 r3108 31e19f9
+Encoding settings                        : cabac=1 / ref=3 / deblock=1:0:0 / analyse=0x3:0x113 / me=hex / subme=7 / psy=1 / psy_rd=1.00:0.00 / mixed_ref=1 / me_range=16 / chroma_me=1 / trellis=1 / 8x8dct=1 / cqm=0 / deadzone=21,11 / fast_pskip=1 / chroma_qp_offset=4 / threads=7 / lookahead_threads=1 / sliced_threads=0 / nr=0 / decimate=1 / interlaced=0 / bluray_compat=0 / constrained_intra=0 / bframes=3 / b_pyramid=2 / b_adapt=1 / b_bias=0 / direct=1 / weightb=1 / open_gop=0 / weightp=2 / keyint=250 / keyint_min=25 / scenecut=40 / intra_refresh=0 / rc_lookahead=40 / rc=crf / mbtree=1 / crf=23.0 / qcomp=0.60 / qpmin=0 / qpmax=69 / qpstep=4 / ip_ratio=1.40 / aq=1:1.00
+Default                                  : No
+Default                                  : No
+Forced                                   : No
+Forced                                   : No
+
