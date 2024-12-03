@@ -347,11 +347,13 @@ fi
 EXISTING_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
 
-mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -o "=" -v "String" -n >> "${EXISTING_TAGS}"
+mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -n >> "${EXISTING_TAGS}"
 
-while IFS="=" read -r EXISTING_KEY EXISTING_VALUE ; do
+while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
+        TEMP_DIALOG_VALUE="$(_maketemp).txt"
+        mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" > "${TEMP_DIALOG_VALUE}"
         DIALOG_LIST_EMBEDDED+=("    <hbox>
         <vbox width-request=\"200\">
             <text xalign=\"0\">
@@ -359,10 +361,11 @@ while IFS="=" read -r EXISTING_KEY EXISTING_VALUE ; do
             </text>
         </vbox>
         <vbox width-request=\"800\">
-            <entry width=\"700\" space-fill=\"false\">
-                <default>${EXISTING_VALUE}</default>
+            <edit width=\"700\" space-fill=\"false\">
                 <variable>${EXISTING_KEY}</variable>
-            </entry>
+                <input file>${TEMP_DIALOG_VALUE}</input>
+                <action signal=\"show\">refresh:${EXISTING_KEY}</action>
+            </edit>
         </vbox>
     </hbox>
 ")
@@ -446,13 +449,13 @@ cat << EOF > "${DIALOG_FORM}"
       </vbox>
 </window>
 EOF
-
+echo "${DIALOG_FORM}" > /tmp/hi ; mate /tmp/hi
 DIALOG_RESULT="$(export MAIN_DIALOG="$(cat "${DIALOG_FORM}")" ; gtkdialog --center --program MAIN_DIALOG)"
-
+echo "${DIALOG_RESULT}"
 EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//g;s/"$//g')"
 
 if [[ "${EXIT_STATUS}" == "Cancel" ]] ; then
-    echo "Nevermind then o_o"
+    echo "Nevermind then o_o ${EXISTING_TAGS}"
     exit
 elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
     # Starts the XML draft for MKV metadata embedding with a root Tags element.
@@ -460,15 +463,34 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
 
     # Reads the edited tag template line by line, extracting tag names and values entered by the user.
     # Only lines that conform to the expected format (tag_name=[tag_value]) are processed.
+    READ_MULTILINE=0
     while read TAG_LINE ; do
-        # Extracts the tag name by splitting the line at the colon and taking the first part.
-        TAG_NAME="$(echo "${TAG_LINE}" | cut -d "=" -f1)"
-        # Extracts the tag value by splitting the line at the colon and taking the second part.
-        TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "=" -f2- | sed 's/^"//g;s/"$//g')"
+        if [[ "${READ_MULTILINE}" = "0" ]] ; then
+            # Extracts the tag name by splitting the line at the colon and taking the first part.
+            TAG_NAME="$(echo "${TAG_LINE}" | cut -d "=" -f1)"
+            if [[ "$(echo "${TAG_LINE}" | grep -c "^[^=]*=\".*\"$")" != "0" ]] ; then
+                # Extracts the tag value by splitting the line at the colon and taking the second part.
+                TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "=" -f2- | sed 's/^"//g;s/"$//g')"
+            else
+                # Extracts the tag value by splitting the line at the colon and taking the second part.
+                TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "=" -f2- | sed 's/^"//g')"
+                READ_MULTILINE="1"
+                continue
+            fi
+        else
+            if [[ "$(echo "${TAG_LINE}" | grep -c "\"$")" != "0" ]] ; then
+                TAG_VALUE+="\n$(echo "${TAG_LINE}" | sed 's/"$//g')"
+                READ_MULTILINE="0"
+            else
+                TAG_VALUE+="\n${TAG_LINE}"
+                continue
+            fi
+        fi
+        echo -e "${TAG_NAME} ... ${TAG_VALUE}"
         # If the tag value is not empty, the tag is added to the XML draft for embedding.
         # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
         if [[ -n "${TAG_VALUE// /}" ]] ; then
-            xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" "${XML_DRAFT}"
+            xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" "${XML_DRAFT}"
         fi
     done < <(echo "${DIALOG_RESULT}" | grep -v "^EXIT=")
 
