@@ -449,7 +449,7 @@ cat << EOF > "${DIALOG_FORM}"
       </vbox>
 </window>
 EOF
-echo "${DIALOG_FORM}" > /tmp/hi ; mate /tmp/hi
+
 DIALOG_RESULT="$(export MAIN_DIALOG="$(cat "${DIALOG_FORM}")" ; gtkdialog --center --program MAIN_DIALOG)"
 echo "${DIALOG_RESULT}"
 EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//g;s/"$//g')"
