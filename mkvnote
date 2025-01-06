@@ -440,7 +440,7 @@ cat << EOF > "${DIALOG_FORM}"
                 <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
             </text>
         </frame>
-        <vbox>${FRAME_ALREADY}${FRAME_PROFILE}</vbox>
+        <vbox scrollable="true" height="800">${FRAME_ALREADY}${FRAME_PROFILE}</vbox>
         <hbox space-expand="false" space-fill="false">
             <button>
                 <label>Settings</label>
