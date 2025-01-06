@@ -372,7 +372,7 @@ while read EXISTING_KEY ; do
                         </vbox>
                     </hbox>"
         else
-        DIALOG_LIST_EMBEDDED+="
+            DIALOG_LIST_EMBEDDED+="
                 <hbox>
                     <vbox width-request=\"200\">
                         <text xalign=\"0\">
