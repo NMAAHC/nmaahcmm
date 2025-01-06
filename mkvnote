@@ -354,6 +354,24 @@ while read EXISTING_KEY ; do
     if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
         mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" > "${TEMP_DIALOG_VALUE}"
+        LINE_COUNT="$(wc -l < "${TEMP_DIALOG_VALUE}")"
+        if [[ "${LINE_COUNT// /}" < "2" ]] ; then
+            DIALOG_LIST_EMBEDDED+="
+                    <hbox>
+                        <vbox width-request=\"200\">
+                            <text xalign=\"0\">
+                                <label>${EXISTING_KEY}</label>
+                            </text>
+                        </vbox>
+                        <vbox width-request=\"800\">
+                            <entry width=\"700\" space-fill=\"false\">
+                                <variable>${EXISTING_KEY}</variable>
+                                <input file>${TEMP_DIALOG_VALUE}</input>
+                                <action signal=\"show\">refresh:${EXISTING_KEY}</action>
+                            </entry>
+                        </vbox>
+                    </hbox>"
+        else
         DIALOG_LIST_EMBEDDED+="
                 <hbox>
                     <vbox width-request=\"200\">
@@ -369,6 +387,7 @@ while read EXISTING_KEY ; do
                         </edit>
                     </vbox>
                 </hbox>"
+        fi
     fi
     
 done < "${EXISTING_TAGS}"
