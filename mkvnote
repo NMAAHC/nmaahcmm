@@ -354,21 +354,40 @@ while read EXISTING_KEY ; do
     if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
         mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" > "${TEMP_DIALOG_VALUE}"
-        DIALOG_LIST_EMBEDDED+=("    <hbox>
-        <vbox width-request=\"200\">
-            <text xalign=\"0\">
-                <label>${EXISTING_KEY}</label>
-            </text>
-        </vbox>
-        <vbox width-request=\"800\">
-            <edit width=\"700\" space-fill=\"false\">
-                <variable>${EXISTING_KEY}</variable>
-                <input file>${TEMP_DIALOG_VALUE}</input>
-                <action signal=\"show\">refresh:${EXISTING_KEY}</action>
-            </edit>
-        </vbox>
-    </hbox>
-")
+        LINE_COUNT="$(wc -l < "${TEMP_DIALOG_VALUE}")"
+        if [[ "${LINE_COUNT// /}" < "2" ]] ; then
+            DIALOG_LIST_EMBEDDED+="
+                    <hbox>
+                        <vbox width-request=\"200\">
+                            <text xalign=\"0\">
+                                <label>${EXISTING_KEY}</label>
+                            </text>
+                        </vbox>
+                        <vbox width-request=\"800\">
+                            <entry width=\"700\" space-fill=\"false\">
+                                <variable>${EXISTING_KEY}</variable>
+                                <input file>${TEMP_DIALOG_VALUE}</input>
+                                <action signal=\"show\">refresh:${EXISTING_KEY}</action>
+                            </entry>
+                        </vbox>
+                    </hbox>"
+        else
+            DIALOG_LIST_EMBEDDED+="
+                <hbox>
+                    <vbox width-request=\"200\">
+                        <text xalign=\"0\">
+                            <label>${EXISTING_KEY}</label>
+                        </text>
+                    </vbox>
+                    <vbox width-request=\"800\">
+                        <edit width=\"700\" space-fill=\"false\">
+                            <variable>${EXISTING_KEY}</variable>
+                            <input file>${TEMP_DIALOG_VALUE}</input>
+                            <action signal=\"show\">refresh:${EXISTING_KEY}</action>
+                        </edit>
+                    </vbox>
+                </hbox>"
+        fi
     fi
     
 done < "${EXISTING_TAGS}"
@@ -376,19 +395,19 @@ done < "${EXISTING_TAGS}"
 for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
     PROFILE_KEY="${PROFILE_TAG%%=*}"
     if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${PROFILE_TAG}[[:space:]] ]] ; then
-        DIALOG_LIST_PROFILE+=("    <hbox>
-        <vbox width-request=\"200\">
-            <text xalign=\"0\">
-                <label>${PROFILE_KEY}</label>
-            </text>
-        </vbox>
-        <vbox width-request=\"800\">
-            <entry width=\"700\" space-fill=\"false\">
-                <variable>${PROFILE_KEY}</variable>
-            </entry>
-        </vbox>
-    </hbox>
-")
+        DIALOG_LIST_PROFILE+="
+                <hbox>
+                    <vbox width-request=\"200\">
+                        <text xalign=\"0\">
+                            <label>${PROFILE_KEY}</label>
+                        </text>
+                    </vbox>
+                    <vbox width-request=\"800\">
+                        <entry width=\"700\" space-fill=\"false\">
+                            <variable>${PROFILE_KEY}</variable>
+                        </entry>
+                    </vbox>
+                </hbox>"
     fi 
 done
 
@@ -413,6 +432,23 @@ widget_class "*<GtkFrame>.*.GtkLabel" style "fgWhite"
 ' > /tmp/gtkrc_mono
 export GTK2_RC_FILES=/tmp/gtkrc_mono
 
+if [[ -n "${DIALOG_LIST_EMBEDDED}" ]] ; then
+    FRAME_ALREADY="
+            <frame Already Embedded>${DIALOG_LIST_EMBEDDED}
+            </frame>
+"
+else
+    unset FRAME_ALREADY
+fi
+if [[ -n "${DIALOG_LIST_PROFILE}" ]] ; then
+    FRAME_PROFILE="
+            <frame ${SELECTED_PROFILE} profile>${DIALOG_LIST_PROFILE}
+            </frame>
+"
+else
+    unset FRAME_PROFILE
+fi
+
 DIALOG_FORM="$(_maketemp).xml"
 
 cat << EOF > "${DIALOG_FORM}"
@@ -423,30 +459,27 @@ cat << EOF > "${DIALOG_FORM}"
                 <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
             </text>
         </frame>
-        <vbox>
-            <frame Already Embedded>
-                ${DIALOG_LIST_EMBEDDED[@]}
-            </frame>
-            <frame ${SELECTED_PROFILE} profile>
-                ${DIALOG_LIST_PROFILE[@]}
-            </frame>
-          </vbox>
-          <hbox space-expand="false" space-fill="false">
-              <button>
-                  <label>Settings</label>
-                  <input file stock="gtk-index"></input>
-                  <variable export="false">settings_button</variable>
-              </button>
-              <hbox space-expand="true" space-fill="true"><text><label>""</label></text></hbox>
-              <button>
-                  <label>Tag-On!</label>
-                  <input file stock="gtk-media-record"></input>
-                  <variable export="false">record_button</variable>
-              </button>
-              <button cancel>
-              </button>
-          </hbox>
-      </vbox>
+        <vbox scrollable="true" height="800">${FRAME_ALREADY}${FRAME_PROFILE}</vbox>
+        <hbox space-expand="false" space-fill="false">
+            <button>
+                <label>Settings</label>
+                <input file stock="gtk-index"></input>
+                <variable export="false">settings_button</variable>
+            </button>
+            <hbox space-expand="true" space-fill="true">
+                <text>
+                    <label>""</label>
+                </text>
+            </hbox>
+            <button>
+                <label>Tag-On!</label>
+                <input file stock="gtk-media-record"></input>
+                <variable export="false">record_button</variable>
+            </button>
+            <button cancel>
+            </button>
+        </hbox>
+    </vbox>
 </window>
 EOF
 
