@@ -432,22 +432,6 @@ widget_class "*.GtkLabel" style "fgWhite"
 ' > /tmp/gtkrc_mono
 export GTK2_RC_FILES=/tmp/gtkrc_mono
 
-if [[ -n "${DIALOG_LIST_EMBEDDED}" ]] ; then
-    FRAME_ALREADY="
-            ${DIALOG_LIST_EMBEDDED}
-
-"
-else
-    unset FRAME_ALREADY
-fi
-if [[ -n "${DIALOG_LIST_PROFILE}" ]] ; then
-    FRAME_PROFILE="
-            ${DIALOG_LIST_PROFILE}
-"
-else
-    unset FRAME_PROFILE
-fi
-
 DIALOG_FORM="$(_maketemp).xml"
 
 cat << EOF > "${DIALOG_FORM}"
@@ -456,7 +440,16 @@ cat << EOF > "${DIALOG_FORM}"
             <text xalign="0" width-request="1000">
                 <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
             </text>
-        <vbox scrollable="true" height="800">${FRAME_ALREADY}${FRAME_PROFILE}</vbox>
+        <vbox scrollable="true">
+            <text xalign="0" width-request="1000">
+                <label>Metadata tags already embedded.</label>
+            </text>
+            ${DIALOG_LIST_EMBEDDED}
+            <text xalign="0" width-request="1000">
+                <label>Metadata tags from the ${SELECTED_PROFILE} profile.</label>
+            </text>
+            ${DIALOG_LIST_PROFILE}
+        </vbox>
         <hbox space-expand="false" space-fill="false">
             <button>
                 <label>Settings</label>
