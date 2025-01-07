@@ -426,24 +426,23 @@ style "custom-font" { font_name = "Sans 64" }
 
 widget "mkvnotemain" style "bgMain"
 
-widget_class "*<GtkFrame>.GtkLabel" style "fgWhite"
-widget_class "*<GtkFrame>.*.GtkLabel" style "fgWhite"
+widget_class "*GtkLabel" style "fgWhite"
+widget_class "*.GtkLabel" style "fgWhite"
 
 ' > /tmp/gtkrc_mono
 export GTK2_RC_FILES=/tmp/gtkrc_mono
 
 if [[ -n "${DIALOG_LIST_EMBEDDED}" ]] ; then
     FRAME_ALREADY="
-            <frame Already Embedded>${DIALOG_LIST_EMBEDDED}
-            </frame>
+            ${DIALOG_LIST_EMBEDDED}
+
 "
 else
     unset FRAME_ALREADY
 fi
 if [[ -n "${DIALOG_LIST_PROFILE}" ]] ; then
     FRAME_PROFILE="
-            <frame ${SELECTED_PROFILE} profile>${DIALOG_LIST_PROFILE}
-            </frame>
+            ${DIALOG_LIST_PROFILE}
 "
 else
     unset FRAME_PROFILE
@@ -454,11 +453,9 @@ DIALOG_FORM="$(_maketemp).xml"
 cat << EOF > "${DIALOG_FORM}"
 <window title="Welcome to mkvnote!" default-width="1100" name="mkvnotemain">
     <vbox>
-        <frame Intro>
             <text xalign="0" width-request="1000">
                 <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
             </text>
-        </frame>
         <vbox scrollable="true" height="800">${FRAME_ALREADY}${FRAME_PROFILE}</vbox>
         <hbox space-expand="false" space-fill="false">
             <button>
