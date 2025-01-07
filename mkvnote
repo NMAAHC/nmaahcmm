@@ -355,12 +355,17 @@ while read EXISTING_KEY ; do
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
         mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" > "${TEMP_DIALOG_VALUE}"
         LINE_COUNT="$(wc -l < "${TEMP_DIALOG_VALUE}")"
+        if [[ ! " ${SELECTED_TAG_SET[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
+            KEY_LABEL="${EXISTING_KEY}*"
+        else
+            KEY_LABEL="${EXISTING_KEY}"
+        fi
         if [[ "${LINE_COUNT// /}" < "2" ]] ; then
             DIALOG_LIST_EMBEDDED+="
                     <hbox>
                         <hbox width-request=\"200\">
                             <text xalign=\"0\">
-                                <label>${EXISTING_KEY}</label>
+                                <label>${KEY_LABEL}</label>
                             </text>
                         </hbox>
                         <hbox width-request=\"800\">
@@ -376,7 +381,7 @@ while read EXISTING_KEY ; do
                 <hbox>
                     <hbox width-request=\"200\">
                         <text xalign=\"0\">
-                            <label>${EXISTING_KEY}</label>
+                            <label>${KEY_LABEL}</label>
                         </text>
                     </hbox>
                     <hbox width-request=\"800\">
@@ -442,11 +447,11 @@ cat << EOF > "${DIALOG_FORM}"
         </text>
         <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
             <text xalign="0" width-request="1000">
-                <label>Metadata tags already embedded.</label>
+                <label>Metadata tags already embedded. (* for part of the ${SELECTED_PROFILE} profile)</label>
             </text>
             ${DIALOG_LIST_EMBEDDED}
             <text xalign="0" width-request="1000">
-                <label>Metadata tags from the ${SELECTED_PROFILE} profile.</label>
+                <label>Yet unused metadata tags from the ${SELECTED_PROFILE} profile.</label>
             </text>
             ${DIALOG_LIST_PROFILE}
         </vbox>
