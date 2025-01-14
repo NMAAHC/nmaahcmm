@@ -355,37 +355,42 @@ while read EXISTING_KEY ; do
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
         mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" > "${TEMP_DIALOG_VALUE}"
         LINE_COUNT="$(wc -l < "${TEMP_DIALOG_VALUE}")"
+        if [[ ! " ${SELECTED_TAG_SET[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
+            KEY_LABEL="${EXISTING_KEY}*"
+        else
+            KEY_LABEL="${EXISTING_KEY}"
+        fi
         if [[ "${LINE_COUNT// /}" < "2" ]] ; then
             DIALOG_LIST_EMBEDDED+="
                     <hbox>
-                        <vbox width-request=\"200\">
+                        <hbox width-request=\"200\">
                             <text xalign=\"0\">
-                                <label>${EXISTING_KEY}</label>
+                                <label>${KEY_LABEL}</label>
                             </text>
-                        </vbox>
-                        <vbox width-request=\"800\">
-                            <entry width=\"700\" space-fill=\"false\">
+                        </hbox>
+                        <hbox width-request=\"800\">
+                            <entry width=\"700\">
                                 <variable>${EXISTING_KEY}</variable>
                                 <input file>${TEMP_DIALOG_VALUE}</input>
                                 <action signal=\"show\">refresh:${EXISTING_KEY}</action>
                             </entry>
-                        </vbox>
+                        </hbox>
                     </hbox>"
         else
             DIALOG_LIST_EMBEDDED+="
                 <hbox>
-                    <vbox width-request=\"200\">
+                    <hbox width-request=\"200\">
                         <text xalign=\"0\">
-                            <label>${EXISTING_KEY}</label>
+                            <label>${KEY_LABEL}</label>
                         </text>
-                    </vbox>
-                    <vbox width-request=\"800\">
-                        <edit width=\"700\" space-fill=\"false\">
+                    </hbox>
+                    <hbox width-request=\"800\">
+                        <edit width=\"700\">
                             <variable>${EXISTING_KEY}</variable>
                             <input file>${TEMP_DIALOG_VALUE}</input>
                             <action signal=\"show\">refresh:${EXISTING_KEY}</action>
                         </edit>
-                    </vbox>
+                    </hbox>
                 </hbox>"
         fi
     fi
@@ -397,16 +402,16 @@ for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
     if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${PROFILE_TAG}[[:space:]] ]] ; then
         DIALOG_LIST_PROFILE+="
                 <hbox>
-                    <vbox width-request=\"200\">
+                    <hbox width-request=\"200\">
                         <text xalign=\"0\">
                             <label>${PROFILE_KEY}</label>
                         </text>
-                    </vbox>
-                    <vbox width-request=\"800\">
-                        <entry width=\"700\" space-fill=\"false\">
+                    </hbox>
+                    <hbox width-request=\"800\">
+                        <entry width=\"700\">
                             <variable>${PROFILE_KEY}</variable>
                         </entry>
-                    </vbox>
+                    </hbox>
                 </hbox>"
     fi 
 done
@@ -426,40 +431,30 @@ style "custom-font" { font_name = "Sans 64" }
 
 widget "mkvnotemain" style "bgMain"
 
-widget_class "*<GtkFrame>.GtkLabel" style "fgWhite"
-widget_class "*<GtkFrame>.*.GtkLabel" style "fgWhite"
+widget_class "*GtkLabel" style "fgWhite"
+widget_class "*.GtkLabel" style "fgWhite"
 
 ' > /tmp/gtkrc_mono
 export GTK2_RC_FILES=/tmp/gtkrc_mono
-
-if [[ -n "${DIALOG_LIST_EMBEDDED}" ]] ; then
-    FRAME_ALREADY="
-            <frame Already Embedded>${DIALOG_LIST_EMBEDDED}
-            </frame>
-"
-else
-    unset FRAME_ALREADY
-fi
-if [[ -n "${DIALOG_LIST_PROFILE}" ]] ; then
-    FRAME_PROFILE="
-            <frame ${SELECTED_PROFILE} profile>${DIALOG_LIST_PROFILE}
-            </frame>
-"
-else
-    unset FRAME_PROFILE
-fi
 
 DIALOG_FORM="$(_maketemp).xml"
 
 cat << EOF > "${DIALOG_FORM}"
 <window title="Welcome to mkvnote!" default-width="1100" name="mkvnotemain">
     <vbox>
-        <frame Intro>
+        <text xalign="0" width-request="1000">
+            <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
+        </text>
+        <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
             <text xalign="0" width-request="1000">
-                <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
+                <label>Metadata tags already embedded. (* for part of the ${SELECTED_PROFILE} profile)</label>
             </text>
-        </frame>
-        <vbox scrollable="true" height="800">${FRAME_ALREADY}${FRAME_PROFILE}</vbox>
+            ${DIALOG_LIST_EMBEDDED}
+            <text xalign="0" width-request="1000">
+                <label>Yet unused metadata tags from the ${SELECTED_PROFILE} profile.</label>
+            </text>
+            ${DIALOG_LIST_PROFILE}
+        </vbox>
         <hbox space-expand="false" space-fill="false">
             <button>
                 <label>Settings</label>
