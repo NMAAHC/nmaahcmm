@@ -654,13 +654,13 @@ if [[ "${AIP}" == "YES" ]] ; then
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
     elif [[ "${PROFILE}" = "xn" ]] ; then
         MIDDLE_OPTIONS+=(-r:v ntsc -c:v mpeg2video -intra_vlc 1 -non_linear_quant 1)
-        MIDDLE_OPTIONS+=(-pix_fmt yuv420p -flags +ildct+ilme -top 1 -dc 10 -qmin 1 -lmin QP2LAMBDA -b:v 35000k -minrate 20000k -maxrate 35000k -bufsize 36408333 -g 15 -bf 2 -aspect 16:9)
+        MIDDLE_OPTIONS+=(-pix_fmt yuv420p -flags +ildct+ilme -top 1 -dc 10 -qmin 5 -qmax 28 -lmin QP2LAMBDA -b:v 35000k -minrate 20000k -maxrate 35000k -bufsize 36408333 -g 15 -bf 2 -aspect 16:9)
         MIDDLE_OPTIONS+=(-ps 1 -mpv_flags strict_gop)
         MIDDLE_OPTIONS+=(-s 1920x1080)
         MIDDLE_OPTIONS+=(-acodec pcm_s16le -ar 48000)
     elif [[ "${PROFILE}" = "xp" ]] ; then
         MIDDLE_OPTIONS+=(-r:v pal -c:v mpeg2video -intra_vlc 1 -non_linear_quant 1)
-        MIDDLE_OPTIONS+=(-pix_fmt yuv420p -flags +ildct+ilme -top 1 -dc 10 -qmin 1 -lmin QP2LAMBDA -b:v 35000k -minrate 20000k -maxrate 35000k -bufsize 36408333 -g 15 -bf 2 -aspect 16:9)
+        MIDDLE_OPTIONS+=(-pix_fmt yuv420p -flags +ildct+ilme -dc 10 -qmin 5 -qmax 28 -lmin QP2LAMBDA -b:v 35000k -minrate 20000k -maxrate 35000k -bufsize 36408333 -g 15 -bf 2 -aspect 16:9)
         MIDDLE_OPTIONS+=(-ps 1 -mpv_flags strict_gop)
         MIDDLE_OPTIONS+=(-s 1920x1080)
         MIDDLE_OPTIONS+=(-acodec pcm_s16le -ar 48000)
