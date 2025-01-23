@@ -105,10 +105,11 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -h display this help
 
   By default, this script will try to losslessly rewrap the contents of the camera cards from input to a concatenated output; however, setting this profile option will transcode the contents instead. Setting a profile will disable lossless verification.
-  -p [xn|xp|h] where
+  -p [xn|xp|h|s] where
   -p xn     creates an NSTC XDCam/PCM output in an mov container
   -p xp     creates an PAL XDCam/PCM output in an mov container
   -p h      creates an h264/aac output in an mp4 container
+  -p s      creates a single image that summarizes the clips of the input
 
   Options specific to the GENERAL camera card type:
   -k [y|n]  If the camera card is GENERAL, set '-k y' to keep a copy of all files from the original camera card with the aip. Defaults to '-k n' to not keep them.
@@ -415,6 +416,11 @@ _check_if_in_list(){
     fi
 }
 
+_smmm_to_hhmmssff(){
+    secs="$1"
+    echo "${secs}" | awk '{ printf "%02i:%02i:%02i:%02i\n", $1/60/60, $1/60%60, $1%60, $1%1*30 }'
+}
+
 # getopts loop
 OPTIND=1
 SUFFIX="_concatenated"
@@ -557,7 +563,9 @@ if [[ "${AIP}" == "YES" ]] ; then
     ## concatenate video files into a single file
     echo
     FIRST_FILE="$(_read_inventory -f ",video," "FILE_NAME" | head -n 1)"
-    if [[ -z "${OUTPUT_EXTENSION}" ]] ; then
+    if [[ "${PROFILE}" = "s" ]] ; then
+        OUTPUT_EXTENSION="jpg"
+    elif [[ -z "${OUTPUT_EXTENSION}" ]] ; then
         if [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
             OUTPUT_EXTENSION="${FIRST_FILE#*.}"
         else
@@ -568,7 +576,15 @@ if [[ "${AIP}" == "YES" ]] ; then
     CONCATENATED_VIDEO_FILE="${AIPDIR_AIP}/${MEDIAID}${SUFFIX}.${OUTPUT_EXTENSION}"
 
     # create list of files to concatenate, formatted for ffmpeg
-    unset AUDIO_STRATEGY UNKNOWN_ENCODINGS_FOUND
+    unset AUDIO_STRATEGY UNKNOWN_ENCODINGS_FOUND INPUT4IMAGE
+    # if the output if a proofsheet then initialize some values
+    if [[ "${PROFILE}" = "s" ]] ; then
+        DURATION_TALLY=0
+        HEADER_SIZE="8540x48" # in HxW format
+        TILE_SIZE="8540:480"  # in H:W format
+        INFO_CARD="$(ffprobe -v 0 "${FIRST_FILE}" -show_entries format_tags=company_name,product_name,product_uid -of default=nk=1:nw=1 | xargs | sed 's|:|\\\:|g')"
+        HEADER_FILTER="color=color=black:s=${HEADER_SIZE},drawtext=x=2:y=2:text='Path\\: $(dirname "${FIRST_FILE}") -- ${INFO_CARD}':fontcolor=white:fontsize=36:x=2:y=2[header];"
+    fi
     while read INVENTORY_ROW ; do
         SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
         FILE_NAME="$(echo "${INVENTORY_ROW}" | cut -d "," -f 12)"
@@ -592,10 +608,51 @@ if [[ "${AIP}" == "YES" ]] ; then
             fi
             echo "file '${FILE_NAME}'" >> "${TEMP_CONCATLIST}"
         fi
+        
+        if [[ "${PROFILE}" = "s" ]] ; then
+            IMAGENUMBER=0
+            unset INPUTCLIP4IMAGEFILTER
+            IMAGECOUNT=10
+            IMAGENUMBER_PER_FILE=1
+            DURATION=$(ffprobe 2>/dev/null "${FILE_NAME}" -show_format | grep duration | cut -d= -f2)
+            INFO_FILE="$(ffprobe -v 0 "${FILE_NAME}" -show_entries format_tags=modification_date,timecode -of default=nk=1:nw=1 | xargs | sed 's|:|\\\:|g')"
+            DURATION_ALT="$(_smmm_to_hhmmssff "${DURATION}")"
+            DURATION_ALT2="$(echo "$DURATION_ALT" | sed 's|:|\\\:|g')"
+            DURATION_TALLY_ALT2="$(_smmm_to_hhmmssff "${DURATION_TALLY}" | sed 's|:|\\\:|g')"
+            unset INPUT4IMAGEFILTER INPUTCLIP4IMAGE IMAGE_FILTER MIDDLE_OPTIONS
+            while [[ "${IMAGENUMBER}" -lt "${IMAGECOUNT}" ]] ; do
+                START="0$(echo "scale=2; ( ${DURATION} / ( ${IMAGECOUNT} + 1 )) * ${IMAGENUMBER_PER_FILE}" | bc)"
+                START_ALT="$(_smmm_to_hhmmssff "${START}")"
+                _report -d "For $(basename "${FILE_NAME}") making frame ${IMAGENUMBER} of ${IMAGECOUNT}  - dur:${DURATION_ALT} start:${START_ALT}"
+                INPUTCLIP4IMAGE+=(-ss "$START" -i "${FILE_NAME}")
+                INPUTCLIP4IMAGEFILTER+="[${IMAGENUMBER}:v]"
+                ((IMAGENUMBER++))
+                ((IMAGENUMBER_PER_FILE++))
+            done
+            IMAGE_FILTER+="${INPUTCLIP4IMAGEFILTER}hstack=${IMAGECOUNT},scale=${TILE_SIZE},pad=iw:ih+40:0:40:black,drawtext=x=2:y=2:text='#${SEG_NUMBER} -- $(basename "${FILE_NAME}") -- dur\\:${DURATION_ALT2} -- start_in_set\\:${DURATION_TALLY_ALT2} -- ${INFO_FILE}':fontcolor=white:fontsize=32[out]"
+            MIDDLE_OPTIONS+=(-filter_complex "${IMAGE_FILTER}")
+            MIDDLE_OPTIONS+=(-update 1 -frames:v 1)
+            MIDDLE_OPTIONS+=(-map '[out]')
+            TEMP_PROOFSHEET_OUTPUT="$(_maketemp)_seg${SEG_NUMBER}.jpg"
+            INPUT_NO=$((SEG_NUMBER--))
+            ((INPUT_NO--))
+            ROWINPUT4STACK+="[${INPUT_NO}:v]"
+            "${FFMPEG_PATH}" -nostdin -y "${INPUTCLIP4IMAGE[@]}" "${MIDDLE_OPTIONS[@]}" "${TEMP_PROOFSHEET_OUTPUT}"
+            INPUT4IMAGE+=(-i "${TEMP_PROOFSHEET_OUTPUT}")
+            DURATION_TALLY="$(echo "scale=6; ${DURATION_TALLY} + ${DURATION}" | bc)"
+            unset MIDDLE_OPTIONS
+        fi
     done < <(_read_inventory -f ",video,\|,audio,")
 
+    if [[ "${PROFILE}" = "s" ]] ; then
+        MIDDLE_OPTIONS+=(-an)
+        ((SEG_NUMBER++)) # increment segment to add in header row for vstack filter
+        ((SEG_NUMBER++)) # increment segment since we started from zero
+        # add to header the time range of the clips, add total duration. count of clip. camera info, option for audio
+        MIDDLE_OPTIONS+=(-filter_complex "${HEADER_FILTER}[header]${ROWINPUT4STACK}vstack=${SEG_NUMBER},format=yuv420p")
+        MIDDLE_OPTIONS+=(-update 1 -frames:v 1)
     # concatenate video files in the order they are printed in $TEMP_CONCATLIST; map metadata from the first video file (in sequence) onto the concatenated file
-    if [[ "${PROFILE}" = "xn" ]] ; then
+    elif [[ "${PROFILE}" = "xn" ]] ; then
         MIDDLE_OPTIONS+=(-r:v ntsc -c:v mpeg2video -intra_vlc 1 -non_linear_quant 1)
         MIDDLE_OPTIONS+=(-pix_fmt yuv420p -flags +ildct+ilme -top 1 -dc 10 -qmin 1 -lmin QP2LAMBDA -b:v 35000k -minrate 20000k -maxrate 35000k -bufsize 36408333 -g 15 -bf 2 -aspect 16:9)
         MIDDLE_OPTIONS+=(-ps 1 -mpv_flags strict_gop)
@@ -612,8 +669,12 @@ if [[ "${AIP}" == "YES" ]] ; then
     else
         MIDDLE_OPTIONS+=(-c copy)
     fi
-        
+    if [[ "${PROFILE}" = "s" ]] ; then
+        "${FFMPEG_PATH}" -nostdin -y "${INPUT4IMAGE[@]}" "${MIDDLE_OPTIONS[@]}" "${CONCATENATED_VIDEO_FILE}"
+        exit
+    else
     "${FFMPEG_PATH}" -f concat -safe 0 -i "${TEMP_CONCATLIST}" -i "${FIRST_FILE}" -map 0 -map_metadata 1 "${MIDDLE_OPTIONS_ALL[@]}" "${MIDDLE_OPTIONS[@]}" "${AUDIO_STRATEGY[@]}" "${CONCATENATED_VIDEO_FILE}"
+    fi
     # calculate md5 for each stream in the file
     if [[ "${SINGLE_OUTPUT}" != "Y" ]] ; then
         _report -b "Calculating streamhash and checking input for errors."
