@@ -1,138 +1,37 @@
-#!/usr/bin/env bash
+import os
+import argparse
+import subprocess
 
-# a script to create a H264 derivative of a given input. Make access happen!
-# unlike makeDer, this script does not allow the operator to select a CRF value or preset encoding speed; those values and the maximum bitrate are set at the top of the script
+def convert_mov_to_h264(input_dirs, verbose=True):
+    for input_dir in input_dirs:
+        mp4_dir = os.path.join(input_dir, "mp4")
+        if not os.path.exists(mp4_dir):
+            os.makedirs(mp4_dir)
+        
+        for filename in os.listdir(input_dir):
+            if filename.lower().endswith(".mov"):
+                mov_path = os.path.join(input_dir, filename)
+                mp4_path = os.path.join(mp4_dir, os.path.splitext(filename)[0] + ".mp4")
+                
+              command = [
+                    "ffmpeg", "-n", "-vsync", "0", "-nostdin", "-v", "info", "-hide_banner", "-stats",
+                    "-i", mov_path, 
+                    "-c:v", "libx264", "-crf", "30", "-preset", "fast", "-pix_fmt", "yuv420p", "-bufsize", "1835k",
+                    "-movflags", "+faststart",  # Correct placement
+                    "-map", "0:v", "-map", "0:a?", "-c:a", "aac", "-b:a", "192k",
+                    mp4_path  # Output file should always be last
+                ]
+                
+                try:
+                    subprocess.run(command, check=True)
+                    if verbose:
+                        print(f"Converted: {filename} -> {os.path.basename(mp4_path)} in {mp4_dir}")
+                except subprocess.CalledProcessError as e:
+                    print(f"Error converting {filename}: {e}")
 
-# load nmaahcmmfunctions into this script
-SCRIPT_PATH="${0%/*}"
-. "${SCRIPT_PATH}/nmaahcmmfunctions"
-[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-_initialize_make # safe script termination process defined in nmaahcmmfunctions
-DEPENDENCIES=(ffmpeg) # list dependencies required by script
-_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
-
-SUFFIX="" #SUFFIX is blank here but can be filled in with desired characters for inclusion in filename
-CRFVALUE=18
-PRESETSPEED=medium
-MAXRATE=8000
-ERRORS=0
-
-## USAGE
-
-_usage(){
-    echo
-    echo "$(basename "${0}")"
-    echo "This application will create a high quality h264 file (suitable for uploading to YouTube). It takes one or more video files or packages as input. You may pass both video files and packages in the same command."
-    echo "FOR VIDEO FILES: The script will create derivatives for all video files (regardless of extension) that are passed as input. Each derivative will be named after its input file. Derivatives will be created in a subdirectory called 'access' located within the input file's parent directory."
-    echo "FOR PACKAGES: The script will create derivatives for all .mov and .mkv files within the input package. Each derivative will be named after its corresponding .mov or .mkv file. Derivatives will be created in a subdirectory called 'access' located within the input directory."
-    echo "Usage: $(basename ${0}) fileorpackage1 [ fileorpackage2 ...]"
-    echo
-    exit
-}
-[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
-# getopts loop
-OPTIND=1
-while getopts ":h" OPT; do
-    case "${OPT}" in
-        h) _usage ;;  # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
-    esac
-done
-shift $(( ${OPTIND} - 1 ))
-
-## SCRIPT ACTIONS
-
-# log script beginning
-_log -b
-
-while [ "${*}" != "" ] ; do
-    INPUT="${1}" #set $INPUT as the first argument sent to script
-
-    # process if INPUT is a file
-    if [[ -f "${INPUT}" ]] ; then
-        OUTPUT_DIR="$(dirname ${INPUT})/access" # set OUTPUT_DIR to a subdirectory called "access," nested under the directory where the input file is
-        MEDIAID="${INPUT##*/}" #set $MEDIAID to basename of $INPUT
-        MEDIAID="${MEDIAID%.*}" #set $MEDIAID to $MEDIAID with extension stripped
-        OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
-        [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT directory if it doesn't already exist
-        if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
-            _report -rst "WARNING: ${OUTPUT} already exists, skipping transcode of ${INPUT}"
-            _report "Moving to next file if present..."
-        else
-            _report -g "The MEDIA ID is: ${MEDIAID}"
-            _report -g "The OUTPUT directory is: ${OUTPUT_DIR}"
-            _report -g "The OUTPUT file is: ${OUTPUT}"
-            _report -gs "making .mp4 derivative of ${INPUT} ..."
-            ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${INPUT}" -movflags faststart -map 0:v -map 0:a'?' -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
-            if [[ -s "${OUTPUT}" ]] ; then
-                _report -gs "Success! Derivative ${OUTPUT} created."
-            else
-                _report -rst  "Hmm...derivative ${OUTPUT} was not successfully created."
-                ((ERRORS++))
-            fi
-            _report -s "Moving to next file if present..."
-        fi
-    # process if INPUT is a directory
-    elif [[ -d "${INPUT}" ]] ; then
-        TEMPFILE1="$(_maketemp)"
-        TEMPFILE2="$(_maketemp)"
-        INPUT="${1}"
-        # Gather a list of potential video files in the directory/package (TEMPFILE1). Ignore common image, audio, and text files; ignore all files in a "access" folder.
-        _report "Checking for video files in the package..."
-        find "${INPUT}" -type f -not -iname "*.dpx" -not -iname "*.wav" -not -iname "*.mp3" -not -iname "*.txt" -not -iname "*.xml" -not -path "*/access/*" >> "${TEMPFILE1}"
-        # Check whether there is a video stream in each file; if there is, add it to a list of confirmed video files (TEMPFILE2). This approach is intended to catch all video files regardless of type or extension.
-        while read FILE ; do
-            if [[ -n "$(mediainfo --Inform="General;%VideoCount%" "${FILE}")" ]] ; then
-                echo "Found video file ${FILE}"
-                echo "${FILE}" >> "${TEMPFILE2}"
-            else
-                :
-            fi
-        done <"${TEMPFILE1}"
-        # check whether any video files were found in this process, by checking whether $TEMPFILE2 is empty.
-        if [[ ! -s "${TEMPFILE2}" ]] ; then
-            _report -r "There are no video files in this package!"
-        fi
-        # create h264 derivatives of all video files in package
-        while read FILE ; do
-            OUTPUT_DIR="${INPUT}/access" # set OUTPUT_DIR to a subdirectory called "access," nested under the directory passed as input
-            [[ ! -d "${OUTPUT_DIR}" ]] && mkdir -p "${OUTPUT_DIR}" # make OUTPUT_DIR if it doesn't already exist
-            MEDIAID="${FILE##*/}" #strip directory from the filename used for MEDIAID
-            MEDIAID="${MEDIAID%.*}" #strip extension from the filename used for MEDIAID
-            OUTPUT="${OUTPUT_DIR}/${MEDIAID%.*}${SUFFIX}.mp4" #set $OUTPUT
-            if [[ -s "${OUTPUT}" ]] ; then #check to see if $OUTPUT exists
-                _report -rst "WARNING: ${OUTPUT} already exists, skipping transcode of ${FILE}"
-            else
-                _report -gs "The MEDIA ID is: ${MEDIAID}"
-                _report -gs "The OUTPUT directory is: ${OUTPUT_DIR}"
-                _report -gs "The OUTPUT file is: ${OUTPUT}"
-                _report -gs "making .mp4 derivative of ${FILE} ..."
-                ffmpeg -n -vsync 0 -nostdin -v info -hide_banner -stats -i "${FILE}" -movflags faststart -pix_fmt yuv420p -map 0:v -map 0:a'?' -c:v libx264 -vf "yadif=1,format=yuv420p" -crf "${CRFVALUE}" -preset "${PRESETSPEED}" -maxrate "${MAXRATE}"k -bufsize 1835k -c:a aac -strict -2 -b:a 384k -f mp4 "${OUTPUT}"
-                if [[ -s "${OUTPUT}" ]] ; then
-                    _report -gs "Success! Derivative ${OUTPUT} created."
-                else
-                    _report -rst  "Hmm...derivative ${OUTPUT} not successfully created."
-                    ((ERRORS++))
-                fi
-            fi
-            _report -s "Moving to next file if present..."
-        done <"${TEMPFILE2}"
-    else
-        _report -rst  "ERROR: Input ${INPUT} is not a file or directory. Exiting..."
-        _log -a "Process terminated by script (input was not a file or directory)."
-        exit 1
-    fi
-    shift
-done
-
-# log script ending
-rm "${TEMPFILE1}" "${TEMPFILE2}"
-_log -e
-_report -g "makeH264 process complete."
-if [[ "${ERRORS}" -gt 0 ]] ; then
-    _report -rs "Not all derivatives were successfully created. Please double-check the terminal output!"
-    _report -rs "Total number of derivative errors found: ${ERRORS}"
-    _log -w "${ERRORS} error/s occurred during derivative creation."
-fi
-echo
-exit "$?"
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Convert .mov files to H.264 .mp4 with specified settings.")
+    parser.add_argument("input_directories", type=str, nargs='+', help="One or more directories containing .mov files.")
+    args = parser.parse_args()
+    
+    convert_mov_to_h264(args.input_directories)

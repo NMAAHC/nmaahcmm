@@ -1,34 +1,46 @@
 #!/usr/bin/env bash
 
-#a script to create md5 checksums of all files in a directory or a single file and save it to a .md5 file
+# A script to create md5 checksums of all files in a directory or a single file
+# and save them in .md5 and .txt files.
 
-# load nmaahcmmfunctions into this script
+# Load nmaahcmmfunctions into this script
 SCRIPT_PATH="${0%/*}"
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
-[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
-_initialize_make # safe script termination process defined in nmaahcmmfunctions
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo -e "\033[31m✖ Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting.\033[0m" ; exit 1 ;};
+
+_initialize_make # Safe script termination process defined in nmaahcmmfunctions
 unset DEPENDENCIES
-DEPENDENCIES=(md5deep cowsay) # list dependencies required by script
-_check_dependencies "${DEPENDENCIES[@]}" # defined in nmaahcmmfunctions
-DATE=$(date '+%Y%m%d-%H:%M:%S')
+DEPENDENCIES=(md5deep cowsay) # List dependencies required by script
+_check_dependencies "${DEPENDENCIES[@]}" # Defined in nmaahcmmfunctions
+DATE=$(date '+%Y%m%d-%H-%M-%S') # Updated time format to HH-MM-SS
+
+### ANSI COLORS
+RED="\033[31m"     # Red for errors
+GREEN="\033[32m"   # Green for success
+YELLOW="\033[33m"  # Yellow for warnings
+BLUE="\033[34m"    # Blue for information
+BOLD="\033[1m"     # Bold text
+RESET="\033[0m"    # Reset text formatting
 
 ### USAGE
-
 _usage(){
     echo
-    echo "$(basename "${0}")"
-    echo "This application creates md5 checksums. If you pass a single file as input, the application will create a checksum for that file and save it in a .md5 file in the same directory as your input. If you pass a directory as input, the application will create a checksum for every file in the directory and save them in .md5 files (one .md5 file for each original file) in the same directory that you supplied."
-    echo "Usage: $(basename ${0}) fileorpackage1 fileorpackage2 [fileorpackage3...]"
+    echo -e "${BOLD}$(basename "${0}")${RESET}"
+    echo -e "${BLUE}This application generates MD5 checksums.${RESET}"
+    echo -e " - If you pass a ${BOLD}single file${RESET}, the script creates a checksum and saves it in a .md5 and .txt file."
+    echo -e " - If you pass a ${BOLD}directory${RESET}, it recursively generates checksums for all files except existing .md5 files."
+    echo -e "${YELLOW}Usage:${RESET} $(basename ${0}) fileorpackage1 fileorpackage2 [fileorpackage3...]"
     echo
     exit
 }
-[ "${#}" = 0 ] && _usage # if the command is run with no arguments then _usage is called
-# getopts loop
+[ "${#}" = 0 ] && _usage # If no arguments are passed, show usage
+
+# Getopts loop
 OPTIND=1
 while getopts ":h" OPT; do
     case "${OPT}" in
-        h) _usage ;; # if the operator runs "[scriptname] -h" then the _usage text above will display in the terminal
-        *) echo "Invalid option -${OPTARG}" ; _usage ;; # if the operator tries to use an option other than the ones listed above, the _usage text will display in the terminal
+        h) _usage ;; # Display usage information
+        *) echo -e "${RED}✖ Invalid option -${OPTARG}${RESET}" ; _usage ;; # Show error for unknown options
     esac
 done
 shift $(( ${OPTIND} - 1 ))
@@ -36,28 +48,72 @@ shift $(( ${OPTIND} - 1 ))
 ## SCRIPT ACTIONS
 
 _log -b
+echo -e "\n${BOLD}${BLUE}==============================${RESET}"
+echo -e "${BOLD} MD5 Checksum Generator Started ${RESET}"
+echo -e "${BOLD}${BLUE}==============================${RESET}\n"
+
 while [ "${*}" != "" ] ; do
-    INPUT="${1}" # name $INPUT as the first argument sent to script
-    if [[ -d "${INPUT}" ]] ; then # if argument is a directory, run md5deep
-        "${SCRIPTDIR}/removeDSStore" "${INPUT}"
-        TARGET="$(basename "${INPUT}")" # get basename of input, or ${INPUT##*/} - this command also strips the trailing slash, or ${INPUT%/}
-        OUTPUT="${INPUT}/${TARGET}_${DATE}_checksums.md5" # set .md5 file as $OUTPUT
-        _report -g "Making checksums of all files in directory ${TARGET} and writing to ${OUTPUT}"
-        md5deep -bre "${INPUT}" > "${OUTPUT}" # create md5 hash (hashes) of $INPUT and write results to $OUTPUT. -b=strip leading directory info, -r=recursive, -e=display progress indicator
+    INPUT="${1}" # Assign input argument
+
+    if [[ -d "${INPUT}" ]] ; then
+        echo -e "${BLUE}➜ Processing directory:${RESET} ${BOLD}${INPUT}${RESET}"
+        "${SCRIPTDIR}/removeDSStore" "${INPUT}"  # Remove .DS_Store files
+        TARGET="$(basename "${INPUT}")"
+        OUTPUT="${INPUT}/${TARGET}_${DATE}_checksums.md5"
+
+        # Count files to be hashed (excluding .md5 files)
+        FILE_COUNT=$(find "${INPUT}" -type f ! -name "*.md5" | wc -l)
+
+        # Calculate total size of hashed files (excluding .md5 files)
+        TOTAL_SIZE=$(find "${INPUT}" -type f ! -name "*.md5" -exec du -ch {} + | grep "total" | awk '{print $1}')
+
+        echo -e "${YELLOW}⚡ Generating checksums for ${FILE_COUNT} files (${TOTAL_SIZE}) in:${RESET} ${BOLD}${INPUT}${RESET}"
+        
+        # Generate checksums excluding existing .md5 files
+        find "${INPUT}" -type f ! -name "*.md5" -exec md5deep -b {} + > "${OUTPUT}"
+        
+        echo -e "${BLUE}➜ Sorting checksums in:${RESET} ${BOLD}$(basename "${OUTPUT}")${RESET}"
+        sort -k 2 -o "${OUTPUT}" "${OUTPUT}"
+        
+        # Save a duplicate copy as .txt
+        cp "${OUTPUT}" "${OUTPUT%.md5}.txt"
+        
+        echo -e "${GREEN}✔ ${FILE_COUNT} files hashed, total size: ${TOTAL_SIZE}.${RESET}"
+        echo -e "${GREEN}✔ Checksum file created:${RESET} ${BOLD}${OUTPUT}${RESET}"
+        echo -e "${GREEN}✔ Duplicate saved as:${RESET} ${BOLD}${OUTPUT%.md5}.txt${RESET}\n"
     fi
-    if [[ -f "${INPUT}" ]] ; then # if argument is a file, run md5deep
-        TARGET="$(basename "${INPUT}")" # get basename of input, or ${INPUT##*/}
-        OUTPUT_DIR="$(dirname "${INPUT}")" # get full path of parent directory, or ${INPUT%/*}
-        OUTPUT="${OUTPUT_DIR}/${TARGET%.*}_$(date +%F)_checksums.md5" # set .md5 file as $OUTPUT. ${TARGET%.*} strips extension from $TARGET
-        _report -g "Making checksum of file ${TARGET} and writing to ${OUTPUT}"
-        md5deep -bre "${INPUT}" > "${OUTPUT}" # create md5 hash of $INPUT and write results to $OUTPUT. -b=strip leading directory info, -r=recursive, -e=display progress indicator
+
+    if [[ -f "${INPUT}" ]] && [[ "${INPUT}" != *.md5 ]]; then
+        echo -e "${BLUE}➜ Processing file:${RESET} ${BOLD}${INPUT}${RESET}"
+        
+        TARGET="$(basename "${INPUT}")"
+        OUTPUT_DIR="$(dirname "${INPUT}")"
+        OUTPUT="${OUTPUT_DIR}/${TARGET%.*}_${DATE}_checksums.md5"
+
+        # Get file size in human-readable format
+        FILE_SIZE=$(du -sh "${INPUT}" | awk '{print $1}')
+
+        echo -e "${YELLOW}⚡ Generating checksum for 1 file (${FILE_SIZE}):${RESET} ${BOLD}${TARGET}${RESET}"
+
+        md5deep -bre "${INPUT}" > "${OUTPUT}"
+        
+        echo -e "${BLUE}➜ Sorting checksums in:${RESET} ${BOLD}$(basename "${OUTPUT}")${RESET}"
+        sort -k 2 -o "${OUTPUT}" "${OUTPUT}"
+
+        # Save a duplicate copy as .txt
+        cp "${OUTPUT}" "${OUTPUT%.md5}.txt"
+
+        echo -e "${GREEN}✔ 1 file hashed, size: ${FILE_SIZE}.${RESET}"
+        echo -e "${GREEN}✔ Checksum file created:${RESET} ${BOLD}${OUTPUT}${RESET}"
+        echo -e "${GREEN}✔ Duplicate saved as:${RESET} ${BOLD}${OUTPUT%.md5}.txt${RESET}\n"
     fi
-    _report -g "Sorting checksums in $(basename "${OUTPUT}")"
-    sort -k 2 -o "${OUTPUT}" "${OUTPUT}" # sort $OUTPUT. -k 2=sort on the second field, -o=write OUTPUT to file (instead of standard terminal OUTPUT). The output is rewritten to the same file as previously, just sorted.
+
     shift
 done
 
-# log script ending
+echo -e "\n${BOLD}${BLUE}==============================${RESET}"
+echo -e "${BOLD}${GREEN}✔ MD5 Checksum Generation Complete ${RESET}"
+echo -e "${BOLD}${BLUE}==============================${RESET}\n"
+
 _log -e
-_report -g "makechecksum process complete."
 exit $?
