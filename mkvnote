@@ -360,6 +360,7 @@ while read EXISTING_KEY ; do
         else
             KEY_LABEL="${EXISTING_KEY}"
         fi
+        LIST_OF_KEYS+=("${EXISTING_KEY}")
         if [[ "${LINE_COUNT// /}" < "2" ]] ; then
             DIALOG_LIST_EMBEDDED+="
                     <hbox>
@@ -400,6 +401,7 @@ done < "${EXISTING_TAGS}"
 for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
     PROFILE_KEY="${PROFILE_TAG%%=*}"
     if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${PROFILE_TAG}[[:space:]] ]] ; then
+        LIST_OF_KEYS+=("${PROFILE_TAG}")
         DIALOG_LIST_PROFILE+="
                 <hbox>
                     <hbox width-request=\"200\">
@@ -492,35 +494,46 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
     # Reads the edited tag template line by line, extracting tag names and values entered by the user.
     # Only lines that conform to the expected format (tag_name=[tag_value]) are processed.
     READ_MULTILINE=0
-    while read TAG_LINE ; do
-        if [[ "${READ_MULTILINE}" = "0" ]] ; then
-            # Extracts the tag name by splitting the line at the colon and taking the first part.
-            TAG_NAME="$(echo "${TAG_LINE}" | cut -d "=" -f1)"
-            if [[ "$(echo "${TAG_LINE}" | grep -c "^[^=]*=\".*\"$")" != "0" ]] ; then
-                # Extracts the tag value by splitting the line at the colon and taking the second part.
-                TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "=" -f2- | sed 's/^"//g;s/"$//g')"
-            else
-                # Extracts the tag value by splitting the line at the colon and taking the second part.
-                TAG_VALUE="$(echo "${TAG_LINE}" | cut -d "=" -f2- | sed 's/^"//g')"
-                READ_MULTILINE="1"
-                continue
-            fi
+    PARSING_COUNTER=0
+    # Parse the list of keys
+    TO_BE_PARSED="${#LIST_OF_KEYS[@]}"
+
+    # Remove the "EXIT=" lines from DIALOG_RESULT
+    DATA_TO_PARSE="$(echo "${DIALOG_RESULT}" | grep -v "^EXIT=")"
+
+    # Print the data to parse (for debugging)
+    echo "DATA TO PARSE"
+    echo "$DATA_TO_PARSE"
+    echo ""
+    SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | sort))
+
+    # Loop through each key in the array
+    for ((i=0; i<TO_BE_PARSED; i++)); do
+        TAG_NAME=${SORTED_KEYS[$i]}
+        # Check for the next key in the array (if available)
+        if ((i+1 < TO_BE_PARSED)); then
+            NEXT_TAG=${SORTED_KEYS[$i+1]}
         else
-            if [[ "$(echo "${TAG_LINE}" | grep -c "\"$")" != "0" ]] ; then
-                TAG_VALUE+="\n$(echo "${TAG_LINE}" | sed 's/"$//g')"
-                READ_MULTILINE="0"
-            else
-                TAG_VALUE+="\n${TAG_LINE}"
-                continue
-            fi
+            NEXT_TAG=""
         fi
-        echo -e "${TAG_NAME} ... ${TAG_VALUE}"
+        # Extract content between $TAG_NAME and $NEXT_TAG
+        if [[ -z "${NEXT_TAG}" ]]; then
+            # If there's no next key (end is empty), extract from $TAG_NAME to EOF
+            TAG_VALUE=$(echo "$DATA_TO_PARSE" | awk "/^${TAG_NAME}/ {found=1} found" | sed "s|^${TAG_NAME}=\"||g" | sed '$d' | sed '$s/.$//')
+        else
+            # Extract content between $start and $end
+            TAG_VALUE=$(echo "$DATA_TO_PARSE" | awk "/^${TAG_NAME}/,/^${NEXT_TAG}/" | sed "s|^${TAG_NAME}=\"||g" | sed '$d' | sed '$s/.$//')
+        fi
+
+        # Output the extracted content
+        echo "${TAG_NAME} ... (${TAG_VALUE})"
+        echo
         # If the tag value is not empty, the tag is added to the XML draft for embedding.
         # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
         if [[ -n "${TAG_VALUE// /}" ]] ; then
             xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" "${XML_DRAFT}"
         fi
-    done < <(echo "${DIALOG_RESULT}" | grep -v "^EXIT=")
+    done
 
     # Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
     mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}"
