@@ -264,7 +264,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
             
             # If the tag value is not empty, proceed to add it to the XML draft.
-            if [[ -n "${TAG_VALUE// /}" ]] ; then
+            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "filename" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
                 # The command edits the XML structure, ensuring each tag is uniquely added under a `<Simple>` element.
                 xml ed --omit-decl --inplace \
