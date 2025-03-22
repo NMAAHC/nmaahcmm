@@ -481,7 +481,6 @@ cat << EOF > "${DIALOG_FORM}"
 EOF
 
 DIALOG_RESULT="$(export MAIN_DIALOG="$(cat "${DIALOG_FORM}")" ; gtkdialog --center --program MAIN_DIALOG)"
-echo "${DIALOG_RESULT}"
 EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//g;s/"$//g')"
 
 if [[ "${EXIT_STATUS}" == "Cancel" ]] ; then
@@ -501,10 +500,6 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
     # Remove the "EXIT=" lines from DIALOG_RESULT
     DATA_TO_PARSE="$(echo "${DIALOG_RESULT}" | grep -v "^EXIT=")"
 
-    # Print the data to parse (for debugging)
-    echo "DATA TO PARSE"
-    echo "$DATA_TO_PARSE"
-    echo ""
     SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | sort))
 
     # Loop through each key in the array
@@ -525,12 +520,10 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
             TAG_VALUE=$(echo "$DATA_TO_PARSE" | awk "/^${TAG_NAME}/,/^${NEXT_TAG}/" | sed "s|^${TAG_NAME}=\"||g" | sed '$d' | sed '$s/.$//')
         fi
 
-        # Output the extracted content
-        echo "${TAG_NAME} ... (${TAG_VALUE})"
-        echo
         # If the tag value is not empty, the tag is added to the XML draft for embedding.
         # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
         if [[ -n "${TAG_VALUE// /}" ]] ; then
+            echo "${TAG_NAME} ... (${TAG_VALUE})"
             xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" "${XML_DRAFT}"
         fi
     done
