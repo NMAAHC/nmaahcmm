@@ -253,7 +253,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     # Begin processing each file listed in the 'filename' column of the CSV.
     while read FILE_IN_CSV ; do
         # Initialize the XML draft for the current file by creating a basic structure with root `<Tags>` and `<Tag>` elements.
-        echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
+        mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
 
         # Loop through each tag line associated with the current file in the CSV.
         while read TAG_LINE ; do
@@ -268,7 +268,8 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
                 # The command edits the XML structure, ensuring each tag is uniquely added under a `<Simple>` element.
                 xml ed --omit-decl --inplace \
-                    --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" \
+                    --subnode "/Tags" --type elem -n "Tag" \
+                    --subnode "/Tags/Tag[not(Simple)]" --type elem -n "Simple" \
                     --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
                     --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
                     "${XML_DRAFT}"
@@ -285,7 +286,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
 
         # Use `mkvpropedit` to embed the prepared XML metadata into the current MKV file.
         # The `--tags` option specifies the XML draft file containing the tags, and `global` applies them to the entire MKV file.
-        mkvpropedit --tags "global:${XML_DRAFT}" "${FILE_IN_CSV}"
+        mkvpropedit --tags "all:${XML_DRAFT}" "${FILE_IN_CSV}"
 
     # End the outer loop, moving on to the next file listed in the CSV.
     done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
