@@ -385,7 +385,7 @@ while read EXISTING_KEY ; do
                         </text>
                     </hbox>
                     <hbox width-request=\"800\">
-                        <edit width=\"700\">
+                        <edit width=\"700\" wrap-mode=\"1\">
                             <variable>${EXISTING_KEY}</variable>
                             <input file>${TEMP_DIALOG_VALUE}</input>
                             <action signal=\"show\">refresh:${EXISTING_KEY}</action>
