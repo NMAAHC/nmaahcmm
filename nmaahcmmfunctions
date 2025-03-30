@@ -148,6 +148,17 @@ _writelog(){
     echo "$KEY: $VALUE" >> "$LOG"
 }
 
+_writeerrorlog(){
+    local FUNCTION_NAME="${1}"
+    local ERROR_MESSAGE="${2}"
+    local LOGFILE="${LOGDIR}/nmaahcmm-error.log"
+
+    [[ -z "$FUNCTION_NAME" || -z "$ERROR_MESSAGE" ]] && return
+
+    mkdir -p "$LOGDIR"
+    echo "$(date +%FT%T), ERROR in ${FUNCTION_NAME}: ${ERROR_MESSAGE}" >> "$LOGFILE"
+}
+
 _maketemp(){
     mktemp -q "/tmp/$(basename "${0}").XXXXXX"
     if [ "${?}" -ne 0 ]; then
