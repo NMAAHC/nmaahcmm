@@ -1,173 +1,136 @@
 #!/usr/bin/env bash
-# nmaahcmmconfig
-# set up variables for microservices, has option for a graphical user interface
+# nmaahcmmconfig - configure system variables for NMAAHC microservices
+
+# Color setup
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4)
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
 CONFIG="Y"
 SCRIPT_PATH="${0%/*}"
+
+# Source function library
 . "${SCRIPT_PATH}/nmaahcmmfunctions"
-[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};
+[[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || {
+    echo "${RED}Missing function file. Exiting.${RESET}"
+    exit 1
+}
+
 NMAAHCMM_CONFIG_FILE="${SCRIPTDIR}/nmaahcmm.conf"
 
-if [[ "$(uname -s)" = "Darwin" ]] ; then
-    RUNPASHUA="Y"
-fi
+# Default to GUI mode
+RUNSWIFTDIALOG="Y"
+SWIFTDIALOG_PATH="/usr/local/bin/dialog"
 
+# Usage helper
 _usage(){
     cat <<EOS
-$(basename "${0}")
-  -a  set configuration file using the GUI (default on macOS)
-  -t  set configuration file using the CLI
+${BOLD}Usage:${RESET} $(basename "$0")
+  -a    Use GUI (SwiftDialog)
+  -t    Use CLI
+  -h    Help
 EOS
 }
 
-# local variables
 REQUIRED_VARIABLES=("DPX_DESTINATION" "DRIVE_CONTENTS_DESTINATION" "LOGDIR" "TMPDIR" "AIP_DESTINATION")
 
+# Parse options
 OPTIND=1
-
 while getopts ":ath" OPT ; do
-    case "${OPT}" in
-        a) RUNPASHUA="Y" ;;
-        t) RUNPASHUA="N" ;;
+    case "$OPT" in
+        a) RUNSWIFTDIALOG="Y" ;;
+        t) RUNSWIFTDIALOG="N" ;;
         h) _usage ; exit 0 ;;
-        *) echo "bad option -${OPTARG}" ; _usage ; exit 1 ;;
+        *) echo "${RED}Invalid option -${OPTARG}${RESET}" ; _usage ; exit 1 ;;
     esac
 done
 
+# Edit helper
 _config_edit(){
-    [ -z "${1}" -o -z "${2}" ] && { _report -r "The config_edit function requires two arguments. Error." ; exit ;};
+    [ -z "$1" -o -z "$2" ] && { _report -r "${RED}Missing arguments to _config_edit${RESET}" ; exit ;}
     SEDTEMP=$(_maketemp)
-    sed "s:^${1}=[^ ]*:$1=$2:" "${NMAAHCMM_CONFIG_FILE}" > "${SEDTEMP}"
-    cp "${SEDTEMP}" "${NMAAHCMM_CONFIG_FILE}"
+    sed "s:^$1=.*$:$1=\"$2\":" "$NMAAHCMM_CONFIG_FILE" > "$SEDTEMP"
+    cp "$SEDTEMP" "$NMAAHCMM_CONFIG_FILE"
 }
 
+# Test directories
 _test_config(){
-    for DIRECTORYVARIABLE in LOGDIR DPX_DESTINATION DRIVE_CONTENTS_DESTINATION AIP_DESTINATION ; do
-        if [ ! -d "${!DIRECTORYVARIABLE}" ] ; then
-            _report -r "${DIRECTORYVARIABLE} is NOT a valid directory"
-        fi
+    for VAR in LOGDIR DPX_DESTINATION DRIVE_CONTENTS_DESTINATION AIP_DESTINATION ; do
+        [ ! -d "${!VAR}" ] && _report -r "${RED}${VAR} is NOT a valid directory${RESET}"
     done
 }
 
+# Add missing keys
 _add_key(){
-    KEY_TO_ADD="${1}"
-    grep -q "^${KEY_TO_ADD}=" "${NMAAHCMM_CONFIG_FILE}" ; GREP_CODE="$?"
-    if [[ ! "${GREP_CODE}" -eq "0" ]] ; then
-        _report -td "Adding NEW variable ${KEY_TO_ADD} to ${NMAAHCMM_CONFIG_FILE}"
-        echo "${KEY_TO_ADD}=" >> "${NMAAHCMM_CONFIG_FILE}"
-    fi
+    KEY="$1"
+    grep -q "^$KEY=" "$NMAAHCMM_CONFIG_FILE" || {
+        _report -td "${YELLOW}Adding $KEY to config${RESET}"
+        echo "$KEY=" >> "$NMAAHCMM_CONFIG_FILE"
+    }
 }
 
-CONF="
-# Set transparency: 0 is transparent, 1 is opaque
-*.transparency=1.00
-*.x = 250
-*.y = 250
-
-# Set window title
-*.title = nmaahcmm config file
-
-# intro text
-intro.x = 20
-intro.y = 375
-intro.width = 500
-intro.type = text
-intro.text = Set up nmaahcmmconfig variables:
-
-# AIP_DESTINATION
-AIP_DESTINATION.x = 20
-AIP_DESTINATION.y = 300
-AIP_DESTINATION.type = openbrowser
-AIP_DESTINATION.label = Please select the directory where your AIPs will be stored (see ingestfile and camera_cards):
-AIP_DESTINATION.width = 470
-AIP_DESTINATION.default = ${AIP_DESTINATION}
-
-# DPX_DESTINATION
-DPX_DESTINATION.x = 20
-DPX_DESTINATION.y = 250
-DPX_DESTINATION.type = openbrowser
-DPX_DESTINATION.label = Please select the directory where copies of your DPX packages will go (see moveDPX):
-DPX_DESTINATION.width = 470
-DPX_DESTINATION.default = ${DPX_DESTINATION}
-
-# DRIVE_CONTENTS_DESTINATION
-DRIVE_CONTENTS_DESTINATION.x = 20
-DRIVE_CONTENTS_DESTINATION.y = 200
-DRIVE_CONTENTS_DESTINATION.type = openbrowser
-DRIVE_CONTENTS_DESTINATION.label = Please select the directory where trees of your drives will be created (see makedrivetree):
-DRIVE_CONTENTS_DESTINATION.width = 470
-DRIVE_CONTENTS_DESTINATION.default = ${DRIVE_CONTENTS_DESTINATION}
-
-# ask LOGDIR
-LOGDIR.x = 20
-LOGDIR.y = 150
-LOGDIR.type = openbrowser
-LOGDIR.label = Please select the directory where logs for these microservices will be created:
-LOGDIR.width = 470
-LOGDIR.default = ${LOGDIR}
-
-# Add a cancel button with default label
-cb.type=cancelbutton
-
-";
-
-# if a config file does not exist, create one using this GUI
-if [[ "${RUNPASHUA}" = "Y" ]] ; then
-    PASHUA_CONFIGFILE=$(/usr/bin/mktemp /tmp/pashua_XXXXXXXXX)
-    echo "${CONF}" > "${PASHUA_CONFIGFILE}"
-    _pashua_run
-    rm "${PASHUA_CONFIGFILE}"
-    if [ "${PASHUAFAIL}" = "Y" ] ; then
-        echo "Pashua is not installed.  Opening via CLI."
-        sleep 1
-        exec $(basename "${0}") -t
-    else
-        echo "  AIP_DESTINATION = ${AIP_DESTINATION}"
-        echo "  DPX_DESTINATION = ${DPX_DESTINATION}"
-        echo "  DRIVE_CONTENTS_DESTINATION = ${DRIVE_CONTENTS_DESTINATION}"
-        echo "  LOGDIR = ${LOGDIR}"
-        echo "  TMPDIR = ${TMPDIR}"
+# --- GUI MODE ---
+if [[ "$RUNSWIFTDIALOG" == "Y" ]] ; then
+    if [[ ! -x "$SWIFTDIALOG_PATH" ]]; then
         echo
+        echo "${RED}${BOLD}ERROR:${RESET} ${RED}SwiftDialog not found at ${SWIFTDIALOG_PATH}.${RESET}"
+        echo "${YELLOW}Falling back to CLI configuration mode.${RESET}"
+        echo
+        RUNSWIFTDIALOG="N"
     fi
-    #write to the config file
+fi
+
+if [[ "$RUNSWIFTDIALOG" == "Y" ]]; then
+    _run_swiftdialog_config_ui "$HOME"
+
+    echo "${GREEN}Configuration set using GUI:${RESET}"
+    echo "  AIP_DESTINATION = $AIP_DESTINATION"
+    echo "  DPX_DESTINATION = $DPX_DESTINATION"
+    echo "  DRIVE_CONTENTS_DESTINATION = $DRIVE_CONTENTS_DESTINATION"
+    echo "  LOGDIR = $LOGDIR"
+    echo "  TMPDIR = $TMPDIR"
+
+    # Save to config file
     {
-        echo "AIP_DESTINATION=\"${AIP_DESTINATION}"\"
-        echo "DPX_DESTINATION=\"${DPX_DESTINATION}"\"
-        echo "DRIVE_CONTENTS_DESTINATION=\"${DRIVE_CONTENTS_DESTINATION}"\"
-        echo "LOGDIR=\"${LOGDIR}"\"
-        echo "TMPDIR=\"${TMPDIR}"\"
-    } > "${NMAAHCMM_CONFIG_FILE}"
+        echo "AIP_DESTINATION=\"$AIP_DESTINATION\""
+        echo "DPX_DESTINATION=\"$DPX_DESTINATION\""
+        echo "DRIVE_CONTENTS_DESTINATION=\"$DRIVE_CONTENTS_DESTINATION\""
+        echo "LOGDIR=\"$LOGDIR\""
+        echo "TMPDIR=\"$TMPDIR\""
+    } > "$NMAAHCMM_CONFIG_FILE"
+
+# --- CLI MODE ---
 else
-    # set up configuration file using the command line
-    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
-        _add_key "${KEY}"
-    done
-
-    _report -d "(basename "${0}")"
-    _report -d "Set system variables for ${WHAT_IS_THIS}"
-    echo
-    _report -d "Testing ${NMAAHCMM_CONFIG_FILE} validity"
+    for VAR in "${REQUIRED_VARIABLES[@]}" ; do _add_key "$VAR" ; done
+    _report -d "${BOLD}$(basename "$0")${RESET}"
+    _report -d "${BLUE}Setting system variables for ${WHAT_IS_THIS}${RESET}"
+    _report -d "${YELLOW}Validating config...${RESET}"
     _test_config
-    echo
 
-    _report -d "Table of existing variables:"
-    for KEY in "${REQUIRED_VARIABLES[@]}" ; do
-        VALUE=$(grep "^${KEY}=" "${NMAAHCMM_CONFIG_FILE}" | cut -d= -f2)
-        printf '\t%-40s %-40s\n' "${KEY}" "${VALUE}"
+    _report -d "${GREEN}Current configuration:${RESET}"
+    for VAR in "${REQUIRED_VARIABLES[@]}" ; do
+        VALUE=$(grep "^$VAR=" "$NMAAHCMM_CONFIG_FILE" | cut -d= -f2-)
+        printf '\t%-30s %-40s\n' "$VAR" "$VALUE"
     done
+
     while true ; do
-        EDITOPTION1="Edit config file in nano"
-        EDITOPTION2="Edit config file in TextMate"
-        _report -q "Edit a variable? "
-        PS3="Selection (enter by number)? "
-        select CONFIG_KEY in "${EDITOPTION1}" "${EDITOPTION2}" "${REQUIRED_VARIABLES[@]}" "Quit" ; do
-            break
-        done
-        [ "${CONFIG_KEY}" = "Quit" ] && { echo "Goodbye." ; exit 1 ;};
-        [ "${CONFIG_KEY}" = "${EDITOPTION1}" ] && { nano "${NMAAHCMM_CONFIG_FILE}" ; exit 1 ;};
-        [ "${CONFIG_KEY}" = "${EDITOPTION2}" ] && { mate "${NMAAHCMM_CONFIG_FILE}" ; exit 1 ;};
-        echo -n "Enter the value for ${CONFIG_KEY}: "
-        read -e "CONFIG_VALUE"
-        echo "${CONFIG_KEY} is now set to ${CONFIG_VALUE}"
-        _config_edit "${CONFIG_KEY}" "${CONFIG_VALUE}"
+        _report -q "${BLUE}Edit a variable?${RESET}"
+        PS3="${YELLOW}Select option: ${RESET}"
+        select VAR in "Edit config in nano" "Edit config in TextMate" "${REQUIRED_VARIABLES[@]}" "Quit" ; do break ; done
+
+        case "$VAR" in
+            "Edit config in nano") nano "$NMAAHCMM_CONFIG_FILE" ; exit 0 ;;
+            "Edit config in TextMate") mate "$NMAAHCMM_CONFIG_FILE" ; exit 0 ;;
+            "Quit") echo "${GREEN}Goodbye.${RESET}" ; exit 0 ;;
+            *)
+                echo -n "${BOLD}Enter new value for $VAR:${RESET} "
+                read -e CONFIG_VALUE
+                echo "$VAR set to ${GREEN}$CONFIG_VALUE${RESET}"
+                _config_edit "$VAR" "$CONFIG_VALUE"
+                ;;
+        esac
     done
 fi
