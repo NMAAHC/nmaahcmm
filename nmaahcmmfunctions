@@ -1,36 +1,40 @@
-# assign variables
+#!/usr/bin/env bash
+
+# nmaahcmmfunctions
+# Shared function library for NMAAHC Media Microservices
+
+# -------------------------------------------------------------------
+# INITIAL SETUP
+# -------------------------------------------------------------------
+
 SCRIPTDIR=$(dirname "${0}")
 NMAAHCMM_CONFIG_FILE="${SCRIPTDIR}/nmaahcmm.conf"
 GM_CONFIG_FILE="${SCRIPTDIR}/gm.conf"
-WHAT_IS_THIS="NMAAHC mediamicroservices"
+WHAT_IS_THIS="NMAAHC Media Microservices"
 
-# You can't directly call a function in another shell script. You can move your function definitions into a separate file and then load them into your script using the . command, like this:
-# . /path/to/functions.sh
-# The script will interpret functions.sh as if its content were actually present in your file at this point. It is a common mechanism for implementing shared libraries of shell functions, and is how each script in nmaahcmm can reference the shared functions in this file.
-# Here is an example specific to NMAAHC:
-## SCRIPT_PATH="${0%/*}"      # SCRIPT_PATH will be the directory path of {0} which is the script being called
-## . "${SCRIPT_PATH}/nmaahcmmfunctions"         # loads the functions in nmaahcmmfunctions into this script
-## [[ -f "${SCRIPT_PATH}/nmaahcmmfunctions" ]] || { echo "Missing '${SCRIPT_PATH}/nmaahcmmfunctions'. Exiting." ; exit 1 ;};        # checks to see that that nmaahcmmfunctions exists; if it doesn't (left side of || exits non-zero) then it will execute the right side of ||
-
-# load configuration file
-if [ -f "${NMAAHCMM_CONFIG_FILE}" ] ; then
+# Load NMAAHCMM config if present
+if [ -f "${NMAAHCMM_CONFIG_FILE}" ]; then
     . "${NMAAHCMM_CONFIG_FILE}"
-elif [[ "${CONFIG}" != "Y" ]] && [[ "${REQUIRECONFIG}" != "N" ]] ; then
-    echo "The NMAAHCmm configuration file is not set. You must first create ${NMAAHCMM_CONFIG_FILE} by running nmaahcmmconfig." 1>&2
+elif [[ "${CONFIG}" != "Y" && "${REQUIRECONFIG}" != "N" ]]; then
+    echo "Missing ${NMAAHCMM_CONFIG_FILE}. Run nmaahcmmconfig first." >&2
     exit 1
 fi
 
-[[ -n "${LOGDIR}" ]] && [[ ! -d "${LOGDIR}" ]] && mkdir "${LOGDIR}"
+# Ensure LOGDIR exists
+[[ -n "${LOGDIR}" && ! -d "${LOGDIR}" ]] && mkdir -p "${LOGDIR}"
 
-# load configuration file
-if [ -f "${GM_CONFIG_FILE}" ] ; then
+# Load GM config if needed
+if [ -f "${GM_CONFIG_FILE}" ]; then
     . "${GM_CONFIG_FILE}"
-elif [[ "${CONFIG}" != "Y" ]] && [[ "${REQUIRECONFIG}" != "N" ]] && [[ "${CONFIG_TYPE}" = "GM" ]] ; then
-    echo "The Great Migration configuration file is not set. You must first create ${GM_CONFIG_FILE} by running gmconfig." 1>&2
+elif [[ "${CONFIG}" != "Y" && "${REQUIRECONFIG}" != "N" && "${CONFIG_TYPE}" == "GM" ]]; then
+    echo "Missing ${GM_CONFIG_FILE}. Run gmconfig first." >&2
     exit 1
 fi
 
-# set text colors; can be used to differentiate statements that display in the terminal window
+# -------------------------------------------------------------------
+# GENERAL UTILITIES
+# -------------------------------------------------------------------
+
 _setcolors(){
     date="$(date +%Y%m%d)"
     BIWHITE=$(tput bold)$(tput setaf 7)
@@ -40,147 +44,108 @@ _setcolors(){
     COLOR_OFF=$(tput sgr0)
 }
 
-# this function helps the system gracefully exit the script; it will only run when the operator presses ctrl+C
 _initialize_make(){
-    _cleanup(){
-        _report -rt "Process cancelled" # tell operator that script is ending
-        exit 1
-    }
-    trap _cleanup SIGHUP SIGINT SIGTERM # "termination signals" that ask the system to clean up and safely kill the ongoing process, with increasing urgency
+    trap '_report -rt "Process cancelled"; exit 1' SIGHUP SIGINT SIGTERM
 }
 
-# a substitute for the plain mkdir tool; adds a more explicit warning to the operator if there is already a directory at that location
 _mkdir(){
-    local DIR2MAKE=""
-    while [ "${*}" != "" ] ; do
-        DIR2MAKE="${1}"
-        if [ ! -d "${DIR2MAKE}" ] ; then
-            mkdir -p "${DIR2MAKE}"
-            if [ "${?}" -ne 0 ]; then
-                _report -rt "${0}: Can't create directory at ${DIR2MAKE}"
+    for dir in "$@"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir" || {
+                _report -rt "Cannot create directory at $dir"
                 exit 1
-            fi
+            }
         fi
-        shift
     done
 }
 
-# removes hidden files (always identified with a period at the beginning of the filename - ".*")
 _removehidden(){
-    if [ -z "${1}" ] ; then
-        cowsay "no argument provided to remove hidden files. tootles."
-    else
-        find "${1}" -name ".*" -exec rm -vfr {} \;
-        #cowsay "hidden files removed. tootles."
-    fi
+    [[ -z "$1" ]] && { cowsay "No argument provided. Tootles."; return; }
+    find "$1" -name ".*" -exec rm -vfr {} +
 }
 
 _sortk2(){
-    if [ -z "${1}" ]; then
-        cowsay "no argument provided to sort. tootles."
-    else
-        sort -k 2 -o "${1}" "${1}" # -k 2=sort on the second field, -o=write output to file (instead of standard terminal output)
-        cowsay "file sorting is done. tootles."
-    fi
+    [[ -z "$1" ]] && { cowsay "No file provided. Tootles."; return; }
+    sort -k 2 -o "$1" "$1"
+    cowsay "File sorted by 2nd column. Tootles."
 }
 
-_pashua_run(){
-    # Wrapper function for interfacing to Pashua. Written by Carsten
-    # Bluem <carsten@bluem.net> in 10/2003, modified in 12/2003 (including
-    # a code snippet contributed by Tor Sigurdsson), 08/2004 and 12/2004.
-    # Write config file
+_seconds_to_hhmmss(){
+    local num=$1
+    printf "%02d:%02d:%02d\n" $(($num/3600)) $(($num%3600/60)) $(($num%60))
+}
 
-    # Find Pashua binary. We do search both . and dirname "${0}"
-    # , as in a doubleclickable application, cwd is /
-    # BTW, all these quotes below are necessary to handle paths
-    # containing spaces.
-    BUNDLEPATH="Pashua.app/Contents/MacOS/Pashua"
-    MYPATH=$(dirname "${0}")
-    for SEARCHPATH in "${MYPATH}/Pashua" "${MYPATH}/${BUNDLEPATH}" "./${BUNDLEPATH}" \
-                      "/Applications/${BUNDLEPATH}" "${HOME}/Applications/${BUNDLEPATH}"
-    do
-        if [ -f "${SEARCHPATH}" -a -x "${SEARCHPATH}" ] ; then
-            PASHUAPATH=${SEARCHPATH}
-            break
+_check_rsync_output(){
+    [[ $? -ne 0 ]] && ((RSYNC_ERROR_COUNT++))
+}
+
+_check_dependencies(){
+    local missing=0
+    for dep in "$@"; do
+        if ! command -v "$dep" >/dev/null; then
+            _report -r "Missing dependency: $dep"
+            echo "Try: brew install $dep (macOS) or sudo apt install $dep (Linux)"
+            missing=1
         fi
     done
-    if [ ! "${PASHUAPATH}" ] && [[ "$(uname -s)" = "Darwin" ]] ; then
-        echo "Error: Pashua is used to edit but is not found."
-        if [[ "${PASHUAINSTALL}" = "" ]] ; then
-            echo "Attempting to run: brew cask install pashua"
-            if [[ "${PASHUAINSTALL}" != "Y" ]] && [[ "${PASHUAFAIL}" != "Y" ]] ; then
-                brew cask install pashua && PASHUAINSTALL="Y" || PASHUAFAIL=Y
-                _pashua_run
-            fi
-        fi
-    else
-        ENCODING=""
-        # Get result
-        RESULT=$("${PASHUAPATH}" ${ENCODING} ${PASHUA_CONFIGFILE} | sed 's/ /;;;/g')
-        # Parse result
-        for LINE in ${RESULT} ; do
-            KEY=$(echo ${LINE} | sed 's/^\([^=]*\)=.*$/\1/')
-            VALUE=$(echo ${LINE} | sed 's/^[^=]*=\(.*\)$/\1/' | sed 's/;;;/ /g')
-            VARNAME="${KEY}"
-            VARVALUE="${VALUE}"
-            eval $VARNAME='$VARVALUE'
-        done
-    fi
+    [[ $missing -eq 1 ]] && exit 1
 }
 
-_check_deliverdir(){
-    if [[ ! -d "${DELIVERDIR}" ]] ; then
-        _report -rt "The delivery directory, ${DELIVERDIR}, does not exist. Cannot deliver the OUTPUT of $(basename "${0}")."
-    fi
+_report(){
+    local RED=$(tput setaf 1)
+    local GREEN=$(tput setaf 2)
+    local BLUE=$(tput setaf 4)
+    local NC=$(tput sgr0)
+    local COLOR=""
+    local LOG_MESSAGE=""
+    local PREFIX=""
+    local ECHOOPT=""
+    local OPTIND=1
+
+    while getopts ":bgrstn" opt; do
+        case $opt in
+            b) COLOR="$BLUE" ;;
+            g) COLOR="$GREEN" ;;
+            r) COLOR="$RED"; LOG_MESSAGE="Y" ;;
+            s) PREFIX+="[$(basename "$0")] " ;;
+            t) PREFIX+="$(date +%FT%T) - " ;;
+            n) ECHOOPT="-n" ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    echo $ECHOOPT "${COLOR}${PREFIX}$*${NC}"
+    [[ "$LOG_MESSAGE" == "Y" ]] && _log -w "$*"
 }
 
 _log(){
-    if [[ -n "$LOGDIR" ]] ; then
-        if [[ ! -d "${LOGDIR}" ]] ; then
-            mkdir "${LOGDIR}"
-            if [[ "${?}" -ne 0 ]] ; then
-                _report -rt "${0}: Can't create log directory at ${LOGDIR}, exiting..."
-                exit 1
-            fi
-        fi
-        MMLOGNAME="nmaahcmm.log"
-        OPTIND=1
-        while getopts ":beacw" OPT; do
-            case "${OPT}" in
-                b) STATUS="start" ;;              # script is beginning
-                e) STATUS="end"   ;;              # script is ending
-                a) STATUS="abort" ;;              # script is aborted
-                c) STATUS="comment" ;;            # comment about what script is doing
-                w) STATUS="warning" ;;            # warning information
-            esac
-        done
-        shift $(( ${OPTIND} - 1 ))
-        NOTE="${1}"
-        echo "$(date +%FT%T), $(basename "${0}") ${STATUS} ${OP} ${MEDIAID} ${NOTE}" >> "${LOGDIR}/${MMLOGNAME}"
-    fi
+    [[ -z "$LOGDIR" ]] && return
+    local LOGFILE="$LOGDIR/nmaahcmm.log"
+    mkdir -p "$LOGDIR"
+
+    local STATUS=""
+    while getopts ":beacw" opt; do
+        case $opt in
+            b) STATUS="start" ;;
+            e) STATUS="end" ;;
+            a) STATUS="abort" ;;
+            c) STATUS="comment" ;;
+            w) STATUS="warning" ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    echo "$(date +%FT%T), $(basename "$0") $STATUS $*" >> "$LOGFILE"
 }
 
 _writelog(){
-    if [[ -n "$LOGDIR" ]] ; then
-        if [[ -z "${LOG}" ]] ; then
-            echo "Error, can not write to log, ingest log not yet created"
-            exit
-        fi
-        if [[ ! -f "${LOG}" ]] ; then
-            mkdir -p "${LOGDIR}"
-            touch "${LOG}"
-        fi
-        KEY="${1}"                              # key is first string passed to function
-        VALUE="${2}"                            # value is variable passed to function
-        OPTIND=1
-        while getopts ":t" OPT; do
-            case "${OPT}" in
-                t) KEY="${2}" && VALUE="$(date +%FT%T)" ;;    # value is day and time in format YYYY-MM-DDTHH:MM:
-            esac
-        done
-        # need to add yaml style escaping
-        echo "${KEY}: ${VALUE}" >> "${LOG}"
-    fi
+    [[ -z "$LOG" ]] && { echo "LOG variable is unset"; exit 1; }
+    [[ ! -f "$LOG" ]] && { mkdir -p "$(dirname "$LOG")"; touch "$LOG"; }
+
+    local KEY="$1"
+    local VALUE="$2"
+    [[ "$3" == "-t" ]] && VALUE="$(date +%FT%T)"
+    echo "$KEY: $VALUE" >> "$LOG"
 }
 
 _maketemp(){
@@ -192,69 +157,63 @@ _maketemp(){
     fi
 }
 
-_check_dependencies(){
-    DEPS_OK=YES
-    while [ "${*}" != "" ] ; do
-        DEPENDENCY="${1}"
-        if [[ ! $(which "${DEPENDENCY}") ]] ; then
-            _report -rt "This script requires ${DEPENDENCY} to run but it is not installed."
-            printf "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
-            printf "sudo apt-get install ${DEPENDENCY}"
-            printf "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
-            printf "brew install ${DEPENDENCY}"
-            DEPS_OK=NO
-        fi
-        shift
-    done
-    if [[ "${DEPS_OK}" = "NO" ]]; then
-        _report -rt "Unmet dependencies. Exiting..."
-        _log -a "Process terminated by script (unmet dependencies)."
-        exit 1
-    else
-        return 0
+_check_deliverdir(){
+    if [[ ! -d "${DELIVERDIR}" ]] ; then
+        _report -rt "The delivery directory, ${DELIVERDIR}, does not exist. Cannot deliver the output of $(basename "${0}")."
     fi
 }
 
-_report(){
-    local RED="$(tput setaf 1)"   # Red      - For Warnings
-    local GREEN="$(tput setaf 2)" # Green    - For Declarations
-    local BLUE="$(tput setaf 4)"  # Blue     - For Questions
-    local NC="$(tput sgr0)"       # No Color
-    local COLOR=""
-    local STARTMESSAGE=""
-    local ENDMESSAGE=""
-    local ECHOOPT=""
-    local LOG_MESSAGE=""
-    OPTIND=1
-    while getopts ":bgrstn" OPT; do
-        case "${OPT}" in
-            b) COLOR="${BLUE}" ;;                         # question mode, use color blue
-            g) COLOR="${GREEN}" ;;                        # declaration mode, use color green
-            r) COLOR="${RED}" ; LOG_MESSAGE="Y" ;;        # warning mode, use color red
-            s) STARTMESSAGE+=([$(basename "${0}")] ) ;;   # prepend scriptname to the message
-            t) STARTMESSAGE+=($(date +%FT%T) '- ' ) ;;   # prepend timestamp to the message
-            n) ECHOOPT="-n" ;;                            # to avoid line breaks after echo
-        esac
-    done
-    shift $(( ${OPTIND} - 1 ))
-    MESSAGE="${1}"
-    echo "${ECHOOPT}" "${COLOR}${STARTMESSAGE[@]} ${MESSAGE}${NC}"
-    [ "${LOG_MESSAGE}" = "Y" ] && _log -w "${MESSAGE}"
-}
+# -------------------------------------------------------------------
+# SWIFTDIALOG CONFIG UI
+# -------------------------------------------------------------------
 
-_seconds_to_hhmmss(){
-    num=$1
-    h=`expr "$num" / 3600`
-    m=`expr "$num"  % 3600 / 60`
-    s=`expr "$num" % 60`
-    printf "%02d:%02d:%02d\n" $h $m $s
-}
+_run_swiftdialog_config_ui(){
+    DEFAULT_PATH="$1"
+    DIALOG="/usr/local/bin/dialog"
 
-_check_rsync_output(){
-    RSYNC_ERR="$?"
-    if [[ "${RSYNC_ERR}" != 0 ]] ; then
-        ((RSYNC_ERROR_COUNT++))
-    else
-        :
+    if [[ ! -x "$DIALOG" ]]; then
+        _report -r "SwiftDialog not found at $DIALOG. Install it here: https://swiftdialog.app/"
+        return 1
     fi
+
+    JSON_FILE=$(_maketemp)
+    cat > "$JSON_FILE" <<EOF
+{
+  "title": "Configure NMAAHC Microservices",
+  "message": "Select a folder for each configuration item.",
+  "icon": "SF=folder",
+  "button1text": "Save",
+  "button2text": "Cancel",
+  "textfield": [
+    { "title": "AIP_DESTINATION", "prompt": "Select AIP Destination Folder", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
+    { "title": "DPX_DESTINATION", "prompt": "Select DPX Destination Folder", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
+    { "title": "DRIVE_CONTENTS_DESTINATION", "prompt": "Select Drive Contents Destination", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
+    { "title": "LOGDIR", "prompt": "Select Log Directory", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
+    { "title": "TMPDIR", "prompt": "Select Temp Directory", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" }
+  ]
+}
+EOF
+
+    JSON_OUTPUT=$("$DIALOG" --jsonfile "$JSON_FILE")
+    [[ $? -ne 0 || -z "$JSON_OUTPUT" ]] && { _report -r "Configuration canceled or failed."; return 1; }
+
+    AIP_DESTINATION=$(echo "$JSON_OUTPUT" | jq -r '."AIP_DESTINATION"')
+    DPX_DESTINATION=$(echo "$JSON_OUTPUT" | jq -r '."DPX_DESTINATION"')
+    DRIVE_CONTENTS_DESTINATION=$(echo "$JSON_OUTPUT" | jq -r '."DRIVE_CONTENTS_DESTINATION"')
+    LOGDIR=$(echo "$JSON_OUTPUT" | jq -r '."LOGDIR"')
+    TMPDIR=$(echo "$JSON_OUTPUT" | jq -r '."TMPDIR"')
+
+    # Remove trailing slashes
+    AIP_DESTINATION="${AIP_DESTINATION%/}"
+    DPX_DESTINATION="${DPX_DESTINATION%/}"
+    DRIVE_CONTENTS_DESTINATION="${DRIVE_CONTENTS_DESTINATION%/}"
+    LOGDIR="${LOGDIR%/}"
+    TMPDIR="${TMPDIR%/}"
+
+    _report -g "Configuration set using SwiftDialog:"
+    echo "  AIP_DESTINATION = $AIP_DESTINATION"
+    echo "  DPX_DESTINATION = $DPX_DESTINATION"
+    echo "  DRIVE_CONTENTS_DESTINATION = $DRIVE_CONTENTS_DESTINATION"
+    echo "  LOGDIR = $LOGDIR"
+    echo "  TMPDIR = $TMPDIR"
 }
