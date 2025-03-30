@@ -86,13 +86,6 @@ fi
 if [[ "$RUNSWIFTDIALOG" == "Y" ]]; then
     _run_swiftdialog_config_ui "$HOME"
 
-    echo "${GREEN}Configuration set using GUI:${RESET}"
-    echo "  AIP_DESTINATION = $AIP_DESTINATION"
-    echo "  DPX_DESTINATION = $DPX_DESTINATION"
-    echo "  DRIVE_CONTENTS_DESTINATION = $DRIVE_CONTENTS_DESTINATION"
-    echo "  LOGDIR = $LOGDIR"
-    echo "  TMPDIR = $TMPDIR"
-
     # Save to config file
     {
         echo "AIP_DESTINATION=\"$AIP_DESTINATION\""

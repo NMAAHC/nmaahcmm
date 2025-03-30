@@ -161,11 +161,6 @@ _writeerrorlog(){
 
 _maketemp(){
     mktemp -q "/tmp/$(basename "${0}").XXXXXX"
-    if [ "${?}" -ne 0 ]; then
-        _report -rt "${0}: Can't create temp file, exiting..."
-        _writeerrorlog "_maketemp" "was unable to create the temp file, so the script had to exit."
-        exit 1
-    fi
 }
 
 _check_deliverdir(){
@@ -178,16 +173,18 @@ _check_deliverdir(){
 # SWIFTDIALOG CONFIG UI
 # -------------------------------------------------------------------
 
-_run_swiftdialog_config_ui(){
-    DEFAULT_PATH="$1"
-    DIALOG="/usr/local/bin/dialog"
+_run_swiftdialog_config_ui() {
+    local DEFAULT_PATH="$1"
+    local DIALOG="/usr/local/bin/dialog"
 
+    # Check for swiftDialog
     if [[ ! -x "$DIALOG" ]]; then
-        _report -r "SwiftDialog not found at $DIALOG. Install it here: https://swiftdialog.app/"
+        _report -r "swiftDialog not found at $DIALOG. Install it here: https://swiftdialog.app/"
         return 1
     fi
 
-    JSON_FILE=$(_maketemp)
+    # Create JSON file for dialog input
+    local JSON_FILE=$(_maketemp)
     cat > "$JSON_FILE" <<EOF
 {
   "title": "Configure NMAAHC Microservices",
@@ -196,17 +193,73 @@ _run_swiftdialog_config_ui(){
   "button1text": "Save",
   "button2text": "Cancel",
   "textfield": [
-    { "title": "AIP_DESTINATION", "prompt": "Select AIP Destination Folder", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
-    { "title": "DPX_DESTINATION", "prompt": "Select DPX Destination Folder", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
-    { "title": "DRIVE_CONTENTS_DESTINATION", "prompt": "Select Drive Contents Destination", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
-    { "title": "LOGDIR", "prompt": "Select Log Directory", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" },
-    { "title": "TMPDIR", "prompt": "Select Temp Directory", "folderselect": true, "required": true, "default": "$DEFAULT_PATH" }
+    {
+      "title": "AIP_DESTINATION",
+      "prompt": "Select AIP Destination Folder",
+      "fileselect": true,
+      "filetype": "folder",
+      "required": true,
+      "value": "$DEFAULT_PATH"
+    },
+    {
+      "title": "DPX_DESTINATION",
+      "prompt": "Select DPX Destination Folder",
+      "fileselect": true,
+      "filetype": "folder",
+      "required": true,
+      "value": "$DEFAULT_PATH"
+    },
+    {
+      "title": "DRIVE_CONTENTS_DESTINATION",
+      "prompt": "Select Drive Contents Destination",
+      "fileselect": true,
+      "filetype": "folder",
+      "required": true,
+      "value": "$DEFAULT_PATH"
+    },
+    {
+      "title": "LOGDIR",
+      "prompt": "Select Log Directory",
+      "fileselect": true,
+      "filetype": "folder",
+      "required": true,
+      "value": "$DEFAULT_PATH"
+    },
+    {
+      "title": "TMPDIR",
+      "prompt": "Select Temp Directory",
+      "fileselect": true,
+      "filetype": "folder",
+      "required": true,
+      "value": "$DEFAULT_PATH"
+    }
   ]
 }
 EOF
 
-    JSON_OUTPUT=$("$DIALOG" --jsonfile "$JSON_FILE")
-    [[ $? -ne 0 || -z "$JSON_OUTPUT" ]] && { _report -r "Configuration canceled or failed."; return 1; }
+    # Temp files for stdout and stderr
+    local OUTPUT_FILE=$(_maketemp)
+    local SWIFTDIALOG_STDERR=$(_maketemp)
+
+    if [[ -z "$OUTPUT_FILE" || -z "$SWIFTDIALOG_STDERR" ]]; then
+        _report -r "Unable to create temporary files for capturing swiftDialog output."
+        return 1
+    fi
+
+    # Run dialog and capture output
+    "$DIALOG" --jsonfile "$JSON_FILE" --json > "$OUTPUT_FILE" 2> "$SWIFTDIALOG_STDERR"
+    cat "$OUTPUT_FILE" > /tmp/nmaahcmm_swiftdialog_debug.json
+
+    if [[ $? -ne 0 || ! -s "$OUTPUT_FILE" ]] || ! jq empty "$OUTPUT_FILE" &>/dev/null; then
+        _report -r "Configuration canceled or returned invalid data."
+        _report -r "swiftDialog error output:"
+        cat "$SWIFTDIALOG_STDERR"
+        return 1
+    fi
+
+    # Read and parse JSON
+    local JSON_OUTPUT
+    JSON_OUTPUT=$(cat "$OUTPUT_FILE")
 
     AIP_DESTINATION=$(echo "$JSON_OUTPUT" | jq -r '."AIP_DESTINATION"')
     DPX_DESTINATION=$(echo "$JSON_OUTPUT" | jq -r '."DPX_DESTINATION"')
@@ -214,17 +267,30 @@ EOF
     LOGDIR=$(echo "$JSON_OUTPUT" | jq -r '."LOGDIR"')
     TMPDIR=$(echo "$JSON_OUTPUT" | jq -r '."TMPDIR"')
 
-    # Remove trailing slashes
+    # Strip trailing slashes
     AIP_DESTINATION="${AIP_DESTINATION%/}"
     DPX_DESTINATION="${DPX_DESTINATION%/}"
     DRIVE_CONTENTS_DESTINATION="${DRIVE_CONTENTS_DESTINATION%/}"
     LOGDIR="${LOGDIR%/}"
     TMPDIR="${TMPDIR%/}"
 
-    _report -g "Configuration set using SwiftDialog:"
-    echo "  AIP_DESTINATION = $AIP_DESTINATION"
-    echo "  DPX_DESTINATION = $DPX_DESTINATION"
-    echo "  DRIVE_CONTENTS_DESTINATION = $DRIVE_CONTENTS_DESTINATION"
-    echo "  LOGDIR = $LOGDIR"
-    echo "  TMPDIR = $TMPDIR"
+   # Display result with color and formatting
+    local GREEN=$(tput setaf 2)
+    local GRAY=$(tput setaf 7)
+    local BOLD=$(tput bold)
+    local RESET=$(tput sgr0)
+    local FULL_CONFIG_PATH
+    FULL_CONFIG_PATH=$(realpath "$NMAAHCMM_CONFIG_FILE")
+
+    echo
+    echo "${GRAY}------------------------------------------------------------${RESET}"
+    _report -g "Configuration set using swiftDialog:"
+    printf "  %-30s %s%s%s\n" "AIP_DESTINATION:"            "$GREEN" "$AIP_DESTINATION" "$RESET"
+    printf "  %-30s %s%s%s\n" "DPX_DESTINATION:"            "$GREEN" "$DPX_DESTINATION" "$RESET"
+    printf "  %-30s %s%s%s\n" "DRIVE_CONTENTS_DESTINATION:" "$GREEN" "$DRIVE_CONTENTS_DESTINATION" "$RESET"
+    printf "  %-30s %s%s%s\n" "LOGDIR:"                     "$GREEN" "$LOGDIR" "$RESET"
+    printf "  %-30s %s%s%s\n" "TMPDIR:"                     "$GREEN" "$TMPDIR" "$RESET"
+    echo "${GRAY}------------------------------------------------------------${RESET}"
+    echo
+    printf "%sConfiguration is saved to:%s %s%s%s\n\n" "$BOLD" "$RESET" "$GREEN" "$FULL_CONFIG_PATH" "$RESET"
 }
