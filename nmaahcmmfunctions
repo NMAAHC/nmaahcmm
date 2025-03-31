@@ -182,20 +182,37 @@ _run_swiftdialog_config_ui() {
         return 1
     fi
 
+    # Resolve absolute path to logo (relative to this script)
+    local SCRIPT_ROOT
+    SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local ICON_PATH="$SCRIPT_ROOT/images/nmaahc_logos/NMAAHC_vert_purple.png"
+
+    # JSON config file for dialog
     local JSON_FILE=$(_maketemp)
     cat > "$JSON_FILE" <<EOF
-{
-  "title": "Configure NMAAHC Microservices",
-  "message": "Select a folder for each configuration item.",
-  "icon": "SF=folder",
-  "button1text": "Save",
-  "button2text": "Cancel",
-  "ontop": 1,
-  "moveable": 1,
-  "width": "75%",
-  "height": "75%",
-  "background": "color=#800080",
-  "textfield": [
+    {
+      "title": "Configure NMAAHC TBM Preservation Microservices",
+      "messagealignment": "left",
+      "messageposition": "top",
+      "messagefont": "size=18,color=white",
+      "message": "**Welcome $USER! This is the NMAAHC TBM Preservation Microservices Setup**\\n\\n\
+Please select a folder for each configuration item below:\\n\\n\
+- **AIP_DESTINATION**: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \\n\\n\
+- **DPX_DESTINATION**: Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam.\\n\\n\
+- **DRIVE_CONTENTS_DESTINATION**: Sed nisi. Nulla quis sem at nibh elementum imperdiet. Sed nisi. Nulla quis sem at nibh elementum imperdiet. Sed nisi. Nulla quis sem at nibh elementum imperdiet.\\n\\n\
+- **LOGDIR**: Duis sagittis ipsum. Praesent mauris. Duis sagittis ipsum. Praesent mauris. Duis sagittis ipsum. Praesent mauris.\\n\\n\
+- **TMPDIR**: Fusce nec tellus sed augue semper porta. Fusce nec tellus sed augue semper porta. Fusce nec tellus sed augue semper porta.",
+      "icon": "$ICON_PATH",
+      "iconsize": 200,
+      "background": "color=#6124a6",
+      "ontop": 1,
+      "moveable": 1,
+      "width": "75%",
+      "height": "75%",
+      "button1text": "Save",
+      "button2text": "Cancel",
+      "infobox": "### Additional Info\\n\\n#### Item 1\\n- Point one\\n- Point two\\n\\n#### Item 2\\n- Point three\\n- Point four",
+      "textfield": [
     {
       "title": "AIP_DESTINATION",
       "prompt": "Select AIP Destination Folder",
@@ -239,6 +256,7 @@ _run_swiftdialog_config_ui() {
   ]
 }
 EOF
+
 
     local OUTPUT_FILE=$(_maketemp)
     local SWIFTDIALOG_STDERR=$(_maketemp)
