@@ -129,8 +129,6 @@ mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[Targets='' or 
 
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
-    TEMP_DIALOG_VALUE="$(_maketemp).txt"
-    mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "/Tags/Tag[not(Targets)]/Simple[Name='${EXISTING_KEY}']" -v "String" > "${TEMP_DIALOG_VALUE}"
     LIST_OF_KEYS+=("${EXISTING_KEY}")
 done < "${EXISTING_TAGS}"
 
@@ -144,25 +142,31 @@ launch_switftdialog_tag_editor(){
     DIALOG_FORM_JSON="$(_maketemp).json"
     XML_DRAFT="$(_maketemp).xml"
 
-    echo '{"title": "mkvnote tag editor", "message": "Edit or enter tags below. Empty fields will not be saved.", "icon": "info", "titlefont": "size=22", "messagefont": "size=14", "width": 1000, "height": 700, "scrollable": true, "blurscreen": false, "moveable": true, "ontop": true, "button1text": "Tag-On!", "button2text": "Cancel", "form": [' > "${DIALOG_FORM_JSON}"
+    echo '{"title": "mkvnote tag editor", "message": "Edit or enter tags below. Empty fields will not be saved.", "icon": "info", "titlefont": "size=22", "messagefont": "size=14", "width": 1000, "height": 700, "scrollable": true, "blurscreen": false, "moveable": true, "ontop": true, "button1text": "Tag-On!", "button2text": "Cancel", "textfield": [' > "${DIALOG_FORM_JSON}"
 
     FIRST=1
     for TAG_KEY in "${LIST_OF_KEYS[@]}"; do
-        TEMP_DIALOG_VALUE="$(_maketemp).txt"
-        mkvextract tags "${INPUT_FILE}" | \
-        xmlstarlet sel -t -m "/Tags/Tag[not(Targets)]/Simple[Name='${TAG_KEY}']" -v "String" > "${TEMP_DIALOG_VALUE}"
+        VALUE=$(mkvextract tags "${INPUT_FILE}" | \
+            xmlstarlet sel -t -m "/Tags/Tag[not(Targets)]/Simple[Name='${TAG_KEY}']" -v "String")
 
         [[ ${FIRST} -eq 0 ]] && echo "," >> "${DIALOG_FORM_JSON}"
         FIRST=0
 
         ESCAPED_KEY=$(echo "${TAG_KEY}" | sed 's/"/\\"/g')
-        echo "  {\"type\": \"textfield\", \"title\": \"${ESCAPED_KEY}\", \"field\": \"${ESCAPED_KEY}\", \"valuefile\": \"${TEMP_DIALOG_VALUE}\"}" >> "${DIALOG_FORM_JSON}"
+        DEFAULT_ESCAPED=$(printf '%s' "${VALUE}" | sed 's/"/\\"/g')
+        echo "  {\"title\": \"${ESCAPED_KEY}\", \"prompt\": \"Enter value for ${ESCAPED_KEY}\", \"default\": \"${DEFAULT_ESCAPED}\"}" >> "${DIALOG_FORM_JSON}"
     done
 
     echo "]}" >> "${DIALOG_FORM_JSON}"
 
     cat "${DIALOG_FORM_JSON}" | jq . || echo "Warning: JSON is invalid"
-    DIALOG_RESULT=$(dialog --jsonfile "${DIALOG_FORM_JSON}" --json)
+    DIALOG_RESULT_JSON="$(_maketemp).json"
+    dialog --jsonfile "${DIALOG_FORM_JSON}" --json > "${DIALOG_RESULT_JSON}"
+    cat "${DIALOG_RESULT_JSON}" > /tmp/debug_dialog_result.txt
+    cat /tmp/debug_dialog_result.txt
+    DIALOG_RESULT=$(jq -c . "${DIALOG_RESULT_JSON}")
+    cat /tmp/debug_dialog_result.txt
+
     EXIT_STATUS=$(echo "${DIALOG_RESULT}" | jq -r '.button_pressed')
 
     if [[ "${EXIT_STATUS}" == "Cancel" ]]; then
@@ -172,7 +176,7 @@ launch_switftdialog_tag_editor(){
 
     TAG_INSERTS=""
     for TAG_KEY in "${LIST_OF_KEYS[@]}"; do
-        VALUE=$(echo "${DIALOG_RESULT}" | jq -r --arg key "${TAG_KEY}" '.[$key]')
+        VALUE=$(jq -r --arg key "${TAG_KEY}" '.[$key] // empty' "${DIALOG_RESULT_JSON}")
         if [[ -n "${VALUE// /}" ]]; then
             TAG_INSERTS+="<Simple><Name>${TAG_KEY}</Name><String>${VALUE}</String></Simple>"
         fi
