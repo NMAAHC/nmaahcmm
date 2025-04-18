@@ -386,7 +386,7 @@ _identify_card_type(){
         EXTENSION="$(printf '%s\n' "${EXTENSION_REVIEW[@]}" | sort | uniq -c | sort -k1,1nr -k2 | awk '{print $2; exit}')"
         EXTENSION_COUNT="$(printf '%s\n' "${EXTENSION_REVIEW[@]}" | sort | uniq -c | sort -k1,1nr -k2 | awk '{print $1; exit}')"
         _report -g "Couldn't identify a particular camera card type here. Using a GENERAL approach on the ${EXTENSION_COUNT} ${EXTENSION} files found in there."
-        _report -g "If you want to keep everything in ${CARD} in a tar.gz file then try the -t optoin."
+        _report -g "If you want to keep everything in ${CARD} in a tar.gz file then try the -t option."
         CAMERA_CARD_TYPE="GENERAL"
     fi
 }
