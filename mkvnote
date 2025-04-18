@@ -306,7 +306,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                     --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
                     "${XML_DRAFT}"
             fi
-        done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*" -v "name()" -o ":" -v "." -n "${CSV_XML}")
+        done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -o ":" -v "." -n "${CSV_XML}")
         # The inner loop reads each tag line corresponding to the current file and updates the XML draft with valid tags.
 
         # Display a message indicating that the current file is being tagged, showing the file name.
