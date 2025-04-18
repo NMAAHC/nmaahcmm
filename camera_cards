@@ -349,25 +349,25 @@ _identify_card_type(){
         # example (from an XDCam disc loaded with proav disabled):
         #├── ALIAS.XML
         #├── Clip
-        #│   ├── C0001.MXF
-        #│   ├── C0001M01.XML
-        #│   ├── C0002.MXF
-        #│   ├── C0002M01.XML
-        #│   ├── C0003.MXF
-        #│   └── C0003M01.XML
+        #│   ├── C0001.MXF
+        #│   ├── C0001M01.XML
+        #│   ├── C0002.MXF
+        #│   ├── C0002M01.XML
+        #│   ├── C0003.MXF
+        #│   └── C0003M01.XML
         #├── Component
         #├── DISCMETA.XML
         #├── Edit
         #├── General
-        #│   └── Sony
-        #│       └── Planning
+        #│   └── Sony
+        #│       └── Planning
         #├── INDEX.XML
         #├── MEDIAPRO.XML
         #├── SYSPRO.XML
         #├── Sub
-        #│   ├── C0001S01.MXF
-        #│   ├── C0002S01.MXF
-        #│   └── C0003S0
+        #│   ├── C0001S01.MXF
+        #│   ├── C0002S01.MXF
+        #│   └── C0003S0
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
     elif [[ -n "$(find "${CARD}" -type d -iname "BPAV")" ]] ; then
         _report -g "Camera card type identified: ${CARD_NAME} is XDCAM EX (e.g. Canon XF100)"
