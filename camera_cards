@@ -582,8 +582,9 @@ if [[ "${AIP}" == "YES" ]] ; then
         DURATION_TALLY=0
         HEADER_SIZE="8540x48" # in HxW format
         TILE_SIZE="8540:480"  # in H:W format
+        FIRST_FILE_ESC="$(echo "${FIRST_FILE}" | sed "s/'/,/g")"
         INFO_CARD="$(ffprobe -v 0 "${FIRST_FILE}" -show_entries format_tags=company_name,product_name,product_uid -of default=nk=1:nw=1 | xargs | sed 's|:|\\\:|g')"
-        HEADER_FILTER="color=color=black:s=${HEADER_SIZE},drawtext=x=2:y=2:text='Path\\: $(dirname "${FIRST_FILE}") -- ${INFO_CARD}':fontcolor=white:fontsize=36:x=2:y=2[header];"
+        HEADER_FILTER="color=color=black:s=${HEADER_SIZE},drawtext=x=2:y=2:text='Path\\: $(dirname "${FIRST_FILE_ESC}") -- ${INFO_CARD}':fontcolor=white:fontsize=36:x=2:y=2[header];"
     fi
     while read INVENTORY_ROW ; do
         SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
