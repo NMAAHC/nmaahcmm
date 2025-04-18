@@ -287,11 +287,17 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         # Initialize the XML draft for the current file by creating a basic structure with root `<Tags>` and `<Tag>` elements.
         mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
 
+        # Display a message indicating that the current file is being tagged, showing the file name.
+        echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
+        echo "---------------------|---------------------"
+
         # Loop through each tag line associated with the current file in the CSV.
         while read TAG_NAME ; do
             # Grab tag value from the xml.
             TAG_VALUE="$(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/${TAG_NAME}" -v "." -n "${CSV_XML}")"
-            
+            if [[ "${TAG_NAME//_}" == "filename" ]] ; then
+                TAG_NAME="filename"
+            fi
             # If the tag value is not empty, proceed to add it to the XML draft.
             if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "${FILENAME_COLUMN_NAME}" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
@@ -303,15 +309,13 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                     --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
                     "${XML_DRAFT}"
             fi
+            printf "%-22s" "$TAG_NAME"
+            echo "$TAG_VALUE" | sed '1n; s/^/                      /'
+
         done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -n "${CSV_XML}")
 
         # The inner loop reads each tag line corresponding to the current file and updates the XML draft with valid tags.
 
-        # Display a message indicating that the current file is being tagged, showing the file name.
-        echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
-        
-        # Display the tags being applied to the current file by selecting relevant tags from the XML draft.
-        xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[not(${FILENAME_COLUMN_NAME})]" -v "name()" -o ":" -v "." -n "${CSV_XML}"
         echo  # Add an empty line for better readability in the output.
 
         # Use `mkvpropedit` to embed the prepared XML metadata into the current MKV file.
