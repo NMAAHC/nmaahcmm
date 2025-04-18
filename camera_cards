@@ -610,8 +610,13 @@ if [[ "${AIP}" == "YES" ]] ; then
             FILE_NAME_ESC="$(echo "${FILE_NAME}" | sed "s|'|'\\\''|g")"
             echo "file '${FILE_NAME_ESC}'" >> "${TEMP_CONCATLIST}"
         fi
-        
+    done < <(_read_inventory -f ",video,\|,audio,")
+    while read INVENTORY_ROW ; do
         if [[ "${PROFILE}" = "s" ]] ; then
+            SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
+            FILE_NAME="$(echo "${INVENTORY_ROW}" | cut -d "," -f 12)"
+            AUDIO_CODEC="$(echo "${INVENTORY_ROW}" | cut -d "," -f 13)"
+            AUDIO_SAMPLE_FMT="$(echo "${INVENTORY_ROW}" | cut -d "," -f 14)"
             IMAGENUMBER=0
             unset INPUTCLIP4IMAGEFILTER
             IMAGECOUNT=10
@@ -644,7 +649,7 @@ if [[ "${AIP}" == "YES" ]] ; then
             DURATION_TALLY="$(echo "scale=6; ${DURATION_TALLY} + ${DURATION}" | bc)"
             unset MIDDLE_OPTIONS
         fi
-    done < <(_read_inventory -f ",video,\|,audio,")
+    done < <(_read_inventory -f ",video,")
 
     if [[ "${PROFILE}" = "s" ]] ; then
         MIDDLE_OPTIONS+=(-an)
