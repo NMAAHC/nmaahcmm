@@ -288,12 +288,9 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
 
         # Loop through each tag line associated with the current file in the CSV.
-        while read TAG_LINE ; do
-            # Extract the tag name by splitting the line at the first colon and trimming any trailing spaces.
-            TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
-            
-            # Extract the tag value by splitting the line at the first colon and trimming any leading spaces.
-            TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
+        while read TAG_NAME ; do
+            # Grab tag value from the xml.
+            TAG_VALUE="$(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/${TAG_NAME}" -v "." -n "${CSV_XML}")"
             
             # If the tag value is not empty, proceed to add it to the XML draft.
             if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "${FILENAME_COLUMN_NAME}" ]] ; then
@@ -306,7 +303,8 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                     --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
                     "${XML_DRAFT}"
             fi
-        done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -o ":" -v "." -n "${CSV_XML}")
+        done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -n "${CSV_XML}")
+
         # The inner loop reads each tag line corresponding to the current file and updates the XML draft with valid tags.
 
         # Display a message indicating that the current file is being tagged, showing the file name.
