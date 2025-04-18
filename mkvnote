@@ -128,6 +128,32 @@ _usage(){
 EOF
 exit
 }
+
+_check_dependencies(){
+    DEPS_OK=YES
+    while [ "${*}" != "" ] ; do
+        DEPENDENCY="${1}"
+        if [ ! $(which "${DEPENDENCY}") ] ; then
+            echo "This script requires ${DEPENDENCY} to run but it is not installed"
+            echo "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
+            echo "sudo apt-get install ${DEPENDENCY}"
+            echo "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
+            echo "brew install ${DEPENDENCY}"
+            DEPS_OK=NO
+        fi
+        shift
+    done
+    if [[ "${DEPS_OK}" = "NO" ]]; then
+        echo "Unmet dependencies"
+        echo "Exiting!"
+        exit 1
+    else
+        return 0
+    fi
+}
+
+_check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract csvtomd
+
 # The function ends with the `exit` command, ensuring that the script stops after displaying usage info.
 
 # Initialize variables to store the selected profile and corresponding tag set.
