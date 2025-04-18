@@ -128,6 +128,32 @@ _usage(){
 EOF
 exit
 }
+
+_check_dependencies(){
+    DEPS_OK=YES
+    while [ "${*}" != "" ] ; do
+        DEPENDENCY="${1}"
+        if [ ! $(which "${DEPENDENCY}") ] ; then
+            echo "This script requires ${DEPENDENCY} to run but it is not installed"
+            echo "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
+            echo "sudo apt-get install ${DEPENDENCY}"
+            echo "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
+            echo "brew install ${DEPENDENCY}"
+            DEPS_OK=NO
+        fi
+        shift
+    done
+    if [[ "${DEPS_OK}" = "NO" ]]; then
+        echo "Unmet dependencies"
+        echo "Exiting!"
+        exit 1
+    else
+        return 0
+    fi
+}
+
+_check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract csvtomd
+
 # The function ends with the `exit` command, ensuring that the script stops after displaying usage info.
 
 # Initialize variables to store the selected profile and corresponding tag set.
@@ -195,6 +221,10 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     echo "Examining the csv: ${CSV_XML}."
     # Iterate through the list of XML elements (column names) from the CSV.
     while read ELEMENT_VALUE ; do
+        if [[ "${ELEMENT_VALUE//_}" == "filename" ]] ; then
+            FILENAME_COLUMN_NAME="${ELEMENT_VALUE}"
+            ELEMENT_VALUE="filename"
+        fi
         echo "Found ${ELEMENT_VALUE}."  # Output the name of each element found.
         ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"   # Append each element name to `ADDITIONAL_COLUMNS` with an underscore prefix.
         if [[ "${ELEMENT_VALUE}" == "filename" ]] ; then
@@ -218,7 +248,9 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             MISSING_FILE_LIST+="${FILE_IN_CSV} "  # Append the missing file name to the list of missing files.
         fi
     done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
-
+    if [[ -z "${FILENAME_COLUMN_NAME}" ]] ; then
+        FILENAME_COLUMN_NAME="filename"
+    fi
     # If any files are missing, display a summary of the missing files and exit the script.
     if [[ "${MISSING_FILE}" != "0" ]] ; then
         echo "${BOLD}${ERROR}Error, Some files in the csv, such as ${MISSING_FILE_LIST}, are not found. Exiting.${RESET}"
@@ -255,16 +287,19 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         # Initialize the XML draft for the current file by creating a basic structure with root `<Tags>` and `<Tag>` elements.
         mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
 
+        # Display a message indicating that the current file is being tagged, showing the file name.
+        echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
+        echo "---------------------|---------------------"
+
         # Loop through each tag line associated with the current file in the CSV.
-        while read TAG_LINE ; do
-            # Extract the tag name by splitting the line at the first colon and trimming any trailing spaces.
-            TAG_NAME="$(echo "${TAG_LINE}" | cut -d ":" -f1 | sed 's/ $//g')"
-            
-            # Extract the tag value by splitting the line at the first colon and trimming any leading spaces.
-            TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
-            
+        while read TAG_NAME ; do
+            # Grab tag value from the xml.
+            TAG_VALUE="$(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/${TAG_NAME}" -v "." -n "${CSV_XML}")"
+            if [[ "${TAG_NAME//_}" == "filename" ]] ; then
+                TAG_NAME="filename"
+            fi
             # If the tag value is not empty, proceed to add it to the XML draft.
-            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "filename" ]] ; then
+            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "${FILENAME_COLUMN_NAME}" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
                 # The command edits the XML structure, ensuring each tag is uniquely added under a `<Simple>` element.
                 xml ed --omit-decl --inplace \
@@ -274,14 +309,13 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                     --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
                     "${XML_DRAFT}"
             fi
-        done < <(xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*" -v "name()" -o ":" -v "." -n "${CSV_XML}")
+            printf "%-22s" "$TAG_NAME"
+            echo "$TAG_VALUE" | sed '1n; s/^/                      /'
+
+        done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -n "${CSV_XML}")
+
         # The inner loop reads each tag line corresponding to the current file and updates the XML draft with valid tags.
 
-        # Display a message indicating that the current file is being tagged, showing the file name.
-        echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
-        
-        # Display the tags being applied to the current file by selecting relevant tags from the XML draft.
-        xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*[not(filename)]" -v "name()" -o ":" -v "." -n "${CSV_XML}"
         echo  # Add an empty line for better readability in the output.
 
         # Use `mkvpropedit` to embed the prepared XML metadata into the current MKV file.
@@ -289,7 +323,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         mkvpropedit --tags "all:${XML_DRAFT}" "${FILE_IN_CSV}"
 
     # End the outer loop, moving on to the next file listed in the CSV.
-    done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
+    done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
 
     # Exit the script after processing all files listed in the CSV.
     exit
