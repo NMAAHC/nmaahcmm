@@ -666,6 +666,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         MIDDLE_OPTIONS+=(-ps 1 -mpv_flags strict_gop)
         MIDDLE_OPTIONS+=(-s 1920x1080)
         MIDDLE_OPTIONS+=(-acodec pcm_s16le -ar 48000)
+        MIDDLE_OPTIONS+=(-metadata "timecode=00:00:00:00")
     elif [[ "${PROFILE}" = "h" ]] ; then
         MIDDLE_OPTIONS+=(-movflags faststart -pix_fmt yuv420p -c:v libx264 -force_key_frames chapters -crf 18 -vf yadif -c:a aac)
     else
