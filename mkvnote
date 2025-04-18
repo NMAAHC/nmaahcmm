@@ -221,6 +221,10 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     echo "Examining the csv: ${CSV_XML}."
     # Iterate through the list of XML elements (column names) from the CSV.
     while read ELEMENT_VALUE ; do
+        if [[ "${ELEMENT_VALUE//_}" == "filename" ]] ; then
+            FILENAME_COLUMN_NAME="${ELEMENT_VALUE}"
+            ELEMENT_VALUE="filename"
+        fi
         echo "Found ${ELEMENT_VALUE}."  # Output the name of each element found.
         ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"   # Append each element name to `ADDITIONAL_COLUMNS` with an underscore prefix.
         if [[ "${ELEMENT_VALUE}" == "filename" ]] ; then
@@ -244,7 +248,9 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             MISSING_FILE_LIST+="${FILE_IN_CSV} "  # Append the missing file name to the list of missing files.
         fi
     done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
-
+    if [[ -z "${FILENAME_COLUMN_NAME}" ]] ; then
+        FILENAME_COLUMN_NAME="filename"
+    fi
     # If any files are missing, display a summary of the missing files and exit the script.
     if [[ "${MISSING_FILE}" != "0" ]] ; then
         echo "${BOLD}${ERROR}Error, Some files in the csv, such as ${MISSING_FILE_LIST}, are not found. Exiting.${RESET}"
@@ -290,7 +296,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             TAG_VALUE="$(echo "${TAG_LINE}" | cut -d ":" -f2- | sed 's/^ //g')"
             
             # If the tag value is not empty, proceed to add it to the XML draft.
-            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "filename" ]] ; then
+            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "${FILENAME_COLUMN_NAME}" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
                 # The command edits the XML structure, ensuring each tag is uniquely added under a `<Simple>` element.
                 xml ed --omit-decl --inplace \
@@ -300,14 +306,14 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                     --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
                     "${XML_DRAFT}"
             fi
-        done < <(xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*" -v "name()" -o ":" -v "." -n "${CSV_XML}")
+        done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*" -v "name()" -o ":" -v "." -n "${CSV_XML}")
         # The inner loop reads each tag line corresponding to the current file and updates the XML draft with valid tags.
 
         # Display a message indicating that the current file is being tagged, showing the file name.
         echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
         
         # Display the tags being applied to the current file by selecting relevant tags from the XML draft.
-        xmlstarlet sel -t -m "/csv/row[filename='${FILE_IN_CSV}']/*[not(filename)]" -v "name()" -o ":" -v "." -n "${CSV_XML}"
+        xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[not(${FILENAME_COLUMN_NAME})]" -v "name()" -o ":" -v "." -n "${CSV_XML}"
         echo  # Add an empty line for better readability in the output.
 
         # Use `mkvpropedit` to embed the prepared XML metadata into the current MKV file.
@@ -315,7 +321,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         mkvpropedit --tags "all:${XML_DRAFT}" "${FILE_IN_CSV}"
 
     # End the outer loop, moving on to the next file listed in the CSV.
-    done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
+    done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
 
     # Exit the script after processing all files listed in the CSV.
     exit
