@@ -39,9 +39,9 @@ _generate_metadata(){
 }
 
 _maketemp(){
-    mktemp -t "$(basename "${0}")"
+    mktemp -q -t "$(basename "${0}").XXXXXX"
     if [ "${?}" -ne 0 ]; then
-        _report -rt "${0}: Can't create temp file, exiting..."
+        echo "${0}: Can't create temp file, exiting..."
         exit 1
     fi
 }
@@ -349,25 +349,25 @@ _identify_card_type(){
         # example (from an XDCam disc loaded with proav disabled):
         #├── ALIAS.XML
         #├── Clip
-        #│   ├── C0001.MXF
-        #│   ├── C0001M01.XML
-        #│   ├── C0002.MXF
-        #│   ├── C0002M01.XML
-        #│   ├── C0003.MXF
-        #│   └── C0003M01.XML
+        #│   ├── C0001.MXF
+        #│   ├── C0001M01.XML
+        #│   ├── C0002.MXF
+        #│   ├── C0002M01.XML
+        #│   ├── C0003.MXF
+        #│   └── C0003M01.XML
         #├── Component
         #├── DISCMETA.XML
         #├── Edit
         #├── General
-        #│   └── Sony
-        #│       └── Planning
+        #│   └── Sony
+        #│       └── Planning
         #├── INDEX.XML
         #├── MEDIAPRO.XML
         #├── SYSPRO.XML
         #├── Sub
-        #│   ├── C0001S01.MXF
-        #│   ├── C0002S01.MXF
-        #│   └── C0003S0
+        #│   ├── C0001S01.MXF
+        #│   ├── C0002S01.MXF
+        #│   └── C0003S0
         RSYNC_OPTIONS=(\( -iname "*.xml" -o -iname "*.bim" \))
     elif [[ -n "$(find "${CARD}" -type d -iname "BPAV")" ]] ; then
         _report -g "Camera card type identified: ${CARD_NAME} is XDCAM EX (e.g. Canon XF100)"
@@ -386,7 +386,7 @@ _identify_card_type(){
         EXTENSION="$(printf '%s\n' "${EXTENSION_REVIEW[@]}" | sort | uniq -c | sort -k1,1nr -k2 | awk '{print $2; exit}')"
         EXTENSION_COUNT="$(printf '%s\n' "${EXTENSION_REVIEW[@]}" | sort | uniq -c | sort -k1,1nr -k2 | awk '{print $1; exit}')"
         _report -g "Couldn't identify a particular camera card type here. Using a GENERAL approach on the ${EXTENSION_COUNT} ${EXTENSION} files found in there."
-        _report -g "If you want to keep everything in ${CARD} in a tar.gz file then try the -t optoin."
+        _report -g "If you want to keep everything in ${CARD} in a tar.gz file then try the -t option."
         CAMERA_CARD_TYPE="GENERAL"
     fi
 }
@@ -582,8 +582,9 @@ if [[ "${AIP}" == "YES" ]] ; then
         DURATION_TALLY=0
         HEADER_SIZE="8540x48" # in HxW format
         TILE_SIZE="8540:480"  # in H:W format
+        FIRST_FILE_ESC="$(echo "${FIRST_FILE}" | sed "s/'/,/g")"
         INFO_CARD="$(ffprobe -v 0 "${FIRST_FILE}" -show_entries format_tags=company_name,product_name,product_uid -of default=nk=1:nw=1 | xargs | sed 's|:|\\\:|g')"
-        HEADER_FILTER="color=color=black:s=${HEADER_SIZE},drawtext=x=2:y=2:text='Path\\: $(dirname "${FIRST_FILE}") -- ${INFO_CARD}':fontcolor=white:fontsize=36:x=2:y=2[header];"
+        HEADER_FILTER="color=color=black:s=${HEADER_SIZE},drawtext=x=2:y=2:text='Path\\: $(dirname "${FIRST_FILE_ESC}") -- ${INFO_CARD}':fontcolor=white:fontsize=36:x=2:y=2[header];"
     fi
     while read INVENTORY_ROW ; do
         SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
@@ -606,10 +607,16 @@ if [[ "${AIP}" == "YES" ]] ; then
                 MIDDLE_OPTIONS_ALL=(-ignore_unknown)
                 _report -b "Uknown encodings were found in ${FILE_NAME}. Will add -ignore_unknown while rewrapping."
             fi
-            echo "file '${FILE_NAME}'" >> "${TEMP_CONCATLIST}"
+            FILE_NAME_ESC="$(echo "${FILE_NAME}" | sed "s|'|'\\\''|g")"
+            echo "file '${FILE_NAME_ESC}'" >> "${TEMP_CONCATLIST}"
         fi
-        
+    done < <(_read_inventory -f ",video,\|,audio,")
+    while read INVENTORY_ROW ; do
         if [[ "${PROFILE}" = "s" ]] ; then
+            SEG_NUMBER="$(echo "${INVENTORY_ROW}" | cut -d "," -f 3)"
+            FILE_NAME="$(echo "${INVENTORY_ROW}" | cut -d "," -f 12)"
+            AUDIO_CODEC="$(echo "${INVENTORY_ROW}" | cut -d "," -f 13)"
+            AUDIO_SAMPLE_FMT="$(echo "${INVENTORY_ROW}" | cut -d "," -f 14)"
             IMAGENUMBER=0
             unset INPUTCLIP4IMAGEFILTER
             IMAGECOUNT=10
@@ -642,7 +649,7 @@ if [[ "${AIP}" == "YES" ]] ; then
             DURATION_TALLY="$(echo "scale=6; ${DURATION_TALLY} + ${DURATION}" | bc)"
             unset MIDDLE_OPTIONS
         fi
-    done < <(_read_inventory -f ",video,\|,audio,")
+    done < <(_read_inventory -f ",video,")
 
     if [[ "${PROFILE}" = "s" ]] ; then
         MIDDLE_OPTIONS+=(-an)
@@ -664,6 +671,7 @@ if [[ "${AIP}" == "YES" ]] ; then
         MIDDLE_OPTIONS+=(-ps 1 -mpv_flags strict_gop)
         MIDDLE_OPTIONS+=(-s 1920x1080)
         MIDDLE_OPTIONS+=(-acodec pcm_s16le -ar 48000)
+        MIDDLE_OPTIONS+=(-metadata "timecode=00:00:00:00")
     elif [[ "${PROFILE}" = "h" ]] ; then
         MIDDLE_OPTIONS+=(-movflags faststart -pix_fmt yuv420p -c:v libx264 -force_key_frames chapters -crf 18 -vf yadif -c:a aac)
     else
