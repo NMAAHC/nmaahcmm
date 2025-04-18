@@ -607,7 +607,8 @@ if [[ "${AIP}" == "YES" ]] ; then
                 MIDDLE_OPTIONS_ALL=(-ignore_unknown)
                 _report -b "Uknown encodings were found in ${FILE_NAME}. Will add -ignore_unknown while rewrapping."
             fi
-            echo "file '${FILE_NAME}'" >> "${TEMP_CONCATLIST}"
+            FILE_NAME_ESC="$(echo "${FILE_NAME}" | sed "s|'|'\\\''|g")"
+            echo "file '${FILE_NAME_ESC}'" >> "${TEMP_CONCATLIST}"
         fi
         
         if [[ "${PROFILE}" = "s" ]] ; then
