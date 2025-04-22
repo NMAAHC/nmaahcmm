@@ -398,7 +398,7 @@ while read EXISTING_KEY ; do
             KEY_LABEL="${EXISTING_KEY}"
         fi
         LIST_OF_KEYS+=("${EXISTING_KEY}")
-        if [[ "${LINE_COUNT}" < "2" ]] ; then
+        if [[ "${LINE_COUNT}" -lt "2" ]] ; then
             DIALOG_LIST_EMBEDDED+="
                     <hbox>
                         <hbox width-request=\"200\">
