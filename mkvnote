@@ -152,7 +152,7 @@ _check_dependencies(){
     fi
 }
 
-_check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract csvtomd
+_check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract
 
 # The function ends with the `exit` command, ensuring that the script stops after displaying usage info.
 
@@ -202,8 +202,6 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     CSV_XML="$(_maketemp).xml"
     # Convert the CSV to XML format using `csvprintf` and redirect the output to the temporary XML file.
     csvprintf -X -f "${INPUT_FILE}" > "${CSV_XML}"
-    # Convert the CSV to markdown format using `csvtomd`, then replace newline characters with `<br/>` for HTML formatting.
-    CSV_TABLE="$(csvtomd "${INPUT_FILE}" | tr '\n' '<br/>')"
     # Extract the list of XML element names (tags) from the first row of the CSV.
     ELEMENT_LIST="$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -n "${CSV_XML}")"
     FILENAME_FOUND=0    # Initialize a flag to check if the 'filename' column is present in the CSV.
