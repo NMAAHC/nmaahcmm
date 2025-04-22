@@ -390,15 +390,15 @@ while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
-        LINE_COUNT="$(wc -l < "${TEMP_DIALOG_VALUE}")"
         xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
+        LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
         if [[ ! " ${SELECTED_TAG_SET[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
             KEY_LABEL="${EXISTING_KEY}*"
         else
             KEY_LABEL="${EXISTING_KEY}"
         fi
         LIST_OF_KEYS+=("${EXISTING_KEY}")
-        if [[ "${LINE_COUNT// /}" < "2" ]] ; then
+        if [[ "${LINE_COUNT}" < "2" ]] ; then
             DIALOG_LIST_EMBEDDED+="
                     <hbox>
                         <hbox width-request=\"200\">
