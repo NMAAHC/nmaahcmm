@@ -106,6 +106,11 @@ _usage(){
 
     Usage: $(basename "${0}") mycsv.csv
 
+    To produce a csv output from a list of mkv files:
+    $(basename "${0}") -c file1.mkv file2.mkv file3.mkv > my.csv
+
+    The output can then be edited to write back into the source files with "$(basename "${0}") my.csv"
+
     Tag definitions for JPC:
     Tag                     Example
     COLLECTION              The name of the collection that the content or object is from ; ex. Johnson Publishing Company Archive / Pearl Bowser Collection
@@ -152,7 +157,7 @@ _check_dependencies(){
     fi
 }
 
-_check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract
+_check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
 # The function ends with the `exit` command, ensuring that the script stops after displaying usage info.
 
@@ -164,9 +169,10 @@ SELECTED_TAG_SET=()        # This array will store the tags associated with the 
 # The options are `-p` for selecting a profile and `-h` for displaying help.
 
 OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
-while getopts ":hp:" opt ; do
+while getopts ":chp:" opt ; do
     case "${opt}" in
         p) SELECTED_PROFILE="${OPTARG}" ;;   # If the `-p` option is provided, set the selected profile to the argument passed with `-p`.
+        c) MKV2CSV="Y" ;;                    # If the `-p` option is provided, then mkvnote will make a csv from an input list of Matroska files.
         h) _usage ;;                         # If the `-h` option is provided, call the `_usage` function to display usage information and exit.
         :) echo "Option -${OPTARG} requires an argument" ; _usage ;;  # Handle the case where an option requires an argument but none is provided.
         *) echo "bad option -${OPTARG}" ; _usage ;;   # Handle any invalid options by displaying an error message and calling `_usage`.
@@ -318,6 +324,44 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     DIALOG_FORM="$(_maketemp).xml"
     DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
     echo $DIALOG_RESULT
+    exit
+fi
+
+if [[ "${MKV2CSV}" == "Y" ]] ; then
+    INPUT_FILES=("$@")
+    while [[ "${@}" != "" ]] ; do
+        # get context about the input
+        INPUT_FILE="${1}"
+        shift
+        EXTRACTED_TAGS="$(_maketemp).xml"
+        XML_DRAFT="$(_maketemp).xml"
+        mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
+        TAGS_FOUND+="$(xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -n "${EXTRACTED_TAGS}")"$'\n'
+    done
+    UNIQUE_TAGS="$(awk 'NF && !seen[$0]++' <<< "$TAGS_FOUND")"
+
+    CSV_XML="$(_maketemp).xml"
+    echo "<csv/>" > "${CSV_XML}"
+    for INPUT_FILE in "${INPUT_FILES[@]}"; do
+        XML_ED_INSTRUCTIONS=()
+        EXTRACTED_TAGS="$(_maketemp).xml"
+        mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
+        while read UNIQUE_TAG ; do
+            UNIQUE_TAG_VALUE="$(xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${UNIQUE_TAG}']" -v "String" -n "${EXTRACTED_TAGS}")"
+            XML_ED_INSTRUCTIONS+=(--subnode "/csv/row[not(${UNIQUE_TAG})]" --type elem -n "${UNIQUE_TAG}" -v "${UNIQUE_TAG_VALUE}")
+        done <<< "${UNIQUE_TAGS}"
+
+        # get context about the input
+        xml ed --omit-decl --inplace \
+            --subnode "/csv" --type elem -n "row" \
+            --subnode "/csv/row[not(filename)]" --type elem -n "filename" -v "${INPUT_FILE}" "${XML_ED_INSTRUCTIONS[@]}" "${CSV_XML}"
+        EXTRACTED_TAGS="$(_maketemp).txt"
+        XML_DRAFT="$(_maketemp).xml"
+    done
+    # Extract headers from the first <row>
+    CSV_HEADER=$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -o "," "${CSV_XML}" | sed 's/,$//')
+    echo "${CSV_HEADER}"
+    xml2csv "${CSV_XML}"
     exit
 fi
 
