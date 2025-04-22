@@ -185,17 +185,6 @@ INPUT_FILE="${1}"
 # Extract the file extension from `INPUT_FILE` to determine the file type.
 EXTENSION="${INPUT_FILE##*.}"
 
-# Determine the selected profile and set the corresponding tag set.
-if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
-    SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")     # If the profile is 'jpc', use the `MKV_TAG_SET_JPC` array.
-elif [[ "${SELECTED_PROFILE}" == "nmaahc" ]] ; then
-    SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")  # If the profile is 'nmaahc', use the `MKV_TAG_SET_NMAAHC` array.
-else
-    unset SELECTED_PROFILE # If an invalid profile is specified or none is provided, unset the profile variable.
-    # Display a message indicating the invalid profile selection and prompt the user to select a profile interactively.
-    echo -e "${BOLD}${ERROR}\nNote: Invalid profile or no profile specified with -p. You will be prompted to select a profile.${RESET}"
-fi
-
 # Function `_maketemp` creates a temporary file and checks for success.
 # This function is used to generate a temporary file that will be used for storing intermediate data, such as XML drafts.
 _maketemp(){
@@ -332,6 +321,17 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
     echo $DIALOG_RESULT
     exit
+fi
+
+# Determine the selected profile and set the corresponding tag set.
+if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
+    SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")     # If the profile is 'jpc', use the `MKV_TAG_SET_JPC` array.
+elif [[ "${SELECTED_PROFILE}" == "nmaahc" ]] ; then
+    SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")  # If the profile is 'nmaahc', use the `MKV_TAG_SET_NMAAHC` array.
+else
+    unset SELECTED_PROFILE # If an invalid profile is specified or none is provided, unset the profile variable.
+    # Display a message indicating the invalid profile selection and prompt the user to select a profile interactively.
+    echo -e "${BOLD}${ERROR}\nNote: Invalid profile or no profile specified with -p. You will be prompted to select a profile.${RESET}"
 fi
 
 # Display available tag options and prompt for selection if no profile was selected
