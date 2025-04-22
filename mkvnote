@@ -247,7 +247,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             MISSING_FILE=1
             MISSING_FILE_LIST+="${FILE_IN_CSV} "  # Append the missing file name to the list of missing files.
         fi
-    done < <(xmlstarlet sel -t -m "/csv/row/filename" -v . -n "${CSV_XML}")
+    done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
     if [[ -z "${FILENAME_COLUMN_NAME}" ]] ; then
         FILENAME_COLUMN_NAME="filename"
     fi
