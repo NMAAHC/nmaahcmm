@@ -286,7 +286,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         # Initialize the XML draft for the current file by creating a basic structure with root `<Tags>` and `<Tag>` elements.
         XML_DRAFT="$(_maketemp).xml"
         mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
-
+        EXISTING_TAGS="$(xmlstarlet sel -t -m '/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple/Name' -v . -n "${XML_DRAFT}" | awk '!seen[$0]++')"
         # Display a message indicating that the current file is being tagged, showing the file name.
         echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
         echo "---------------------|---------------------"
@@ -313,11 +313,18 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "${FILENAME_COLUMN_NAME}" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
                 # The command edits the XML structure, ensuring each tag is uniquely added under a `<Simple>` element.
+                if echo "${EXISTING_TAGS}" | grep -Fxq "${TAG_NAME}"; then
+                    # update existing tag, updating last occurrence in case there's multiple
+                    xml ed --omit-decl -P --inplace \
+                        --update "(/Tags/Tag[Simple/Name='${TAG_NAME}'])[last()]/Simple[Name='${TAG_NAME}']/String" -v "${TAG_VALUE}" \
+                        "${XML_DRAFT}"
+                else
                 xml ed --omit-decl --inplace \
                     --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]" --type elem -n "Simple" \
                     --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
                     --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
                     "${XML_DRAFT}"
+                fi
             fi
             printf "%-22s" "$TAG_NAME"
             echo "$TAG_VALUE" | sed '1n; s/^/                      /'
