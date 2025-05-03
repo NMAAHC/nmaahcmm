@@ -280,11 +280,11 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
 
     # Create a temporary XML file using the `_maketemp` function.
     # This file will be used to draft the XML structure needed for embedding tags into each MKV file.
-    XML_DRAFT="$(_maketemp).xml"
 
     # Begin processing each file listed in the 'filename' column of the CSV.
     while read FILE_IN_CSV ; do
         # Initialize the XML draft for the current file by creating a basic structure with root `<Tags>` and `<Tag>` elements.
+        XML_DRAFT="$(_maketemp).xml"
         mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
 
         # Display a message indicating that the current file is being tagged, showing the file name.
