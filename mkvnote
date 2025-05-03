@@ -310,7 +310,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             fi
 
             # If the tag value is not empty, proceed to add it to the XML draft.
-            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "${FILENAME_COLUMN_NAME}" ]] ; then
+            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME//_}" != "filename" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
                 # The command edits the XML structure, ensuring each tag is uniquely added under a `<Simple>` element.
                 if echo "${EXISTING_TAGS}" | grep -Fxq "${TAG_NAME}"; then
