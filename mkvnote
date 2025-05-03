@@ -298,6 +298,17 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             if [[ "${TAG_NAME//_}" == "filename" ]] ; then
                 TAG_NAME="filename"
             fi
+
+            # Check if there's a <Tag> with no <Targets> or empty <Targets>
+            if ! xmlstarlet sel -t -m '/Tags/Tag[not(Targets) or count(Targets/*)=0]' -v '.' -n "${XML_DRAFT}" | grep -q . ; then
+              # If no such <Tag> exists, create one and append it
+              xmlstarlet ed -P -L \
+                -s '/Tags' -t elem -n 'Tag' \
+                -s '/Tags/Tag[last()]' -t elem -n 'Targets' \
+                "${XML_DRAFT}"
+              echo "Added a new <Tag> with empty <Targets> with ${FILE_IN_CSV}."
+            fi
+
             # If the tag value is not empty, proceed to add it to the XML draft.
             if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME}" != "${FILENAME_COLUMN_NAME}" ]] ; then
                 # Use `xmlstarlet` to add the tag name and value to the XML draft.
