@@ -232,6 +232,14 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     fi
 
     MISSING_FILE=0    # Initialize a flag to track missing files listed in the CSV.
+    # check that there's no repeated filenames
+    REPEATED_FILENAMES="$(xmlstarlet sel -t -m "/csv/row/___filename" -v . -n  "${CSV_XML}" | sort | uniq -c | grep -v "^ *1 ")"
+    if [[ -n "${REPEATED_FILENAMES}" ]] ; then
+        echo "${BOLD}${ERROR}Error, ${INPUT_FILE} contains multiple iterations of the same filename.${RESET}"
+        echo "${REPEATED_FILENAMES}"
+        echo "${BOLD}${ERROR}Comee back when it's fixed.${RESET}"
+        exit 1
+    fi
     # Iterate through the 'filename' column values in the CSV to check if the corresponding files exist.
     while read FILE_IN_CSV ; do
         if [[ ! -f "${FILE_IN_CSV}" ]] ; then
