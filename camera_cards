@@ -103,6 +103,7 @@ Usage: $(basename "${0}") -m MEDIAID [ -o AIP_DESTINATION ] [-tca] /path/to/inpu
   -s SUFFIX   If unset, the default suffix of '_concatenated' will be used on outputs.
   -1          Enable single-output mode. If this is set then no metadata reports will be saved and only one concatenated media output (with no package structure) will be sent to the AIP_DESTINATION.
   -h display this help
+  -r          Run as recursive, this will examine subdirectories to include in the output file.
 
   By default, this script will try to losslessly rewrap the contents of the camera cards from input to a concatenated output; however, setting this profile option will transcode the contents instead. Setting a profile will disable lossless verification.
   -p [xn|xp|h|s] where
@@ -221,16 +222,22 @@ _make_inventory(){
     for CARD in "${CAMERA_CARD_DIR[@]}" ; do
         _identify_card_type "${CARD}"
         if [[ "${CAMERA_CARD_TYPE}" == "P2" ]] ; then
+            if [[ "${RECURSIVE}" != "Y" ]] ; then
+                FIND_OPTS+=(-maxdepth 2)
+            fi
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" ! -name ".DS_Store" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}" | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -path "*CONTENTS/VIDEO*" -iname "*.${EXTENSION}" "${FIND_OPTS[@]}" | sort)
             while read FILE ; do
                 echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},,audio,${FILE},${AUDIO_CODEC},${AUDIO_SAMPLE_FMT}" >> "${FILE_INVENTORY}"
                 ((FILE_NUM++))
-            done < <(find "${CARD}" ! -name ".DS_Store" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}" | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -path "*CONTENTS/AUDIO*" -iname "*.${EXTENSION}" "${FIND_OPTS[@]}" | sort)
         elif [[ "${CAMERA_CARD_TYPE}" == "GENERAL" ]] ; then
+            if [[ "${RECURSIVE}" != "Y" ]] ; then
+                FIND_OPTS+=(-maxdepth 1)
+            fi
             while read FILE ; do
                 if [[ -n $(mediainfo --Inform="General;%VideoCount%" "${FILE}") ]] ; then
                     IFS="," read -r Z DURATION COMPANY_NAME PRODUCT_NAME MOD_TS TC < <(ffprobe -sexagesimal -v 0 "${FILE}" -show_entries format=duration:format_tags=company_name,product_name,modification_date,timecode -of csv)
@@ -242,25 +249,34 @@ _make_inventory(){
                     echo "${CARD_NUM},${CAMERA_CARD_TYPE},0,${FILE_NUM},$(_lookup_associated_video_file),metadata,,,,,,${FILE},," >> "${FILE_INVENTORY}"
                 fi
                 ((FILE_NUM++))
-            done < <(find "${CARD}" ! -name ".DS_Store" -type f | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -type f "${FIND_OPTS[@]}" | sort)
         elif [[ "${CAMERA_CARD_TYPE}" == "XAVC" ]] ; then
+            if [[ "${RECURSIVE}" != "Y" ]] ; then
+                FIND_OPTS+=(-maxdepth 2)
+            fi
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}"! -name ".DS_Store"  -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f | sort)
+            done < <(find "${CARD}"! -name ".DS_Store"  -iname "*.${EXTENSION}" ! -path "*/PROAV/*" ! -path "*/Sub/*" -type f "${FIND_OPTS[@]}" | sort)
         elif [[ "${CAMERA_CARD_TYPE}" ==  "MXF" ]] ; then
+            if [[ "${RECURSIVE}" != "Y" ]] ; then
+                FIND_OPTS+=(-maxdepth 1)
+            fi
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" ! -name ".DS_Store" -iname "*.${EXTENSION}" -type f | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -iname "*.${EXTENSION}" -type f "${FIND_OPTS[@]}" | sort)
         else
+            if [[ "${RECURSIVE}" != "Y" ]] ; then
+                FIND_OPTS+=(-maxdepth 1)
+            fi
             while read FILE ; do
                 _catalog_video "${FILE}"
                 ((VIDEO_NUM++))
                 ((FILE_NUM++))
-            done < <(find "${CARD}" ! -name ".DS_Store" -iname "*.${EXTENSION}" -type f | sort)
+            done < <(find "${CARD}" ! -name ".DS_Store" -iname "*.${EXTENSION}" -type f "${FIND_OPTS[@]}" | sort)
         fi
         if [[ -n "${RSYNC_OPTIONS[@]}" ]] ; then
             while read FILE ; do
@@ -424,7 +440,7 @@ _smmm_to_hhmmssff(){
 # getopts loop
 OPTIND=1
 SUFFIX="_concatenated"
-while getopts ":m:N:o:f:F:ctans:k:p:1h" OPT; do
+while getopts ":m:N:o:f:F:ctarns:k:p:1h" OPT; do
     case "${OPT}" in
         m) MEDIAID="${OPTARG}" ;;
         N) CLIP_SELECTION="${OPTARG}" ;;
@@ -435,6 +451,7 @@ while getopts ":m:N:o:f:F:ctans:k:p:1h" OPT; do
         t) TAR="YES" ; AIP="NO" ;;
         a) TAR="YES" ; AIP="YES" ;;
         n) REPORT_ONLY="Y" ;;
+        r) RECURSIVE="Y" ;;
         s) SUFFIX="${OPTARG}" ;;
         k) KEEP_ALL="${OPTARG}" ;;
         p) PROFILE="${OPTARG}" ;;
