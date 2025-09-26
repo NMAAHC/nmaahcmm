@@ -16,12 +16,12 @@ MKV_TAG_SET_JPC=(
     "ORIGINAL_MEDIA_TYPE"    # The original format of the media before digitization.
     "DATE_TAGGED"            # The date when these tags were applied or updated.
     "TERMS_OF_USE"           # Legal or usage terms associated with the video.
-    "_TECHNICAL_NOTES"       # Any technical notes related to the video or digitization process.
+    "_PRE_TRANSFER_NOTES"    # Free text for capturing anything concerning the inspection and any physical conservation or preparation of the tape.
+    "_TRANSFER_NOTES"        # Any technical notes related to the video or digitization process.
     "_ORIGINAL_FPS"          # The original frames per second for motion picture film, if applicable.
 )
 
 # Declaration of an array named MKV_TAG_SET_NMAAHC to hold tag names specific to the NMAAHC profile.
-# This set includes all tags from the JPC profile with an additional custom tag `_TAGTAG`.
 MKV_TAG_SET_NMAAHC=(
     "COLLECTION"             # (Same as above) The collection to which the video belongs.
     "TITLE"                  # (Same as above) The title of the video, likely matching the archive's system.
@@ -33,9 +33,9 @@ MKV_TAG_SET_NMAAHC=(
     "ORIGINAL_MEDIA_TYPE"    # (Same as above) The original format of the media before digitization.
     "DATE_TAGGED"            # (Same as above) The date when these tags were applied or updated.
     "TERMS_OF_USE"           # (Same as above) Legal or usage terms associated with the video.
-    "_TECHNICAL_NOTES"       # (Same as above) Technical notes related to the video.
+    "_PRE_TRANSFER_NOTES"    # Free text for capturing anything concerning the inspection and any physical conservation or preparation of the tape.
+    "_TRANSFER_NOTES"        # Any technical notes related to the video or digitization process.
     "_ORIGINAL_FPS"          # (Same as above) The original frames per second for the film.
-    "_TAGTAG"                # Additional custom tag unique to NMAAHC, indicating extra metadata.
 )
 
 # Setting up color and style variables using `tput`.
@@ -69,7 +69,8 @@ _usage(){
         "ORIGINAL_MEDIA_TYPE"
         "DATE_TAGGED"
         "TERMS_OF_USE"
-        "_TECHNICAL_NOTES"
+        "_PRE_TRANSFER_NOTES"
+        "_TRANSFER_NOTES"
         "_ORIGINAL_FPS"
 
     NMAAHC:
@@ -83,7 +84,8 @@ _usage(){
         "ORIGINAL_MEDIA_TYPE"
         "DATE_TAGGED"
         "TERMS_OF_USE"
-        "_TECHNICAL_NOTES"
+        "_PRE_TRANSFER_NOTES"  
+        "_TRANSFER_NOTES"
         "_ORIGINAL_FPS"
         "_TAGTAG"
 
@@ -127,7 +129,8 @@ _usage(){
     ORIGINAL_MEDIA_TYPE     Format (from PB Core), manufacturer, model ; ex. U-matic, Sony, KSP-30 (don't guess or estimate the manufacturer or model - the format is plenty sufficient if the others are ambiguous)
     DATE_TAGGED             yyyy-mm-dd, this is the date the mkv tags were embedded or updated ; ex. 2024-10-18
     TERMS_OF_USE            Not definitive, nor authoritative ; ex. Some or all of this video maybe subject to copyright or other intellectual property rights. Proper usage is the responsibility of the user.
-    _TECHNICAL_NOTES        Free text for capturing anything concerning the inspection, conservation, digitization of the tape. ex. 
+    _PRE_TRANSFER_NOTES     Free text for capturing anything concerning the inspection and any physical conservation or preparation of the tape.
+    _TRANSFER_NOTES         Any technical notes related to the video or digitization process.
     _ORIGINAL_FPS           For motion picture film, the frames per second at which the film was meant to be projected. most common - 16, 18, 24 ; ex. 24
 
 EOF
