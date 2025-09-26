@@ -609,31 +609,23 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
 
     SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | sort))
 
-    # Loop through each key in the array
-    for ((i=0; i<TO_BE_PARSED; i++)); do
-        TAG_NAME=${SORTED_KEYS[$i]}
-        # Check for the next key in the array (if available)
-        if ((i+1 < TO_BE_PARSED)); then
-            NEXT_TAG=${SORTED_KEYS[$i+1]}
-        else
-            NEXT_TAG=""
-        fi
-        # Extract content between $TAG_NAME and $NEXT_TAG
-        if [[ -z "${NEXT_TAG}" ]]; then
-            # If there's no next key (end is empty), extract from $TAG_NAME to EOF
-            TAG_VALUE=$(echo "$DATA_TO_PARSE" | awk "/^${TAG_NAME}/ {found=1} found" | sed "s|^${TAG_NAME}=\"||g" | sed '$d' | sed '$s/.$//')
-        else
-            # Extract content between $start and $end
-            TAG_VALUE=$(echo "$DATA_TO_PARSE" | awk "/^${TAG_NAME}/,/^${NEXT_TAG}/" | sed "s|^${TAG_NAME}=\"||g" | sed '$d' | sed '$s/.$//')
-        fi
+   # Loop through each key in the array
+    for TAG_NAME in "${SORTED_KEYS[@]}"; do
+    # Extract the value by stripping TAG_NAME=" at the start and the trailing "
+    TAG_VALUE=$(echo "$DATA_TO_PARSE" \
+        | sed -n "s/^${TAG_NAME}=\"\(.*\)\"$/\1/p")
 
-        # If the tag value is not empty, the tag is added to the XML draft for embedding.
-        # The xmlstarlet tool is used to edit the XML structure, ensuring each tag is uniquely added.
-        if [[ -n "${TAG_VALUE// /}" ]] ; then
-            echo "${TAG_NAME} ... (${TAG_VALUE})"
-            xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" "${XML_DRAFT}"
+    # If the tag value is not empty, embed it
+    if [[ -n "${TAG_VALUE// /}" ]]; then
+        echo "${TAG_NAME} ... (${TAG_VALUE})"
+        xml ed --omit-decl --inplace \
+            --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" \
+            --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
+            --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" \
+            "${XML_DRAFT}"
         fi
     done
+
 
     # Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
     mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}"
