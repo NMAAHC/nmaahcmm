@@ -3,7 +3,7 @@
 # The shebang above specifies that this script should be run with the Bash shell.
 # It tells the system that the script should be interpreted using Bash.
 
-# Declaration of an array named MKV_TAG_SET_JPC to hold tag names specific to the JPC profile.
+# Declaration of an array named MKV_TAG_SET_JPC to hold tag names.
 # These tags are metadata fields that describe various aspects of a video file.
 MKV_TAG_SET_JPC=(
     "COLLECTION"             # The collection to which the video belongs.
@@ -609,11 +609,15 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
 
     SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | sort))
 
-   # Loop through each key in the array
-    for TAG_NAME in "${SORTED_KEYS[@]}"; do
-    # Extract the value by stripping TAG_NAME=" at the start and the trailing "
-    TAG_VALUE=$(echo "$DATA_TO_PARSE" \
-        | sed -n "s/^${TAG_NAME}=\"\(.*\)\"$/\1/p")
+# Loop through each key in the array
+for TAG_NAME in "${SORTED_KEYS[@]}"; do
+    # Handle multi-line fields with perl, everything else with sed
+    if [[ "$TAG_NAME" == "DESCRIPTION" || "$TAG_NAME" == "ENCODER_SETTINGS" ]]; then
+        TAG_VALUE=$(perl -0777 -ne "print \$1 if /${TAG_NAME}=\"(.*?)\"/s" <<< "$DATA_TO_PARSE")
+    else
+        TAG_VALUE=$(echo "$DATA_TO_PARSE" \
+            | sed -n "s/^${TAG_NAME}=\"\(.*\)\"$/\1/p")
+    fi
 
     # If the tag value is not empty, embed it
     if [[ -n "${TAG_VALUE// /}" ]]; then
@@ -623,9 +627,8 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
             --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
             --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" \
             "${XML_DRAFT}"
-        fi
-    done
-
+    fi
+done
 
     # Uses mkvpropedit to embed the prepared XML metadata into the MKV file, effectively tagging the file.
     mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}"
