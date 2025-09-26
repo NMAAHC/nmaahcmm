@@ -142,32 +142,9 @@ _check_dependencies(){
     fi
 }
 
-_check_dependencies(){
-    DEPS_OK=YES
-    while [ "${*}" != "" ] ; do
-        DEPENDENCY="${1}"
-        if [ ! $(which "${DEPENDENCY}") ] ; then
-            echo "This script requires ${DEPENDENCY} to run but it is not installed"
-            echo "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
-            echo "sudo apt-get install ${DEPENDENCY}"
-            echo "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
-            echo "brew install ${DEPENDENCY}"
-            DEPS_OK=NO
-        fi
-        shift
-    done
-    if [[ "${DEPS_OK}" = "NO" ]]; then
-        echo "Unmet dependencies"
-        echo "Exiting!"
-        exit 1
-    else
-        return 0
-    fi
-}
-
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
-# Escape XML special characters in tag values
+# Escape XML special characters in tag values (for writing)
 _escape_xml() {
     echo "$1" | sed \
         -e 's/&/\&amp;/g' \
@@ -177,32 +154,38 @@ _escape_xml() {
         -e "s/'/\&apos;/g"
 }
 
+# Unescape XML entities back to original characters (for display)
+_unescape_xml() {
+    echo "$1" | sed \
+        -e 's/\&amp;/\&/g' \
+        -e 's/\&lt;/</g' \
+        -e 's/\&gt;/>/g' \
+        -e 's/\&quot;/"/g' \
+        -e "s/\&apos;/'/g"
+}
+
 # Initialize variables to store the selected tag set (NMAAHC only now).
 SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
 
-# Start processing command-line options using `getopts`.
 OPTIND=1
 while getopts ":chp:" opt ; do
     case "${opt}" in
-        p) : ;;                         # profile option ignored now
-        c) MKV2CSV="Y" ;;               # export tags to CSV from input MKVs
-        h) _usage ;;                    # show help
+        p) : ;;                         
+        c) MKV2CSV="Y" ;;               
+        h) _usage ;;                    
         :) echo "Option -${OPTARG} requires an argument" ; _usage ;;
         *) echo "bad option -${OPTARG}" ; _usage ;;
     esac
 done
 shift "$((OPTIND-1))"
 
-# If no args, show usage.
 if [[ "${#}" -eq 0 ]]; then
     _usage
 fi
 
-# Assign the first argument (after options) to `INPUT_FILE`.
 INPUT_FILE="${1}"
 EXTENSION="${INPUT_FILE##*.}"
 
-# Function `_maketemp` creates a temporary file and checks for success.
 _maketemp(){
     mktemp -q -t "$(basename "${0}")"
     if [ "${?}" -ne 0 ]; then
@@ -211,8 +194,9 @@ _maketemp(){
     fi
 }
 
-
-# CSV MODE (batch tagging via CSV)
+# ------------------------------
+# CSV MODE
+# ------------------------------
 if [[ "${EXTENSION}" == "csv" ]] ; then
     CSV_XML="$(_maketemp).xml"
     csvprintf -X -f "${INPUT_FILE}" > "${CSV_XML}"
@@ -241,7 +225,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     if [[ -n "${REPEATED_FILENAMES}" ]] ; then
         echo "${BOLD}${ERROR}Error, ${INPUT_FILE} contains multiple iterations of the same filename.${RESET}"
         echo "${REPEATED_FILENAMES}"
-        echo "${BOLD}${ERROR}Comee back when it's fixed.${RESET}"
+        echo "${BOLD}${ERROR}Come back when it's fixed.${RESET}"
         exit 1
     fi
     while read FILE_IN_CSV ; do
@@ -261,7 +245,6 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         echo "${BOLD}Nice. All files from the csv are found. Let's tag.${RESET}"
     fi
 
-    # Process each file listed in the CSV
     while read FILE_IN_CSV ; do
         XML_DRAFT="$(_maketemp).xml"
         mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
@@ -275,7 +258,6 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                 TAG_NAME="filename"
             fi
 
-            # Ensure there is a <Tag> with empty <Targets>
             if ! xmlstarlet sel -t -m '/Tags/Tag[not(Targets) or count(Targets/*)=0]' -v '.' -n "${XML_DRAFT}" | grep -q . ; then
               xmlstarlet ed -P -L \
                 -s '/Tags' -t elem -n 'Tag' \
@@ -287,13 +269,13 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME//_}" != "filename" ]] ; then
                 if echo "${EXISTING_TAGS}" | grep -Fxq "${TAG_NAME}"; then
                     xml ed --omit-decl -P --inplace \
-                        --update "(/Tags/Tag[Simple/Name='${TAG_NAME}'])[last()]/Simple[Name='${TAG_NAME}']/String" -v "${TAG_VALUE}" \
+                        --update "(/Tags/Tag[Simple/Name='${TAG_NAME}'])[last()]/Simple[Name='${TAG_NAME}']/String" -v "$(_escape_xml "${TAG_VALUE}")" \
                         "${XML_DRAFT}"
                 else
                     xml ed --omit-decl --inplace \
                         --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]" --type elem -n "Simple" \
                         --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
-                        --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[not(String)]" --type elem -n "String" -v "${TAG_VALUE}" \
+                        --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[not(String)]" --type elem -n "String" -v "$(_escape_xml "${TAG_VALUE}")" \
                         "${XML_DRAFT}"
                 fi
             fi
@@ -310,7 +292,6 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     exit
 fi
 
-# Export mode (-c): extract tags from MKVs to CSV
 if [[ "${MKV2CSV}" == "Y" ]] ; then
     INPUT_FILES=("$@")
     while [[ "${@}" != "" ]] ; do
@@ -337,8 +318,6 @@ if [[ "${MKV2CSV}" == "Y" ]] ; then
         xml ed --omit-decl --inplace \
             --subnode "/csv" --type elem -n "row" \
             --subnode "/csv/row[not(filename)]" --type elem -n "filename" -v "${INPUT_FILE}" "${XML_ED_INSTRUCTIONS[@]}" "${CSV_XML}"
-        EXTRACTED_TAGS="$(_maketemp).txt"
-        XML_DRAFT="$(_maketemp).xml"
     done
     CSV_HEADER=$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -o "," "${CSV_XML}" | sed 's/,$//')
     echo "${CSV_HEADER}"
@@ -346,8 +325,9 @@ if [[ "${MKV2CSV}" == "Y" ]] ; then
     exit
 fi
 
-# From here, go directly to GUI for single-file edit (no profile prompts).
-
+# ------------------------------
+# GUI MODE
+# ------------------------------
 EXISTING_TAGS="$(_maketemp).txt"
 EXTRACTED_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
@@ -359,9 +339,9 @@ while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
-        xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
+        xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" \
+            | _unescape_xml > "${TEMP_DIALOG_VALUE}"
         LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
-        # mark with * if not part of the NMAAHC tag set
         if [[ ! " ${SELECTED_TAG_SET[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
             KEY_LABEL="${EXISTING_KEY}*"
         else
@@ -402,14 +382,12 @@ while read EXISTING_KEY ; do
                 </hbox>"
         fi
     fi
-    
 done < "${EXISTING_TAGS}"
 
 for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
     PROFILE_KEY="${PROFILE_TAG%%=*}"
     if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${PROFILE_TAG}[[:space:]] ]] ; then
         LIST_OF_KEYS+=("${PROFILE_TAG}")
-        # Make DESCRIPTION and ENCODER_SETTINGS multi-line by default
         if [[ "${PROFILE_KEY}" == "DESCRIPTION" || "${PROFILE_KEY}" == "ENCODER_SETTINGS" ]]; then
             DIALOG_LIST_PROFILE+="
                 <hbox>
@@ -473,11 +451,11 @@ cat << EOF > "${DIALOG_FORM}"
         </text>
         <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
             <text xalign="0" width-request="1000">
-                <label>Metadata tags already embedded. (* not part of the NMAAHC tag set)</label>
+                <label>Metadata tags already embedded. (* for part of the NMAAHC profile)</label>
             </text>
             ${DIALOG_LIST_EMBEDDED}
             <text xalign="0" width-request="1000">
-                <label>Available NMAAHC tag fields (not yet present in this file):</label>
+                <label>Yet unused metadata tags from the NMAAHC profile.</label>
             </text>
             ${DIALOG_LIST_PROFILE}
         </vbox>
@@ -505,43 +483,8 @@ cat << EOF > "${DIALOG_FORM}"
 EOF
 
 DIALOG_RESULT="$(export MAIN_DIALOG="$(cat "${DIALOG_FORM}")" ; gtkdialog --center --program MAIN_DIALOG)"
-EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//g;s/"$//g')"
+EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's
 
-if [[ "${EXIT_STATUS}" == "Cancel" ]] ; then
-    echo "Nevermind then o_o ${EXISTING_TAGS}"
-    exit
-elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
-    # Starts the XML draft for MKV metadata embedding with a root Tags element.
-    echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
-
-    # Remove the "EXIT=" lines from DIALOG_RESULT
-    DATA_TO_PARSE="$(echo "${DIALOG_RESULT}" | grep -v "^EXIT=")"
-
-    # Parse keys deterministically
-    SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | sort))
-
-    # Loop through each key; multi-line for DESCRIPTION and ENCODER_SETTINGS
-    for TAG_NAME in "${SORTED_KEYS[@]}"; do
-        if [[ "$TAG_NAME" == "DESCRIPTION" || "$TAG_NAME" == "ENCODER_SETTINGS" ]]; then
-            TAG_VALUE=$(perl -0777 -ne "print \$1 if /${TAG_NAME}=\"(.*?)\"/s" <<< "$DATA_TO_PARSE")
-        else
-            TAG_VALUE=$(echo "$DATA_TO_PARSE" \
-                | sed -n "s/^${TAG_NAME}=\"\(.*\)\"$/\1/p")
-        fi
-
-        # If the tag value is not empty, embed it
-        if [[ -n "${TAG_VALUE// /}" ]] ; then
-            echo "${TAG_NAME} ... (${TAG_VALUE})"
-            xml ed --omit-decl --inplace \
-                --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" \
-                --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
-                --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" \
-                "${XML_DRAFT}"
-        fi
-    done
-
-    # Uses mkvpropedit to embed the prepared XML metadata into the MKV file
-    mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}"
 
     # A fun message to indicate completion
     cowsay "Cool. Done. Enjoy. Tag-on. ${INPUT_FILE}.${RESET}"
