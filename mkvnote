@@ -142,13 +142,45 @@ _check_dependencies(){
     fi
 }
 
+_check_dependencies(){
+    DEPS_OK=YES
+    while [ "${*}" != "" ] ; do
+        DEPENDENCY="${1}"
+        if [ ! $(which "${DEPENDENCY}") ] ; then
+            echo "This script requires ${DEPENDENCY} to run but it is not installed"
+            echo "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
+            echo "sudo apt-get install ${DEPENDENCY}"
+            echo "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
+            echo "brew install ${DEPENDENCY}"
+            DEPS_OK=NO
+        fi
+        shift
+    done
+    if [[ "${DEPS_OK}" = "NO" ]]; then
+        echo "Unmet dependencies"
+        echo "Exiting!"
+        exit 1
+    else
+        return 0
+    fi
+}
+
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
+
+# Escape XML special characters in tag values
+_escape_xml() {
+    echo "$1" | sed \
+        -e 's/&/\&amp;/g' \
+        -e 's/</\&lt;/g' \
+        -e 's/>/\&gt;/g' \
+        -e 's/"/\&quot;/g' \
+        -e "s/'/\&apos;/g"
+}
 
 # Initialize variables to store the selected tag set (NMAAHC only now).
 SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
 
 # Start processing command-line options using `getopts`.
-# We still accept -p (ignored) to avoid breaking callers while usage text is stale.
 OPTIND=1
 while getopts ":chp:" opt ; do
     case "${opt}" in
@@ -178,6 +210,7 @@ _maketemp(){
         exit 1
     fi
 }
+
 
 # CSV MODE (batch tagging via CSV)
 if [[ "${EXTENSION}" == "csv" ]] ; then
