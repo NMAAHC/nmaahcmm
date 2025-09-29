@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 
 # ================================
 # Script: mkvnote
@@ -338,12 +338,12 @@ export GTK2_RC_FILES=/tmp/gtkrc_mono
 # ================================
 DIALOG_FORM="$(_maketemp).xml"
 cat > "${DIALOG_FORM}" <<EOF
-<window title="Welcome to NMAAHC mkvnote - Matroska Metadata Editor!" default-width="1100" name="mkvnotemain">
+<window title="Welcome to NMAAHC mkvnote - Matroska Metadata Editor!" default-width="1100" default-height="700" name="mkvnotemain">
     <vbox>
         <text xalign="0" width-request="1000">
             <label>Edit metadata tags. These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other piece of the file. Empty tags will be ignored. If you edit existing tags here, they will be overwritten when saved.</label>
         </text>
-        <vbox scrollable="true" height="800" spacing="8" border-width="15">${SECTIONS}</vbox>
+        <vbox scrollable="true" height="600" spacing="8" border-width="15">${SECTIONS}</vbox>
         <text xalign="0" width-request="1000">
             <label>Developed by Smithsonian NMAAHC in collaboration with Dave Rice</label>
         </text>
