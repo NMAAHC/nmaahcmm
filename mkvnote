@@ -1,491 +1,582 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 
-# The shebang above specifies that this script should be run with the Bash shell.
-# It tells the system that the script should be interpreted using Bash.
+# ================================
+# Script: mkvnote
+# Purpose: GUI tool for editing MKV metadata tags
+# Focus: NMAAHC archival standards
+# ================================
 
-# Declaration of an array named MKV_TAG_SET_NMAAHC to hold tag names specific to the NMAAHC profile.
+# ================================
+# Section 1: Configuration and Constants
+# ================================
+
+# ================================
+# Section 1.1: Tag Set Definitions
+# ================================
 MKV_TAG_SET_NMAAHC=(
-    "COLLECTION"             # (Same as above) The collection to which the video belongs.
-    "TITLE"                  # (Same as above) The title of the video, likely matching the archive's system.
-    "CATALOG_NUMBER"         # (Same as above) Unique identifier or catalog number for the video.
-    "DESCRIPTION"            # (Same as above) Brief description of the video's content.
-    "DATE_DIGITIZED"         # (Same as above) The date when the video was digitized.
-    "ENCODER_SETTINGS"       # (Same as above) Details about the encoding process.
-    "ENCODED_BY"             # (Same as above) Information about the entity or person who encoded the video.
-    "ORIGINAL_MEDIA_TYPE"    # (Same as above) The original format of the media before digitization.
-    "DATE_TAGGED"            # (Same as above) The date when these tags were applied or updated.
-    "TERMS_OF_USE"           # (Same as above) Legal or usage terms associated with the video.
-    "_PRE_TRANSFER_NOTES"    # Free text for capturing anything concerning the inspection and any physical conservation or preparation of the tape.
-    "_TRANSFER_NOTES"        # Any technical notes related to the video or digitization process.
-    "_ORIGINAL_FPS"          # (Same as above) The original frames per second for the film.
+    "COLLECTION"
+    "TITLE"
+    "CATALOG_NUMBER" 
+    "DESCRIPTION"
+    "DATE_DIGITIZED"
+    "ENCODER_SETTINGS"
+    "ENCODED_BY"
+    "ORIGINAL_MEDIA_TYPE"
+    "DATE_TAGGED"
+    "TERMS_OF_USE"
+    "_PRE_TRANSFER_NOTES"
+    "_TRANSFER_NOTES"
+    "_ORIGINAL_FPS"
 )
 
-# Setting up color and style variables using `tput`.
-# These variables define text appearance in the script’s output (bold, color, etc.).
-BOLD=$(tput bold)          # Sets text style to bold for emphasis.
-RESET=$(tput sgr0)         # Resets text style to the default, removing any bold or color.
-GB=$(tput setaf 38)        # Sets the text color to greenish-blue for regular output.
-ERROR=$(tput setaf 1)      # Sets the text color to red for error messages.
+# ================================
+# Section 1. Read Only and Special Tag Configuration
+# ================================
+RO_TAGS=("ENCODER" "VIDEO_STREAM_HASH" "AUDIO_STREAM_HASH")
+MULTILINE_TAGS=("DESCRIPTION" "ENCODER_SETTINGS" "_PRE_TRANSFER_NOTES" "_TRANSFER_NOTES")
 
-# Definition of the `_usage` function to provide usage information for the script.
-# *** LEFT UNCHANGED PER YOUR REQUEST ***
-_usage(){
-    cat <<EOF
+# ================================
+# Section 1.3: GUI Field Height Configuration
+# ================================
+declare -A FIELD_HEIGHTS=(
+    ["DESCRIPTION"]="105"
+    ["ENCODER_SETTINGS"]="90"
+    ["_PRE_TRANSFER_NOTES"]="30"
+    ["_TRANSFER_NOTES"]="30"
+)
 
-    $(basename "${0}")
+# ================================
+# Section 2: Terminal Color Definitions
+# ================================
+BOLD=$(tput bold); RESET=$(tput sgr0); DIM=$(tput dim)
+ERROR=$(tput setaf 1); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4); MAGENTA=$(tput setaf 5); CYAN=$(tput setaf 6); WHITE=$(tput setaf 7)
 
-    This application will embed key:value pairs ("tags") into a Matroska file.
-   
-    Usage: $(basename "${0}") [-p|--profile <profile>] /path/to/file
+# ================================
+# Section 3: Core Utility Functions
+# ================================
 
-    Tag keys are pre-defined in sets: JPC or NMAAHC
-
-    JPC:
-        "COLLECTION"
-        "TITLE"
-        "CATALOG_NUMBER"
-        "DESCRIPTION"
-        "DATE_DIGITIZED"
-        "ENCODER_SETTINGS"
-        "ENCODED_BY"
-        "ORIGINAL_MEDIA_TYPE"
-        "DATE_TAGGED"
-        "TERMS_OF_USE"
-        "_PRE_TRANSFER_NOTES"
-        "_TRANSFER_NOTES"
-        "_ORIGINAL_FPS"
-
-    NMAAHC:
-        "COLLECTION"
-        "TITLE"
-        "CATALOG_NUMBER"
-        "DESCRIPTION"
-        "DATE_DIGITIZED"
-        "ENCODER_SETTINGS"
-        "ENCODED_BY"
-        "ORIGINAL_MEDIA_TYPE"
-        "DATE_TAGGED"
-        "TERMS_OF_USE"
-        "_PRE_TRANSFER_NOTES"  
-        "_TRANSFER_NOTES"
-        "_ORIGINAL_FPS"
-        "_TAGTAG"
-
-    Tags beginning with an underscore are not part of the official set of Matroska tags as defined here:
-    https://www.matroska.org/technical/tagging.html
-
-    The script needs swiftdialog to run. It can be installed here:
-    https://github.com/swiftDialog/swiftDialog/releases
-
-    Calling the script will bring up a dialog window in which to enter values for the tag set you have chosen.
-
-    The script can also be run in batch mode by feeding it a .csv
-
-    filename	director    rating
-    test.mkv	dave	    pg
-    test2.mkv	blake	    no
-    test3.mkv	immy	    g
-
-    The filename should be the full path of the file.
-
-    Usage: $(basename "${0}") mycsv.csv
-
-    To produce a csv output from a list of mkv files:
-    $(basename "${0}") -c file1.mkv file2.mkv file3.mkv > my.csv
-
-    The output can then be edited to write back into the source files with "$(basename "${0}") my.csv"
-
-    Tag definitions for JPC:
-    Tag                     Example
-    COLLECTION              The name of the collection that the content or object is from ; ex. Johnson Publishing Company Archive / Pearl Bowser Collection
-    TITLE                   Should be the same as ASpace ; ex. Ebony/Jet Showcase #1001 / A Pinch of Soul
-    CATALOG_NUMBER          Often the file name ; ex. JPC_AV_12345 / 2012.79.2.54.1a
-    DESCRIPTION             Please be brief! Ok to leave blank! ex. In the 1980s a young journalist moves to New York City / Broadcast of the 1978 American Black Achievement Awards
-    DATE_DIGITIZED          yyyy-mm-dd ; ex. 2024-10-10
-    ENCODER_SETTINGS        Source VTR: model name, serial number, video signal type (Composite, SDI, etc.), audio signal type (analog balanced, analog unbalanced, embedded, etc.) ;
-                            TBC/Framesync: model name, serial number, video signal type, audio signal type ;
-                            ADC: model name, serial number, video signal type, audio signal type (if audio is embedded  at this point simply say "embedded") ;
-                            Capture Device: model name, serial number, data connection type (Thunderbolt/PCIe/SATA/etc) ;
-                            Computer: model name, serial number, computer os version, capture software (including version), encoding software (ffmpeg version not required)
-    ENCODED_BY              Entity, name, country ; ex. Smithsonian NMAAHC, James Smithson, US (use ISO 3166-1 alpha-2 codes)
-    ORIGINAL_MEDIA_TYPE     Format (from PB Core), manufacturer, model ; ex. U-matic, Sony, KSP-30 (don't guess or estimate the manufacturer or model - the format is plenty sufficient if the others are ambiguous)
-    DATE_TAGGED             yyyy-mm-dd, this is the date the mkv tags were embedded or updated ; ex. 2024-10-18
-    TERMS_OF_USE            Not definitive, nor authoritative ; ex. Some or all of this video maybe subject to copyright or other intellectual property rights. Proper usage is the responsibility of the user.
-    _PRE_TRANSFER_NOTES     Free text for capturing anything concerning the inspection and any physical conservation or preparation of the tape.
-    _TRANSFER_NOTES         Any technical notes related to the video or digitization process.
-    _ORIGINAL_FPS           For motion picture film, the frames per second at which the film was meant to be projected. most common - 16, 18, 24 ; ex. 24
-
-EOF
-exit
-}
-
+# ================================
+# Section 3.1: Dependency Validation
+# ================================
 _check_dependencies(){
-    DEPS_OK=YES
-    while [ "${*}" != "" ] ; do
-        DEPENDENCY="${1}"
-        if [ ! $(which "${DEPENDENCY}") ] ; then
-            echo "This script requires ${DEPENDENCY} to run but it is not installed"
-            echo "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
-            echo "sudo apt-get install ${DEPENDENCY}"
-            echo "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
-            echo "brew install ${DEPENDENCY}"
-            DEPS_OK=NO
-        fi
-        shift
+    local DEPS_OK=YES
+    for DEP in "$@"; do
+        command -v "${DEP}" >/dev/null 2>&1 || { echo "${ERROR}✗${RESET} Missing: ${BOLD}${DEP}${RESET}"; DEPS_OK=NO; }
     done
-    if [[ "${DEPS_OK}" = "NO" ]]; then
-        echo "Unmet dependencies"
-        echo "Exiting!"
-        exit 1
+    [[ "${DEPS_OK}" = "NO" ]] && { echo "${ERROR}Installation required. Exiting...${RESET}"; exit 1; }
+}
+
+# ================================
+# Section 3.2: File and Text Processing Utilities
+# ================================
+_maketemp(){ mktemp -q -t "$(basename "$0")" || { echo "${ERROR}Can't create temp file${RESET}"; exit 1; }; }
+_escape_xml(){ perl -pe 's/&/&amp;/g; s/</&lt;/g; s/>/&gt;/g; s/'"'"'/&apos;/g; s/"/&quot;/g'; }
+_unescape_xml(){ perl -pe 's/&lt;/</g; s/&gt;/>/g; s/&apos;/'"'"'/g; s/&quot;/"/g; s/&amp;/&/g'; }
+_in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
+
+# ================================
+# Section 3.3: Attachment Processing
+# ================================
+_get_attachments() {
+    local INPUT_FILE="$1"
+    local ATTACHMENT_INFO
+    
+    # Try to get attachment info using mkvextract
+    ATTACHMENT_INFO=$(mkvextract attachments "${INPUT_FILE}" 2>/dev/null | grep "^File name:" | cut -d: -f2- | sed 's/^ *//')
+    
+    # If mkvextract doesn't work or no attachments found, try mediainfo
+    if [[ -z "${ATTACHMENT_INFO}" ]]; then
+        ATTACHMENT_INFO=$(mediainfo --Output="General;%Attachments%" "${INPUT_FILE}" 2>/dev/null)
+    fi
+    
+    # Parse and format attachment names
+    if [[ -n "${ATTACHMENT_INFO}" && "${ATTACHMENT_INFO}" != "N/A" ]]; then
+        # Handle different formats - mediainfo uses " / " separator
+        if echo "${ATTACHMENT_INFO}" | grep -q " / "; then
+            echo "${ATTACHMENT_INFO}" | sed 's/ \/ / ; /g'
+        else
+            # Handle newline-separated format from mkvextract
+            echo "${ATTACHMENT_INFO}" | tr '\n' ';' | sed 's/;$//; s/;/ ; /g'
+        fi
     else
-        return 0
+        echo "none"
     fi
 }
 
-_check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
+# ================================
+# Section 4: Input Validation and Dependency Check
+# ================================
 
-# Escape XML special characters in tag values (for writing)
-_escape_xml() {
-    echo "$1" | sed \
-        -e 's/&/\&amp;/g' \
-        -e 's/</\&lt;/g' \
-        -e 's/>/\&gt;/g' \
-        -e 's/"/\&quot;/g' \
-        -e "s/'/\&apos;/g"
-}
+# ================================
+# Section 4.1: Check Required Dependencies
+# ================================
+_check_dependencies xmlstarlet mkvpropedit mkvextract gtkdialog mediainfo perl awk grep cut sed tr mktemp date
 
-# Unescape XML entities back to original characters (for display)
-_unescape_xml() {
-    echo "$1" | sed \
-        -e 's/\&amp;/\&/g' \
-        -e 's/\&lt;/</g' \
-        -e 's/\&gt;/>/g' \
-        -e 's/\&quot;/"/g' \
-        -e "s/\&apos;/'/g"
-}
-
-# Initialize variables to store the selected tag set (NMAAHC only now).
-SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
-
-OPTIND=1
-while getopts ":chp:" opt ; do
-    case "${opt}" in
-        p) : ;;                         
-        c) MKV2CSV="Y" ;;               
-        h) _usage ;;                    
-        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;
-        *) echo "bad option -${OPTARG}" ; _usage ;;
-    esac
-done
-shift "$((OPTIND-1))"
-
-if [[ "${#}" -eq 0 ]]; then
-    _usage
+# Check for XQuartz on macOS if DISPLAY is not set
+if [[ "$(uname)" == "Darwin" ]] && [[ -z "$DISPLAY" ]]; then
+    if ! pgrep -x "Xquartz" > /dev/null && ! ls /Applications/Utilities/XQuartz.app > /dev/null 2>&1; then
+        echo "${ERROR}✗${RESET} XQuartz not found or not running"
+        echo "  ${DIM}macOS requires XQuartz for GTK applications${RESET}"
+        echo "  ${DIM}Install from: https://www.xquartz.org/${RESET}"
+        echo "  ${DIM}Or install via Homebrew: brew install --cask xquartz${RESET}"
+        exit 1
+    fi
+    # Set DISPLAY if XQuartz is available but DISPLAY isn't set
+    [[ -z "$DISPLAY" ]] && export DISPLAY=:0
 fi
 
+# ================================
+# Section 4.2: Validate Input File
+# ================================
 INPUT_FILE="${1}"
-EXTENSION="${INPUT_FILE##*.}"
-
-_maketemp(){
-    mktemp -q -t "$(basename "${0}")"
-    if [ "${?}" -ne 0 ]; then
-        echo "${0}: ${ERROR}Can't create temp file, exiting...${RESET}"
-        exit 1
-    fi
+[[ -z "${INPUT_FILE}" ]] && {
+    echo "${ERROR}✗ No input file provided${RESET}"
+    echo "  ${DIM}Usage:${RESET} ${CYAN}$(basename "$0")${RESET} <mkv_file>"
+    exit 1
 }
 
-# ------------------------------
-# CSV MODE
-# ------------------------------
-if [[ "${EXTENSION}" == "csv" ]] ; then
-    CSV_XML="$(_maketemp).xml"
-    csvprintf -X -f "${INPUT_FILE}" > "${CSV_XML}"
-    ELEMENT_LIST="$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -n "${CSV_XML}")"
-    FILENAME_FOUND=0
-    echo "Examining the csv: ${CSV_XML}."
-    while read ELEMENT_VALUE ; do
-        if [[ "${ELEMENT_VALUE//_}" == "filename" ]] ; then
-            FILENAME_COLUMN_NAME="${ELEMENT_VALUE}"
-            ELEMENT_VALUE="filename"
-        fi
-        echo "Found ${ELEMENT_VALUE}."
-        ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"
-        if [[ "${ELEMENT_VALUE}" == "filename" ]] ; then
-            FILENAME_FOUND=1
-        fi
-    done < <(echo "${ELEMENT_LIST}")
+# ================================
+# Section 5: Tag Extraction and Processing
+# ================================
 
-    if [[ "${FILENAME_FOUND}" = "0" ]] ; then
-        echo "${BOLD}${ERROR}Error, $(basename "${INPUT_FILE}") does not contain a column called 'filename'. Exiting.${RESET}"
-        exit
-    fi
+# ================================
+# Section 5.1: Initialize and Extract Existing Tags
+# ================================
+echo "${CYAN}Reading:${RESET} ${DIM}$(basename "${INPUT_FILE}")${RESET}"
 
-    MISSING_FILE=0
-    REPEATED_FILENAMES="$(xmlstarlet sel -t -m "/csv/row/___filename" -v . -n  "${CSV_XML}" | sort | uniq -c | grep -v "^ *1 ")"
-    if [[ -n "${REPEATED_FILENAMES}" ]] ; then
-        echo "${BOLD}${ERROR}Error, ${INPUT_FILE} contains multiple iterations of the same filename.${RESET}"
-        echo "${REPEATED_FILENAMES}"
-        echo "${BOLD}${ERROR}Come back when it's fixed.${RESET}"
-        exit 1
-    fi
-    while read FILE_IN_CSV ; do
-        if [[ ! -f "${FILE_IN_CSV}" ]] ; then
-            echo "${BOLD}${ERROR}Error, $(basename "${FILE_IN_CSV}") is referenced in the csv but not found.${RESET}"
-            MISSING_FILE=1
-            MISSING_FILE_LIST+="${FILE_IN_CSV} "
-        fi
-    done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
-    if [[ -z "${FILENAME_COLUMN_NAME}" ]] ; then
-        FILENAME_COLUMN_NAME="filename"
-    fi
-    if [[ "${MISSING_FILE}" != "0" ]] ; then
-        echo "${BOLD}${ERROR}Error, Some files in the csv, such as ${MISSING_FILE_LIST}, are not found. Exiting.${RESET}"
-        exit
-    else
-        echo "${BOLD}Nice. All files from the csv are found. Let's tag.${RESET}"
-    fi
-
-    while read FILE_IN_CSV ; do
-        XML_DRAFT="$(_maketemp).xml"
-        mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
-        EXISTING_TAGS="$(xmlstarlet sel -t -m '/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple/Name' -v . -n "${XML_DRAFT}" | awk '!seen[$0]++')"
-        echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
-        echo "---------------------|---------------------"
-
-        while read TAG_NAME ; do
-            TAG_VALUE="$(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/${TAG_NAME}" -v "." -n "${CSV_XML}")"
-            if [[ "${TAG_NAME//_}" == "filename" ]] ; then
-                TAG_NAME="filename"
-            fi
-
-            if ! xmlstarlet sel -t -m '/Tags/Tag[not(Targets) or count(Targets/*)=0]' -v '.' -n "${XML_DRAFT}" | grep -q . ; then
-              xmlstarlet ed -P -L \
-                -s '/Tags' -t elem -n 'Tag' \
-                -s '/Tags/Tag[last()]' -t elem -n 'Targets' \
-                "${XML_DRAFT}"
-              echo "Added a new <Tag> with empty <Targets> with ${FILE_IN_CSV}."
-            fi
-
-            if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME//_}" != "filename" ]] ; then
-                if echo "${EXISTING_TAGS}" | grep -Fxq "${TAG_NAME}"; then
-                    xml ed --omit-decl -P --inplace \
-                        --update "(/Tags/Tag[Simple/Name='${TAG_NAME}'])[last()]/Simple[Name='${TAG_NAME}']/String" -v "$(_escape_xml "${TAG_VALUE}")" \
-                        "${XML_DRAFT}"
-                else
-                    xml ed --omit-decl --inplace \
-                        --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]" --type elem -n "Simple" \
-                        --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" \
-                        --subnode "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[not(String)]" --type elem -n "String" -v "$(_escape_xml "${TAG_VALUE}")" \
-                        "${XML_DRAFT}"
-                fi
-            fi
-            printf "%-22s" "$TAG_NAME"
-            echo "$TAG_VALUE" | sed '1n; s/^/                      /'
-
-        done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -n "${CSV_XML}")
-
-        echo
-        mkvpropedit --tags "all:${XML_DRAFT}" "${FILE_IN_CSV}"
-
-    done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
-
-    exit
-fi
-
-if [[ "${MKV2CSV}" == "Y" ]] ; then
-    INPUT_FILES=("$@")
-    while [[ "${@}" != "" ]] ; do
-        INPUT_FILE="${1}"
-        shift
-        EXTRACTED_TAGS="$(_maketemp).xml"
-        XML_DRAFT="$(_maketemp).xml"
-        mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
-        TAGS_FOUND+="$(xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -n "${EXTRACTED_TAGS}")"$'\n'
-    done
-    UNIQUE_TAGS="$(awk 'NF && !seen[$0]++' <<< "$TAGS_FOUND")"
-
-    CSV_XML="$(_maketemp).xml"
-    echo "<csv/>" > "${CSV_XML}"
-    for INPUT_FILE in "${INPUT_FILES[@]}"; do
-        XML_ED_INSTRUCTIONS=()
-        EXTRACTED_TAGS="$(_maketemp).xml"
-        mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
-        while read UNIQUE_TAG ; do
-            UNIQUE_TAG_VALUE="$(xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${UNIQUE_TAG}']" -v "String" -n "${EXTRACTED_TAGS}")"
-            XML_ED_INSTRUCTIONS+=(--subnode "/csv/row[not(${UNIQUE_TAG})]" --type elem -n "${UNIQUE_TAG}" -v "${UNIQUE_TAG_VALUE}")
-        done <<< "${UNIQUE_TAGS}"
-
-        xml ed --omit-decl --inplace \
-            --subnode "/csv" --type elem -n "row" \
-            --subnode "/csv/row[not(filename)]" --type elem -n "filename" -v "${INPUT_FILE}" "${XML_ED_INSTRUCTIONS[@]}" "${CSV_XML}"
-    done
-    CSV_HEADER=$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -o "," "${CSV_XML}" | sed 's/,$//')
-    echo "${CSV_HEADER}"
-    xml2csv "${CSV_XML}"
-    exit
-fi
-
-# ------------------------------
-# GUI MODE
-# ------------------------------
-EXISTING_TAGS="$(_maketemp).txt"
-EXTRACTED_TAGS="$(_maketemp).txt"
+EXTRACTED_TAGS="$(_maketemp).xml"
 XML_DRAFT="$(_maketemp).xml"
 
-mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
-xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -n "${EXTRACTED_TAGS}" >> "${EXISTING_TAGS}"
+# Extract tags once
+mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}" 2>/dev/null
+[[ ! -s "${EXTRACTED_TAGS}" ]] || ! grep -q "<Simple>" "${EXTRACTED_TAGS}" 2>/dev/null && {
+    echo '<Tags><Tag></Tag></Tags>' > "${EXTRACTED_TAGS}"
+}
 
-while read EXISTING_KEY ; do
-    DIALOG_LIST+="${EXISTING_KEY} "
-    if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
-        TEMP_DIALOG_VALUE="$(_maketemp).txt"
-        xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" \
-            | _unescape_xml > "${TEMP_DIALOG_VALUE}"
-        LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
-        if [[ ! " ${SELECTED_TAG_SET[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
-            KEY_LABEL="${EXISTING_KEY}*"
-        else
-            KEY_LABEL="${EXISTING_KEY}"
-        fi
-        LIST_OF_KEYS+=("${EXISTING_KEY}")
-        if [[ "${LINE_COUNT}" -lt "2" ]] ; then
-            DIALOG_LIST_EMBEDDED+="
-                    <hbox>
-                        <hbox width-request=\"200\">
-                            <text xalign=\"0\">
-                                <label>${KEY_LABEL}</label>
-                            </text>
-                        </hbox>
-                        <hbox width-request=\"800\">
-                            <entry width=\"700\">
-                                <variable>${EXISTING_KEY}</variable>
-                                <input file>${TEMP_DIALOG_VALUE}</input>
-                                <action signal=\"show\">refresh:${EXISTING_KEY}</action>
-                            </entry>
-                        </hbox>
-                    </hbox>"
-        else
-            DIALOG_LIST_EMBEDDED+="
-                <hbox>
-                    <hbox width-request=\"200\">
-                        <text xalign=\"0\">
-                            <label>${KEY_LABEL}</label>
-                        </text>
-                    </hbox>
-                    <hbox width-request=\"800\">
-                        <edit width=\"700\" wrap-mode=\"1\">
-                            <variable>${EXISTING_KEY}</variable>
-                            <input file>${TEMP_DIALOG_VALUE}</input>
-                            <action signal=\"show\">refresh:${EXISTING_KEY}</action>
-                        </edit>
-                    </hbox>
-                </hbox>"
-        fi
-    fi
+# ================================
+# Section 5.2: Process Existing Tags into Arrays
+# ================================
+# Process tags and create temp files for each
+TAG_KEYS=()
+TAG_FILES=()
+EXISTING_TAGS="$(_maketemp).txt"
+xmlstarlet sel -t -m "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple/Name" -v . -n "${EXTRACTED_TAGS}" 2>/dev/null > "${EXISTING_TAGS}"
+
+while IFS= read -r EXISTING_KEY; do
+    [[ -z "${EXISTING_KEY}" ]] && continue
+    TMPFILE="$(_maketemp).txt"
+    xmlstarlet sel -t \
+        -m "/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple[Name='${EXISTING_KEY}']" \
+        -v "String" -n "${EXTRACTED_TAGS}" 2>/dev/null | _unescape_xml > "${TMPFILE}"
+    TAG_KEYS+=("${EXISTING_KEY}")
+    TAG_FILES+=("${TMPFILE}")
 done < "${EXISTING_TAGS}"
 
-for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
-    PROFILE_KEY="${PROFILE_TAG%%=*}"
-    if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${PROFILE_TAG}[[:space:]] ]] ; then
-        LIST_OF_KEYS+=("${PROFILE_TAG}")
-        if [[ "${PROFILE_KEY}" == "DESCRIPTION" || "${PROFILE_KEY}" == "ENCODER_SETTINGS" ]]; then
-            DIALOG_LIST_PROFILE+="
-                <hbox>
-                    <hbox width-request=\"200\">
-                        <text xalign=\"0\">
-                            <label>${PROFILE_KEY}</label>
-                        </text>
-                    </hbox>
-                    <hbox width-request=\"800\">
-                        <edit width=\"700\" wrap-mode=\"1\">
-                            <variable>${PROFILE_KEY}</variable>
-                        </edit>
-                    </hbox>
-                </hbox>"
-        else
-            DIALOG_LIST_PROFILE+="
-                <hbox>
-                    <hbox width-request=\"200\">
-                        <text xalign=\"0\">
-                            <label>${PROFILE_KEY}</label>
-                        </text>
-                    </hbox>
-                    <hbox width-request=\"800\">
-                        <entry width=\"700\">
-                            <variable>${PROFILE_KEY}</variable>
-                        </entry>
-                    </hbox>
-                </hbox>"
+# ================================
+# Section 5.3: Prepare Attachment Information
+# ================================
+# Get attachment information and add to tag processing
+ATTACHMENT_LIST=$(_get_attachments "${INPUT_FILE}")
+ATTACHMENT_FILE="$(_maketemp).txt"
+echo "${ATTACHMENT_LIST}" > "${ATTACHMENT_FILE}"
+
+# ================================
+# Section 5.4: Helper Functions for Tag Processing
+# ================================
+# Helper to get value file for a key
+_get_value_file() {
+    local KEY="$1"
+    for i in "${!TAG_KEYS[@]}"; do
+        if [[ "${TAG_KEYS[$i]}" == "${KEY}" ]]; then
+            echo "${TAG_FILES[$i]}"
+            return 0
         fi
-    fi 
+    done
+    return 1
+}
+
+# ================================
+# Section 6: GUI Field Generation
+# ================================
+
+# ================================
+# Section 6.1: Field Generation Function
+# ================================
+_make_field() {
+    local KEY="$1" VALUE_FILE="$2" MULTI="$3" RO="$4"
+    
+    # Get custom height if defined, otherwise use default
+    local HEIGHT="${FIELD_HEIGHTS[$KEY]:-100}"
+    
+    if [[ "$RO" == "yes" ]]; then
+        echo "<hbox>
+            <hbox width-request=\"200\"><text xalign=\"0\"><label>${KEY} [RO]</label></text></hbox>
+            <hbox width-request=\"800\">
+                <hbox width-request=\"800\">
+                    <entry editable=\"false\" sensitive=\"false\">
+                        <variable>${KEY}</variable>
+                        <input file>${VALUE_FILE}</input>
+                    </entry>
+                </hbox>
+            </hbox>
+        </hbox>"
+    elif [[ "$MULTI" == "yes" ]]; then
+        echo "<hbox>
+            <hbox width-request=\"200\"><text xalign=\"0\"><label>${KEY}</label></text></hbox>
+            <hbox width-request=\"800\">
+                <vbox height-request=\"${HEIGHT}\" width-request=\"800\">
+                    <edit wrap-mode=\"1\">
+                        <variable>${KEY}</variable>
+                        <input file>${VALUE_FILE}</input>
+                    </edit>
+                </vbox>
+            </hbox>
+        </hbox>"
+    else
+        echo "<hbox>
+            <hbox width-request=\"200\"><text xalign=\"0\"><label>${KEY}</label></text></hbox>
+            <hbox width-request=\"800\">
+                <hbox width-request=\"800\">
+                    <entry>
+                        <variable>${KEY}</variable>
+                        <input file>${VALUE_FILE}</input>
+                    </entry>
+                </hbox>
+            </hbox>
+        </hbox>"
+    fi
+}
+
+# ================================
+# Section 6.2: Build GUI Sections
+# ================================
+# Build sections
+SECTIONS=""
+LIST_OF_KEYS=()
+
+# ================================
+# Section 6.2.1: Read-Only Tags (Technical and Hashes)
+# ================================
+# Read-Only tags
+RO_FIELDS=""
+for TAG in "${RO_TAGS[@]}"; do
+    VALUE_FILE=$(_get_value_file "$TAG")
+    if [[ -z "$VALUE_FILE" ]]; then
+        VALUE_FILE="$(_maketemp).txt"
+        : > "$VALUE_FILE"
+    fi
+    RO_FIELDS+="$(_make_field "$TAG" "$VALUE_FILE" "no" "yes")"
+    LIST_OF_KEYS+=("$TAG")
 done
 
-echo '
-style "bgWhite" { bg[NORMAL] = "#FFFFFF" }
-style "fgWhite" { fg[NORMAL] = "white"  font_name = "Mono 16"}
-style "fgBlack" { fg[NORMAL] = "black" }
+# Add ATTACHMENTS field manually
+RO_FIELDS+="$(_make_field "ATTACHMENTS" "$ATTACHMENT_FILE" "no" "yes")"
+LIST_OF_KEYS+=("ATTACHMENTS")
+
+[[ -n "$RO_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Technical and Hashes</span></b>\"</label></text>${RO_FIELDS}"
+
+# ================================
+# Section 6.2.2: NMAAHC Standard Tags
+# ================================
+# NMAAHC tags
+MAIN_FIELDS=""
+EMPTY_FIELDS=""
+for TAG in "${MKV_TAG_SET_NMAAHC[@]}"; do
+    MULTI=$(_in_list "$TAG" "${MULTILINE_TAGS[@]}" && echo "yes" || echo "no")
+    VALUE_FILE=$(_get_value_file "$TAG")
+    if [[ -n "$VALUE_FILE" ]] && [[ -s "$VALUE_FILE" ]]; then
+        MAIN_FIELDS+="$(_make_field "$TAG" "$VALUE_FILE" "$MULTI" "no")"
+    else
+        EMPTY_FILE="$(_maketemp).txt"
+        : > "$EMPTY_FILE"
+        EMPTY_FIELDS+="$(_make_field "$TAG" "$EMPTY_FILE" "$MULTI" "no")"
+    fi
+    LIST_OF_KEYS+=("$TAG")
+done
+[[ -n "$MAIN_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>NMAAHC Tags</span></b>\"</label></text>${MAIN_FIELDS}"
+
+# ================================
+# Section 6.2.3: Extra Tags (Non-Standard)
+# ================================
+# Extra tags
+EXTRA_FIELDS=""
+for i in "${!TAG_KEYS[@]}"; do
+    TAG="${TAG_KEYS[$i]}"
+    _in_list "$TAG" "${RO_TAGS[@]}" && continue
+    _in_list "$TAG" "${MKV_TAG_SET_NMAAHC[@]}" && continue
+    [[ "$TAG" == "ATTACHMENTS" ]] && continue
+    VALUE_FILE="${TAG_FILES[$i]}"
+    MULTI=$(grep -q $'\n' "$VALUE_FILE" 2>/dev/null && echo "yes" || echo "no")
+    EXTRA_FIELDS+="$(_make_field "${TAG}*" "$VALUE_FILE" "$MULTI" "no")"
+    LIST_OF_KEYS+=("$TAG")
+done
+[[ -n "$EXTRA_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b>Extra Tags</b>\"</label></text>${EXTRA_FIELDS}"
+
+# ================================
+# Section 6.2.4: Empty Tags Section
+# ================================
+[[ -n "$EMPTY_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Empty Tags</span></b>\"</label></text>${EMPTY_FIELDS}"
+
+# ================================
+# Section 7: Create and Launch Dialog
+# ================================
+
+# ================================
+# Section 7.1: GTK Theme Configuration
+# ================================
+cat > /tmp/gtkrc_mono <<EOF
 style "bgMain" { bg[NORMAL] = "#671E75" }
-style "bgRed" { bg[NORMAL] = "red" }
-style "fgRed" { fg[NORMAL] = "red" }
-style "bgGreen" { bg[NORMAL] = "#BB55BB" }
-style "fgGreen" { fg[NORMAL] = "green" }
-style "bgBlue" { bg[NORMAL] = "#0000FF" }
-style "fgBlue" { fg[NORMAL] = "#0000FF" }
-style "custom-font" { font_name = "Sans 64" }
-
+style "fgWhite" { fg[NORMAL] = "white" font_name = "Mono 16"}
 widget "mkvnotemain" style "bgMain"
-
 widget_class "*GtkLabel" style "fgWhite"
-widget_class "*.GtkLabel" style "fgWhite"
-
-' > /tmp/gtkrc_mono
+EOF
 export GTK2_RC_FILES=/tmp/gtkrc_mono
 
+# ================================
+# Section 7.2: Dialog XML Generation
+# ================================
 DIALOG_FORM="$(_maketemp).xml"
-
-cat << EOF > "${DIALOG_FORM}"
-<window title="Welcome to mkvnote!" default-width="1100" name="mkvnotemain">
+cat > "${DIALOG_FORM}" <<EOF
+<window title="Welcome to NMAAHC mkvnote - Matroska Metadata Editor!" default-width="1100" name="mkvnotemain">
     <vbox>
         <text xalign="0" width-request="1000">
-            <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
+            <label>Edit metadata tags. These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other piece of the file. Empty tags will be ignored. If you edit existing tags here, they will be overwritten when saved.</label>
         </text>
-        <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
-            <text xalign="0" width-request="1000">
-                <label>Metadata tags already embedded. (* for part of the NMAAHC profile)</label>
-            </text>
-            ${DIALOG_LIST_EMBEDDED}
-            <text xalign="0" width-request="1000">
-                <label>Yet unused metadata tags from the NMAAHC profile.</label>
-            </text>
-            ${DIALOG_LIST_PROFILE}
-        </vbox>
-        <hbox space-expand="false" space-fill="false">
-            <button>
-                <label>Settings</label>
-                <input file stock="gtk-index"></input>
-                <variable export="false">settings_button</variable>
-            </button>
-            <hbox space-expand="true" space-fill="true">
-                <text>
-                    <label>""</label>
-                </text>
-            </hbox>
+        <vbox scrollable="true" height="800" spacing="8" border-width="15">${SECTIONS}</vbox>
+        <text xalign="0" width-request="1000">
+            <label>Developed by Smithsonian NMAAHC in collaboration with Dave Rice</label>
+        </text>
+        <hbox>
             <button>
                 <label>Tag-On!</label>
                 <input file stock="gtk-media-record"></input>
-                <variable export="false">record_button</variable>
             </button>
-            <button cancel>
-            </button>
+            <button cancel></button>
         </hbox>
     </vbox>
 </window>
 EOF
 
-DIALOG_RESULT="$(export MAIN_DIALOG="$(cat "${DIALOG_FORM}")" ; gtkdialog --center --program MAIN_DIALOG)"
-EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's
+# ================================
+# Section 8: Run Dialog
+# ================================
+export DISPLAY=:0
+export MAIN_DIALOG="$(cat "${DIALOG_FORM}")"
+DIALOG_RESULT="$(gtkdialog --center --program MAIN_DIALOG)"
+EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//;s/"$//')"
 
+[[ "${EXIT_STATUS}" == "Cancel" ]] && { echo "${YELLOW}⚠ Operation cancelled${RESET}"; exit; }
 
-    # A fun message to indicate completion
-    cowsay "Cool. Done. Enjoy. Tag-on. ${INPUT_FILE}.${RESET}"
+# ================================
+# Section 9: Process Results
+# ================================
+
+# ================================
+# Section 9.1: Tag Processing and XML Generation
+# ================================
+if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
+    # Build XML
+    XML_BUILD="$(_maketemp).xml"
+    echo '<?xml version="1.0"?>' > "${XML_BUILD}"
+    echo '<Tags>' >> "${XML_BUILD}"
+    echo '<Tag>' >> "${XML_BUILD}"
+    
+    TAG_COUNT=0
+    FINAL_TAGS=()
+    FINAL_VALUES=()
+    
+    # ================================
+    # Section 8.1.1: Extract Values from Dialog Results
+    # ================================
+    for TAG_NAME in "${LIST_OF_KEYS[@]}"; do
+        # Get value (read-only tags use original, others from dialog)
+        if _in_list "$TAG_NAME" "${RO_TAGS[@]}"; then
+            # Get original value from file for read-only tags
+            for i in "${!TAG_KEYS[@]}"; do
+                if [[ "${TAG_KEYS[$i]}" == "$TAG_NAME" ]]; then
+                    VALUE_FILE="${TAG_FILES[$i]}"
+                    [[ -s "$VALUE_FILE" ]] && TAG_VALUE=$(cat "$VALUE_FILE") || TAG_VALUE=""
+                    break
+                fi
+            done
+        else
+            # Extract from dialog - handle multi-line values
+            TAG_VALUE=$(printf "%s" "${DIALOG_RESULT}" | awk -v tag="${TAG_NAME}" '
+                BEGIN { 
+                    in_tag = 0
+                    value = ""
+                }
+                {
+                    if (match($0, "^" tag "=")) {
+                        in_tag = 1
+                        rest = substr($0, length(tag) + 2)
+                        if (substr(rest, 1, 1) == "\"") {
+                            rest = substr(rest, 2)
+                            if (match(rest, "\"$")) {
+                                value = substr(rest, 1, length(rest) - 1)
+                                in_tag = 0
+                            } else {
+                                value = rest "\n"
+                            }
+                        } else {
+                            value = rest
+                            in_tag = 0
+                        }
+                    }
+                    else if (in_tag) {
+                        if (match($0, "^[A-Z_]+=") || match($0, "^EXIT=")) {
+                            in_tag = 0
+                        } else if (match($0, "\"$")) {
+                            value = value substr($0, 1, length($0) - 1)
+                            in_tag = 0
+                        } else {
+                            value = value $0 "\n"
+                        }
+                    }
+                }
+                END {
+                    gsub(/\n$/, "", value)
+                    gsub(/\\"/, "\"", value)
+                    print value
+                }
+            ')
+        fi
+        
+        [[ -z "${TAG_VALUE// /}" ]] && continue
+        
+        FINAL_TAGS+=("$TAG_NAME")
+        FINAL_VALUES+=("$TAG_VALUE")
+        TAG_COUNT=$((TAG_COUNT + 1))
+        
+        # ================================
+        # Section 9.1.2: Generate XML Elements
+        # ================================
+        echo "  <Simple>" >> "${XML_BUILD}"
+        echo "    <Name>${TAG_NAME}</Name>" >> "${XML_BUILD}"
+        if _in_list "$TAG_NAME" "${MULTILINE_TAGS[@]}"; then
+            echo "    <String><![CDATA[${TAG_VALUE}]]></String>" >> "${XML_BUILD}"
+        else
+            ESCAPED=$(echo "$TAG_VALUE" | _escape_xml)
+            echo "    <String>${ESCAPED}</String>" >> "${XML_BUILD}"
+        fi
+        echo "  </Simple>" >> "${XML_BUILD}"
+    done
+    
+    echo '</Tag>' >> "${XML_BUILD}"
+    echo '</Tags>' >> "${XML_BUILD}"
+    
+    # ================================
+    # Section 9.2: Write Tags to MKV File
+    # ================================
+    if mkvpropedit --tags "global:${XML_BUILD}" "${INPUT_FILE}" 2>/dev/null; then
+        
+        # ================================
+        # Section 9.2.1: Success Output Display
+        # ================================
+        echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo "  ${GREEN}✓${RESET} ${BOLD}Successfully Tagged${RESET}"
+        echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo "  File: ${CYAN}$(basename "${INPUT_FILE}")${RESET}"
+        echo "  Tags Written: ${YELLOW}${TAG_COUNT}${RESET}"
+        echo ""
+        
+        # ================================
+        # Section 9.2.2: Display Tagged Values
+        # ================================
+        for i in "${!FINAL_TAGS[@]}"; do
+            TAG_NAME="${FINAL_TAGS[$i]}"
+            TAG_VALUE="${FINAL_VALUES[$i]}"
+            
+            # Color coding
+            case "$TAG_NAME" in
+                *HASH*|ENCODER) COLOR="${BLUE}"; ICON="${BLUE}◆${RESET}" ;;
+                TITLE|COLLECTION) COLOR="${MAGENTA}"; ICON="${MAGENTA}◆${RESET}" ;;
+                *DATE*) COLOR="${YELLOW}"; ICON="${YELLOW}◆${RESET}" ;;
+                *NOTES*|DESCRIPTION) COLOR="${CYAN}"; ICON="${CYAN}◆${RESET}" ;;
+                CATALOG_NUMBER) COLOR="${GREEN}"; ICON="${GREEN}◆${RESET}" ;;
+                *) COLOR="${WHITE}"; ICON="•" ;;
+            esac
+            
+            printf "  ${ICON} ${COLOR}%-28s${RESET}" "${TAG_NAME}"
+            if echo "${TAG_VALUE}" | grep -q $'\n'; then
+                LINE_COUNT=$(echo "${TAG_VALUE}" | wc -l)
+                echo "[${LINE_COUNT} lines]"
+                echo "${TAG_VALUE}" | while IFS= read -r line; do
+                    echo "      ${DIM}│${RESET} ${line}"
+                done
+            else
+                echo "${TAG_VALUE}"
+            fi
+        done
+        
+        echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        
+        # ================================
+        # Section 9.3: JSON Export
+        # ================================
+        # JSON Export
+        JSON_OUTPUT="${INPUT_FILE%.mkv}_tags.json"
+        echo "# json formatted output of tags generated via the mkvnote tool developed by Smithsonian NMAAHC in collaboration with Dave Rice. https://github.com/NMAAHC/nmaahcmm" > "${JSON_OUTPUT}"
+        echo "{" >> "${JSON_OUTPUT}"
+        echo "  \"file\": \"$(basename "${INPUT_FILE}")\"," >> "${JSON_OUTPUT}"
+        echo "  \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"," >> "${JSON_OUTPUT}"
+        echo "  \"tag_count\": ${TAG_COUNT}," >> "${JSON_OUTPUT}"
+        echo "  \"tags\": {" >> "${JSON_OUTPUT}"
+        
+        # ================================
+        # Section 9.3.1: Add ATTACHMENTS to JSON
+        # ================================
+        # Add ATTACHMENTS field first (after technical hashes)
+        ATTACHMENT_VALUE=$(_get_attachments "${INPUT_FILE}")
+        ESCAPED_ATTACHMENTS=$(echo "$ATTACHMENT_VALUE" | sed 's/\\/\\\\/g; s/"/\\"/g')
+        echo "    \"ATTACHMENTS\": \"${ESCAPED_ATTACHMENTS}\"," >> "${JSON_OUTPUT}"
+        
+        # ================================
+        # Section 9.3.2: Process All Tags for JSON
+        # ================================
+        for i in "${!FINAL_TAGS[@]}"; do
+            TAG_NAME="${FINAL_TAGS[$i]}"
+            TAG_VALUE="${FINAL_VALUES[$i]}"
+            
+            if echo "${TAG_VALUE}" | grep -q $'\n'; then
+                echo -n "    \"${TAG_NAME}\": [" >> "${JSON_OUTPUT}"
+                FIRST=true
+                while IFS= read -r line; do
+                    ESCAPED=$(echo "$line" | sed 's/\\/\\\\/g; s/"/\\"/g')
+                    if [[ "$FIRST" == true ]]; then
+                        echo "" >> "${JSON_OUTPUT}"
+                        echo -n "      \"${ESCAPED}\"" >> "${JSON_OUTPUT}"
+                        FIRST=false
+                    else
+                        echo "," >> "${JSON_OUTPUT}"
+                        echo -n "      \"${ESCAPED}\"" >> "${JSON_OUTPUT}"
+                    fi
+                done <<< "${TAG_VALUE}"
+                echo "" >> "${JSON_OUTPUT}"
+                echo -n "    ]" >> "${JSON_OUTPUT}"
+            else
+                ESCAPED=$(echo "$TAG_VALUE" | sed 's/\\/\\\\/g; s/"/\\"/g')
+                echo -n "    \"${TAG_NAME}\": \"${ESCAPED}\"" >> "${JSON_OUTPUT}"
+            fi
+            
+            if [[ $i -eq $((${#FINAL_TAGS[@]} - 1)) ]]; then
+                echo "" >> "${JSON_OUTPUT}"
+            else
+                echo "," >> "${JSON_OUTPUT}"
+            fi
+        done
+        
+        echo "  }" >> "${JSON_OUTPUT}"
+        echo "}" >> "${JSON_OUTPUT}"
+        
+        echo "  ${CYAN}JSON exported:${RESET} ${DIM}$(basename "${JSON_OUTPUT}")${RESET}"
+        
+    else
+        # ================================
+        # Section 9.4: Error Handling
+        # ================================
+        echo "${ERROR}✗ Error writing tags${RESET}"
+        exit 1
+    fi
 fi
