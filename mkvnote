@@ -23,6 +23,7 @@ MKV_TAG_SET_NMAAHC=(
     "ENCODED_BY"
     "ORIGINAL_MEDIA_TYPE"
     "DATE_TAGGED"
+    "_TAGGED_BY"
     "TERMS_OF_USE"
     "_PRE_TRANSFER_NOTES"
     "_TRANSFER_NOTES"
@@ -478,6 +479,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         echo "  ${GREEN}✓${RESET} ${BOLD}Successfully Tagged${RESET}"
         echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
         echo "  File: ${CYAN}$(basename "${INPUT_FILE}")${RESET}"
+        echo "  Path: ${DIM}$(realpath "${INPUT_FILE}")${RESET}"
         echo "  Tags Written: ${YELLOW}${TAG_COUNT}${RESET}"
         echo ""
         
@@ -516,7 +518,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         # Section 9.3: JSON Export
         # ================================
         # JSON Export
-        JSON_OUTPUT="${INPUT_FILE%.mkv}_tags.json"
+        JSON_OUTPUT="${INPUT_FILE%.mkv}_mkvnote_tags.json"
         echo "# json formatted output of tags generated via the mkvnote tool developed by Smithsonian NMAAHC in collaboration with Dave Rice. https://github.com/NMAAHC/nmaahcmm" > "${JSON_OUTPUT}"
         echo "{" >> "${JSON_OUTPUT}"
         echo "  \"file\": \"$(basename "${INPUT_FILE}")\"," >> "${JSON_OUTPUT}"
@@ -571,6 +573,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         echo "}" >> "${JSON_OUTPUT}"
         
         echo "  ${CYAN}JSON exported:${RESET} ${DIM}$(basename "${JSON_OUTPUT}")${RESET}"
+        echo "  Path: ${DIM}$(realpath "${JSON_OUTPUT}")${RESET}"
         
     else
         # ================================
