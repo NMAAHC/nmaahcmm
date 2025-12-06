@@ -376,7 +376,7 @@ if [[ "${MKV2CSV}" == "Y" ]] ; then
             if [[ "${UNIQUE_TAG}" == "${UNIQUE_TAG// /}" ]] ; then
                 XML_ED_INSTRUCTIONS+=(--subnode "/csv/row[not(${UNIQUE_TAG})]" --type elem -n "${UNIQUE_TAG}" -v "${UNIQUE_TAG_VALUE}")
             else
-                echo "${BOLD}${ERROR}Warning, ${INPUT_FILE} contains a TagName of '${UNIQUE_TAG}'; however TagName is not allowed to contain a space. This value will be ignored while making the csv. See ${EXTRACTED_TAGS} for the tag structure of this file if you like.${RESET}"
+                echo "${BOLD}${ERROR}Warning, ${INPUT_FILE} contains a TagName of '${UNIQUE_TAG}'; however TagName is not allowed to contain a space. This value will be ignored while making the csv. See ${EXTRACTED_TAGS} for the tag structure of this file if you like.${RESET}" >&2
             fi
         done <<< "${UNIQUE_TAGS}"
 
