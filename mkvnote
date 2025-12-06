@@ -373,7 +373,11 @@ if [[ "${MKV2CSV}" == "Y" ]] ; then
         mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
         while read UNIQUE_TAG ; do
             UNIQUE_TAG_VALUE="$(xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${UNIQUE_TAG}']" -v "String" -n "${EXTRACTED_TAGS}")"
+            if [[ "${UNIQUE_TAG}" == "${UNIQUE_TAG// /}" ]] ; then
             XML_ED_INSTRUCTIONS+=(--subnode "/csv/row[not(${UNIQUE_TAG})]" --type elem -n "${UNIQUE_TAG}" -v "${UNIQUE_TAG_VALUE}")
+            else
+                echo "${BOLD}${ERROR}Warning, ${INPUT_FILE} contains a TagName of '${UNIQUE_TAG}'; however TagName is not allowed to contain a space. This value will be ignored while making the csv. See ${EXTRACTED_TAGS} for the tag structure of this file if you like.${RESET}"
+            fi
         done <<< "${UNIQUE_TAGS}"
 
         # get context about the input
