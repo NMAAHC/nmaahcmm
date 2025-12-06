@@ -241,8 +241,12 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         exit 1
     fi
     # Iterate through the 'filename' column values in the CSV to check if the corresponding files exist.
+    ROW_COUNTER=1 # just a counter for when we need to communicate what row we're processing while going through the csv
     while read FILE_IN_CSV ; do
-        if [[ ! -f "${FILE_IN_CSV}" ]] ; then
+        ((ROW_COUNTER++))
+        if [[ -z "${FILE_IN_CSV}" ]] ; then
+            echo "${BOLD}${ERROR}Warning, the filename column on row ${ROW_COUNTER} is empty.${RESET}"
+        elif [[ ! -f "${FILE_IN_CSV}" ]] ; then
             # If a file listed in the CSV is not found, display an error message and set the missing file flag.
             echo "${BOLD}${ERROR}Error, $(basename "${FILE_IN_CSV}") is referenced in the csv but not found.${RESET}"
             MISSING_FILE=1
