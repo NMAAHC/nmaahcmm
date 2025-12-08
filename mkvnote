@@ -106,10 +106,20 @@ _usage(){
 
     Usage: $(basename "${0}") mycsv.csv
 
-    To produce a csv output from a list of mkv files:
-    $(basename "${0}") -c file1.mkv file2.mkv file3.mkv > my.csv
+    Other options:
 
-    The output can then be edited to write back into the source files with "$(basename "${0}") my.csv"
+    -c) matroska input and csv output
+
+        To produce a csv output from a list of mkv files:
+        $(basename "${0}") -c file1.mkv file2.mkv file3.mkv > my.csv
+
+        The output can then be edited to write back into the source files with "$(basename "${0}") my.csv"
+
+    -i) print info about each file
+
+        To print information about the global tags in each matroska file:
+
+        $(basename "${0}") -i file1.mkv file2.mkv file3.mkv
 
     Tag definitions for JPC:
     Tag                     Example
@@ -169,10 +179,11 @@ SELECTED_TAG_SET=()        # This array will store the tags associated with the 
 # The options are `-p` for selecting a profile and `-h` for displaying help.
 
 OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
-while getopts ":chp:" opt ; do
+while getopts ":cihp:" opt ; do
     case "${opt}" in
         p) SELECTED_PROFILE="${OPTARG}" ;;   # If the `-p` option is provided, set the selected profile to the argument passed with `-p`.
         c) MKV2CSV="Y" ;;                    # If the `-p` option is provided, then mkvnote will make a csv from an input list of Matroska files.
+        i) MKVINFO="Y" ;;                    # If the `-i` option is provided, the mkvnote will provide a report about the global tags in each input Matroska file.
         h) _usage ;;                         # If the `-h` option is provided, call the `_usage` function to display usage information and exit.
         :) echo "Option -${OPTARG} requires an argument" ; _usage ;;  # Handle the case where an option requires an argument but none is provided.
         *) echo "bad option -${OPTARG}" ; _usage ;;   # Handle any invalid options by displaying an error message and calling `_usage`.
@@ -395,6 +406,19 @@ if [[ "${MKV2CSV}" == "Y" ]] ; then
     CSV_HEADER=$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -o "," "${CSV_XML}" | sed 's/,$//')
     echo "${CSV_HEADER}"
     xml2csv "${CSV_XML}"
+    exit
+fi
+
+if [[ "$MKVINFO" == "Y" ]] ; then
+    INPUT_FILES=("$@")
+    while [[ "${@}" != "" ]] ; do
+        # get context about the input
+        INPUT_FILE="${1}"
+        shift
+        echo "Global tag report for: ${INPUT_FILE}"
+        mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "Tags/Tag[not(Targets) or count(Targets/*)=0]" -o "Tag:" -n  -m Simple -o " " -v Name -o "=(" -v String -o ")" -n 
+        echo
+    done
     exit
 fi
 
