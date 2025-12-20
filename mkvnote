@@ -31,7 +31,7 @@ MKV_TAG_SET_NMAAHC=(
 )
 
 # ================================
-# Section 1. Read Only and Special Tag Configuration
+# Section 1.2: Read Only and Special Tag Configuration
 # ================================
 RO_TAGS=("ENCODER" "VIDEO_STREAM_HASH" "AUDIO_STREAM_HASH")
 MULTILINE_TAGS=("DESCRIPTION" "ENCODER_SETTINGS" "_PRE_TRANSFER_NOTES" "_TRANSFER_NOTES")
@@ -54,11 +54,125 @@ ERROR=$(tput setaf 1); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
 BLUE=$(tput setaf 4); MAGENTA=$(tput setaf 5); CYAN=$(tput setaf 6); WHITE=$(tput setaf 7)
 
 # ================================
-# Section 3: Core Utility Functions
+# Section 3: Help and Usage Functions
 # ================================
 
 # ================================
-# Section 3.1: Dependency Validation
+# Section 3.1: Version Information
+# ================================
+VERSION="1.0.0"
+SCRIPT_NAME=$(basename "$0")
+
+# ================================
+# Section 3.2: Logging Function
+# ================================
+LOG_FILE=""
+
+_init_log() {
+    local INPUT="$1"
+    LOG_FILE="${INPUT%.mkv}_mkvnote_tags.log"
+    echo "# mkvnote log - $(date -u +"%Y-%m-%dT%H:%M:%SZ")" > "${LOG_FILE}"
+    echo "# Version: ${VERSION}" >> "${LOG_FILE}"
+    echo "# Input: ${INPUT}" >> "${LOG_FILE}"
+    echo "# ========================================" >> "${LOG_FILE}"
+}
+
+_log() {
+    local LEVEL="$1"
+    local MESSAGE="$2"
+    [[ -n "${LOG_FILE}" ]] && echo "[$(date +"%H:%M:%S")] [${LEVEL}] ${MESSAGE}" >> "${LOG_FILE}"
+}
+
+_log_xml() {
+    local XML_FILE="$1"
+    [[ -n "${LOG_FILE}" ]] && {
+        echo "" >> "${LOG_FILE}"
+        echo "# ======== XML CONTENT ========" >> "${LOG_FILE}"
+        cat "${XML_FILE}" >> "${LOG_FILE}"
+        echo "" >> "${LOG_FILE}"
+        echo "# ======== END XML ========" >> "${LOG_FILE}"
+    }
+}
+
+# ================================
+# Section 3.3: Help Menu Function
+# ================================
+_show_help() {
+    cat << EOF
+
+${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════════════════════╗
+║                    mkvnote - Matroska Metadata Editor                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝${RESET}
+
+${BOLD}DESCRIPTION${RESET}
+    GUI tool for editing MKV file metadata tags according to NMAAHC archival
+    standards. Provides a GTK interface for viewing and modifying tags embedded
+    in Matroska video files.
+
+${BOLD}USAGE${RESET}
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} <mkv_file>
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} [options]
+
+${BOLD}OPTIONS${RESET}
+    ${CYAN}-h, --help${RESET}            Show this help message and exit
+    ${CYAN}-v, --version${RESET}         Show version information and exit
+
+${BOLD}TAG CATEGORIES${RESET}
+    ${MAGENTA}Read-Only (Technical):${RESET}
+        ENCODER, VIDEO_STREAM_HASH, AUDIO_STREAM_HASH, ATTACHMENTS
+
+    ${MAGENTA}NMAAHC Standard Tags:${RESET}
+        COLLECTION, TITLE, CATALOG_NUMBER, DESCRIPTION, DATE_DIGITIZED,
+        ENCODER_SETTINGS, ENCODED_BY, ORIGINAL_MEDIA_TYPE, DATE_TAGGED,
+        _TAGGED_BY, TERMS_OF_USE, _PRE_TRANSFER_NOTES, _TRANSFER_NOTES,
+        _ORIGINAL_FPS
+
+${BOLD}OUTPUT${RESET}
+    On save, creates a JSON sidecar file: ${CYAN}<filename>_mkvnote_tags.json${RESET}
+
+${BOLD}EXAMPLES${RESET}
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} video.mkv
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} /path/to/archive/preservation_master.mkv
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} --help
+
+${BOLD}DEPENDENCIES${RESET}
+    Required: mkvtoolnix (mkvpropedit, mkvextract), gtkdialog, xmlstarlet,
+              mediainfo, perl
+    macOS:    XQuartz (for GTK display)
+
+${BOLD}ABOUT${RESET}
+    Developed by Smithsonian NMAAHC in collaboration with Dave Rice
+    ${DIM}https://github.com/NMAAHC/nmaahcmm${RESET}
+
+EOF
+}
+
+# ================================
+# Section 3.4: Version Function
+# ================================
+_show_version() {
+    echo "${SCRIPT_NAME} version ${VERSION}"
+    echo "Matroska Metadata Editor for NMAAHC archival standards"
+}
+
+# ================================
+# Section 3.5: Usage Function (Brief)
+# ================================
+_show_usage() {
+    echo ""
+    echo "${BOLD}Usage:${RESET} ${SCRIPT_NAME} <mkv_file>"
+    echo "       ${SCRIPT_NAME} [-h|--help] [-v|--version]"
+    echo ""
+    echo "  ${DIM}Use -h or --help for detailed information${RESET}"
+    echo ""
+}
+
+# ================================
+# Section 4: Core Utility Functions
+# ================================
+
+# ================================
+# Section 4.1: Dependency Validation
 # ================================
 _check_dependencies(){
     local DEPS_OK=YES
@@ -69,7 +183,7 @@ _check_dependencies(){
 }
 
 # ================================
-# Section 3.2: File and Text Processing Utilities
+# Section 4.2: File and Text Processing Utilities
 # ================================
 _maketemp(){ mktemp -q -t "$(basename "$0")" || { echo "${ERROR}Can't create temp file${RESET}"; exit 1; }; }
 _escape_xml(){ perl -pe 's/&/&amp;/g; s/</&lt;/g; s/>/&gt;/g; s/'"'"'/&apos;/g; s/"/&quot;/g'; }
@@ -77,7 +191,7 @@ _unescape_xml(){ perl -pe 's/&lt;/</g; s/&gt;/>/g; s/&apos;/'"'"'/g; s/&quot;/"/
 _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
 
 # ================================
-# Section 3.3: Attachment Processing
+# Section 4.3: Attachment Processing
 # ================================
 _get_attachments() {
     local INPUT_FILE="$1"
@@ -106,15 +220,86 @@ _get_attachments() {
 }
 
 # ================================
-# Section 4: Input Validation and Dependency Check
+# Section 5: Argument Parsing
 # ================================
 
 # ================================
-# Section 4.1: Check Required Dependencies
+# Section 5.1: Parse Command Line Arguments
+# ================================
+INPUT_FILE=""
+
+# Handle no arguments
+if [[ $# -eq 0 ]]; then
+    echo "${ERROR}✗ No input file provided${RESET}"
+    _show_usage
+    exit 1
+fi
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            _show_help
+            exit 0
+            ;;
+        -v|--version)
+            _show_version
+            exit 0
+            ;;
+        -*)
+            echo "${ERROR}✗ Unknown option: $1${RESET}"
+            _show_usage
+            exit 1
+            ;;
+        *)
+            # Assume it's the input file
+            if [[ -z "${INPUT_FILE}" ]]; then
+                INPUT_FILE="$1"
+            else
+                echo "${ERROR}✗ Multiple input files not supported${RESET}"
+                _show_usage
+                exit 1
+            fi
+            ;;
+    esac
+    shift
+done
+
+# ================================
+# Section 5.2: Validate Input File
+# ================================
+if [[ -z "${INPUT_FILE}" ]]; then
+    echo "${ERROR}✗ No input file provided${RESET}"
+    _show_usage
+    exit 1
+fi
+
+if [[ ! -f "${INPUT_FILE}" ]]; then
+    echo "${ERROR}✗ File not found: ${INPUT_FILE}${RESET}"
+    exit 1
+fi
+
+if [[ ! "${INPUT_FILE}" =~ \.[Mm][Kk][Vv]$ ]]; then
+    echo "${YELLOW}! Warning: File does not have .mkv extension${RESET}"
+fi
+
+# Initialize log file
+_init_log "${INPUT_FILE}"
+_log "INFO" "mkvnote started"
+_log "INFO" "Input file: ${INPUT_FILE}"
+
+# ================================
+# Section 6: Dependency and Environment Check
+# ================================
+
+# ================================
+# Section 6.1: Check Required Dependencies
 # ================================
 _check_dependencies xmlstarlet mkvpropedit mkvextract gtkdialog mediainfo perl awk grep cut sed tr mktemp date
 
-# Check for XQuartz on macOS if DISPLAY is not set
+# ================================
+# Section 6.2: Check for XQuartz on macOS
+# ================================
 if [[ "$(uname)" == "Darwin" ]] && [[ -z "$DISPLAY" ]]; then
     if ! pgrep -x "Xquartz" > /dev/null && ! ls /Applications/Utilities/XQuartz.app > /dev/null 2>&1; then
         echo "${ERROR}✗${RESET} XQuartz not found or not running"
@@ -128,35 +313,28 @@ if [[ "$(uname)" == "Darwin" ]] && [[ -z "$DISPLAY" ]]; then
 fi
 
 # ================================
-# Section 4.2: Validate Input File
-# ================================
-INPUT_FILE="${1}"
-[[ -z "${INPUT_FILE}" ]] && {
-    echo "${ERROR}✗ No input file provided${RESET}"
-    echo "  ${DIM}Usage:${RESET} ${CYAN}$(basename "$0")${RESET} <mkv_file>"
-    exit 1
-}
-
-# ================================
-# Section 5: Tag Extraction and Processing
+# Section 7: Tag Extraction and Processing
 # ================================
 
 # ================================
-# Section 5.1: Initialize and Extract Existing Tags
+# Section 7.1: Initialize and Extract Existing Tags
 # ================================
 echo "${CYAN}Reading:${RESET} ${DIM}$(basename "${INPUT_FILE}")${RESET}"
+_log "INFO" "Extracting existing tags"
 
 EXTRACTED_TAGS="$(_maketemp).xml"
 XML_DRAFT="$(_maketemp).xml"
+_log "DEBUG" "Temp XML file: ${EXTRACTED_TAGS}"
 
 # Extract tags once
 mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}" 2>/dev/null
 [[ ! -s "${EXTRACTED_TAGS}" ]] || ! grep -q "<Simple>" "${EXTRACTED_TAGS}" 2>/dev/null && {
     echo '<Tags><Tag></Tag></Tags>' > "${EXTRACTED_TAGS}"
+    _log "INFO" "No existing tags found, using empty template"
 }
 
 # ================================
-# Section 5.2: Process Existing Tags into Arrays
+# Section 7.2: Process Existing Tags into Arrays
 # ================================
 # Process tags and create temp files for each
 TAG_KEYS=()
@@ -172,10 +350,12 @@ while IFS= read -r EXISTING_KEY; do
         -v "String" -n "${EXTRACTED_TAGS}" 2>/dev/null | _unescape_xml > "${TMPFILE}"
     TAG_KEYS+=("${EXISTING_KEY}")
     TAG_FILES+=("${TMPFILE}")
+    _log "DEBUG" "Found existing tag: ${EXISTING_KEY}"
 done < "${EXISTING_TAGS}"
+_log "INFO" "Found ${#TAG_KEYS[@]} existing tags"
 
 # ================================
-# Section 5.3: Prepare Attachment Information
+# Section 7.3: Prepare Attachment Information
 # ================================
 # Get attachment information and add to tag processing
 ATTACHMENT_LIST=$(_get_attachments "${INPUT_FILE}")
@@ -183,7 +363,7 @@ ATTACHMENT_FILE="$(_maketemp).txt"
 echo "${ATTACHMENT_LIST}" > "${ATTACHMENT_FILE}"
 
 # ================================
-# Section 5.4: Helper Functions for Tag Processing
+# Section 7.4: Helper Functions for Tag Processing
 # ================================
 # Helper to get value file for a key
 _get_value_file() {
@@ -198,11 +378,11 @@ _get_value_file() {
 }
 
 # ================================
-# Section 6: GUI Field Generation
+# Section 8: GUI Field Generation
 # ================================
 
 # ================================
-# Section 6.1: Field Generation Function
+# Section 8.1: Field Generation Function
 # ================================
 _make_field() {
     local KEY="$1" VALUE_FILE="$2" MULTI="$3" RO="$4"
@@ -250,14 +430,14 @@ _make_field() {
 }
 
 # ================================
-# Section 6.2: Build GUI Sections
+# Section 8.2: Build GUI Sections
 # ================================
 # Build sections
 SECTIONS=""
 LIST_OF_KEYS=()
 
 # ================================
-# Section 6.2.1: Read-Only Tags (Technical and Hashes)
+# Section 8.2.1: Read-Only Tags (Technical and Hashes)
 # ================================
 # Read-Only tags
 RO_FIELDS=""
@@ -278,7 +458,7 @@ LIST_OF_KEYS+=("ATTACHMENTS")
 [[ -n "$RO_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Technical and Hashes</span></b>\"</label></text>${RO_FIELDS}"
 
 # ================================
-# Section 6.2.2: NMAAHC Standard Tags
+# Section 8.2.2: NMAAHC Standard Tags
 # ================================
 # NMAAHC tags
 MAIN_FIELDS=""
@@ -298,7 +478,7 @@ done
 [[ -n "$MAIN_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>NMAAHC Tags</span></b>\"</label></text>${MAIN_FIELDS}"
 
 # ================================
-# Section 6.2.3: Extra Tags (Non-Standard)
+# Section 8.2.3: Extra Tags (Non-Standard)
 # ================================
 # Extra tags
 EXTRA_FIELDS=""
@@ -315,16 +495,16 @@ done
 [[ -n "$EXTRA_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b>Extra Tags</b>\"</label></text>${EXTRA_FIELDS}"
 
 # ================================
-# Section 6.2.4: Empty Tags Section
+# Section 8.2.4: Empty Tags Section
 # ================================
 [[ -n "$EMPTY_FIELDS" ]] && SECTIONS+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Empty Tags</span></b>\"</label></text>${EMPTY_FIELDS}"
 
 # ================================
-# Section 7: Create and Launch Dialog
+# Section 9: Create and Launch Dialog
 # ================================
 
 # ================================
-# Section 7.1: GTK Theme Configuration
+# Section 9.1: GTK Theme Configuration
 # ================================
 cat > /tmp/gtkrc_mono <<EOF
 style "bgMain" { bg[NORMAL] = "#671E75" }
@@ -335,7 +515,7 @@ EOF
 export GTK2_RC_FILES=/tmp/gtkrc_mono
 
 # ================================
-# Section 7.2: Dialog XML Generation
+# Section 9.2: Dialog XML Generation
 # ================================
 DIALOG_FORM="$(_maketemp).xml"
 cat > "${DIALOG_FORM}" <<EOF
@@ -360,23 +540,30 @@ cat > "${DIALOG_FORM}" <<EOF
 EOF
 
 # ================================
-# Section 8: Run Dialog
+# Section 10: Run Dialog
 # ================================
+_log "INFO" "Launching GTK dialog"
 export DISPLAY=:0
 export MAIN_DIALOG="$(cat "${DIALOG_FORM}")"
 DIALOG_RESULT="$(gtkdialog --center --program MAIN_DIALOG)"
 EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//;s/"$//')"
+_log "INFO" "Dialog closed with status: ${EXIT_STATUS}"
 
-[[ "${EXIT_STATUS}" == "Cancel" ]] && { echo "${YELLOW}⚠ Operation cancelled${RESET}"; exit; }
+[[ "${EXIT_STATUS}" == "Cancel" ]] && { 
+    echo "${YELLOW}⚠ Operation cancelled${RESET}"
+    _log "INFO" "User cancelled operation"
+    exit
+}
 
 # ================================
-# Section 9: Process Results
+# Section 11: Process Results
 # ================================
 
 # ================================
-# Section 9.1: Tag Processing and XML Generation
+# Section 11.1: Tag Processing and XML Generation
 # ================================
 if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
+    _log "INFO" "Processing tags for XML generation"
     # Build XML
     XML_BUILD="$(_maketemp).xml"
     echo '<?xml version="1.0"?>' > "${XML_BUILD}"
@@ -388,7 +575,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
     FINAL_VALUES=()
     
     # ================================
-    # Section 8.1.1: Extract Values from Dialog Results
+    # Section 11.1.1: Extract Values from Dialog Results
     # ================================
     for TAG_NAME in "${LIST_OF_KEYS[@]}"; do
         # Get value (read-only tags use original, others from dialog)
@@ -451,7 +638,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         TAG_COUNT=$((TAG_COUNT + 1))
         
         # ================================
-        # Section 9.1.2: Generate XML Elements
+        # Section 11.1.2: Generate XML Elements
         # ================================
         echo "  <Simple>" >> "${XML_BUILD}"
         echo "    <Name>${TAG_NAME}</Name>" >> "${XML_BUILD}"
@@ -467,13 +654,24 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
     echo '</Tag>' >> "${XML_BUILD}"
     echo '</Tags>' >> "${XML_BUILD}"
     
+    _log "INFO" "XML build complete with ${TAG_COUNT} tags"
+    _log "DEBUG" "XML file: ${XML_BUILD}"
+    _log_xml "${XML_BUILD}"
+    
     # ================================
-    # Section 9.2: Write Tags to MKV File
+    # Section 11.2: Write Tags to MKV File
     # ================================
-    if mkvpropedit --tags "global:${XML_BUILD}" "${INPUT_FILE}" 2>/dev/null; then
+    _log "INFO" "Writing tags to MKV file"
+    MKVPROPEDIT_OUTPUT=$(mkvpropedit --tags "global:${XML_BUILD}" "${INPUT_FILE}" 2>&1)
+    MKVPROPEDIT_STATUS=$?
+    _log "DEBUG" "mkvpropedit exit status: ${MKVPROPEDIT_STATUS}"
+    _log "DEBUG" "mkvpropedit output: ${MKVPROPEDIT_OUTPUT}"
+    
+    if [[ ${MKVPROPEDIT_STATUS} -eq 0 ]]; then
+        _log "INFO" "Tags written successfully"
         
         # ================================
-        # Section 9.2.1: Success Output Display
+        # Section 11.2.1: Success Output Display
         # ================================
         echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
         echo "  ${GREEN}✓${RESET} ${BOLD}Successfully Tagged${RESET}"
@@ -484,7 +682,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         echo ""
         
         # ================================
-        # Section 9.2.2: Display Tagged Values
+        # Section 11.2.2: Display Tagged Values
         # ================================
         for i in "${!FINAL_TAGS[@]}"; do
             TAG_NAME="${FINAL_TAGS[$i]}"
@@ -515,7 +713,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
         
         # ================================
-        # Section 9.3: JSON Export
+        # Section 11.3: JSON Export
         # ================================
         # JSON Export
         JSON_OUTPUT="${INPUT_FILE%.mkv}_mkvnote_tags.json"
@@ -527,7 +725,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         echo "  \"tags\": {" >> "${JSON_OUTPUT}"
         
         # ================================
-        # Section 9.3.1: Add ATTACHMENTS to JSON
+        # Section 11.3.1: Add ATTACHMENTS to JSON
         # ================================
         # Add ATTACHMENTS field first (after technical hashes)
         ATTACHMENT_VALUE=$(_get_attachments "${INPUT_FILE}")
@@ -535,7 +733,7 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         echo "    \"ATTACHMENTS\": \"${ESCAPED_ATTACHMENTS}\"," >> "${JSON_OUTPUT}"
         
         # ================================
-        # Section 9.3.2: Process All Tags for JSON
+        # Section 11.3.2: Process All Tags for JSON
         # ================================
         for i in "${!FINAL_TAGS[@]}"; do
             TAG_NAME="${FINAL_TAGS[$i]}"
@@ -572,14 +770,23 @@ if [[ "${EXIT_STATUS}" == "Tag-On!" ]]; then
         echo "  }" >> "${JSON_OUTPUT}"
         echo "}" >> "${JSON_OUTPUT}"
         
+        _log "INFO" "JSON exported: ${JSON_OUTPUT}"
+        _log "INFO" "mkvnote completed successfully"
+        
         echo "  ${CYAN}JSON exported:${RESET} ${DIM}$(basename "${JSON_OUTPUT}")${RESET}"
-        echo "  Path: ${DIM}$(realpath "${JSON_OUTPUT}")${RESET}"
+        echo "  ${CYAN}Log file:${RESET}     ${DIM}$(basename "${LOG_FILE}")${RESET}"
+        echo "  Path: ${DIM}$(realpath "${JSON_OUTPUT%/*}")${RESET}"
         
     else
         # ================================
-        # Section 9.4: Error Handling
+        # Section 11.4: Error Handling
         # ================================
+        _log "ERROR" "mkvpropedit failed with status ${MKVPROPEDIT_STATUS}"
+        _log "ERROR" "Output: ${MKVPROPEDIT_OUTPUT}"
         echo "${ERROR}✗ Error writing tags${RESET}"
+        echo "  ${DIM}${MKVPROPEDIT_OUTPUT}${RESET}"
+        echo ""
+        echo "  ${DIM}See log file for details: $(basename "${LOG_FILE}")${RESET}"
         exit 1
     fi
 fi
