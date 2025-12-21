@@ -432,7 +432,7 @@ if [[ "$MKVGLOBALRM" == "Y" ]] ; then
     INPUT_FILES=("$@")
     echo "This process will delete all the global tags in all the input files. Are you sure? Type 'Y' to proceed, else anything else."
     read -p "Really? " DELETE_CHOICE
-    if [[ "${DELETE_CHOICE}" == "Y" ]] ; then
+    if [[ "${DELETE_CHOICE}" =~ ^[Yy]$ ]] ; then
         while [[ "${@}" != "" ]] ; do
             # get context about the input
             INPUT_FILE="${1}"
