@@ -123,8 +123,8 @@ _usage(){
 
     -d) delete the global tags
 
-        This option is mostly used for debugging. It will remove all global tags from all input mkv files.
-        Warning this is a destructive, irreversible process.
+        This option is mostly used for debugging. It will remove all global tags (except the ffmpeg ENCODER
+        tag) from all input mkv files. Warning this is a destructive, irreversible process.
 
     Tag definitions for JPC:
     Tag                     Example
@@ -437,7 +437,7 @@ fi
 
 if [[ "$MKVGLOBALRM" == "Y" ]] ; then
     INPUT_FILES=("$@")
-    echo "This process will delete all the global tags in all the input files. Are you sure? Type 'Y' to proceed, else anything else."
+    echo "This process will delete all the global tags in all the input files. Are you sure? Type 'Y' to proceed, anything else to quit."
     read -p "Really? " DELETE_CHOICE
     if [[ "${DELETE_CHOICE}" =~ ^[Yy]$ ]] ; then
         while [[ "${@}" != "" ]] ; do
@@ -453,8 +453,8 @@ if [[ "$MKVGLOBALRM" == "Y" ]] ; then
             # put the ffmpeg global tags back in
             mkvpropedit --tags "global:${TEMP_XML}" "${INPUT_FILE}"
         done
-        echo "Thx. Global tags are gone now."
         _temprm "${TEMP_XML}"
+        echo "Thx. Global tags are gone now from $(basename "${INPUT_FILE}")."
     else
         echo "np"
     fi
