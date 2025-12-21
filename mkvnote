@@ -219,6 +219,13 @@ _maketemp(){
     fi
 }
 
+_temprm(){
+    RM_FILE="${1}"
+    if [[ -f "${RM_FILE}" ]] ; then
+        rm "${RM_FILE}"
+    fi
+}
+
 # Check if the input file has a `.csv` extension, indicating a batch mode operation.
 if [[ "${EXTENSION}" == "csv" ]] ; then
     # If the input file is a CSV, create a temporary XML file for storing converted data.
@@ -438,9 +445,16 @@ if [[ "$MKVGLOBALRM" == "Y" ]] ; then
             INPUT_FILE="${1}"
             shift
             echo "Deleting global tags for ${INPUT_FILE}..."
+            # save the ffmpeg global tags
+            TEMP_XML="$(_maketemp).xml"
+            mkvextract tags out2.mkv | xmlstarlet ed -d "//Tag[Targets/*]" -d '//Simple[Name != "ENCODER"]' > "${TEMP_XML}"
+            # remove global tags
             mkvpropedit --tags "global:" "${INPUT_FILE}"
+            # put the ffmpeg global tags back in
+            mkvpropedit --tags "global:${TEMP_XML}" "${INPUT_FILE}"
         done
         echo "Thx. Global tags are gone now."
+        _temprm "${TEMP_XML}"
     else
         echo "np"
     fi
