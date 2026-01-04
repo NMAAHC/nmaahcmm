@@ -121,6 +121,11 @@ _usage(){
 
         $(basename "${0}") -i file1.mkv file2.mkv file3.mkv
 
+    -d) delete the global tags
+
+        This option is mostly used for debugging. It will remove all global tags (except the ffmpeg ENCODER
+        tag) from all input mkv files. Warning this is a destructive, irreversible process.
+
     Tag definitions for JPC:
     Tag                     Example
     COLLECTION              The name of the collection that the content or object is from ; ex. Johnson Publishing Company Archive / Pearl Bowser Collection
@@ -180,10 +185,12 @@ SELECTED_TAG_SET=()        # This array will store the tags associated with the 
 
 OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
 while getopts ":cihp:" opt ; do
+while getopts ":cidhp:" opt ; do
     case "${opt}" in
         p) SELECTED_PROFILE="${OPTARG}" ;;   # If the `-p` option is provided, set the selected profile to the argument passed with `-p`.
         c) MKV2CSV="Y" ;;                    # If the `-p` option is provided, then mkvnote will make a csv from an input list of Matroska files.
         i) MKVINFO="Y" ;;                    # If the `-i` option is provided, the mkvnote will provide a report about the global tags in each input Matroska file.
+        d) MKVGLOBALRM="Y" ;;                # If the `-d` option is provided, mkvnote will remove all global tags from the mkv inputs. Warning this is a destructive process.
         h) _usage ;;                         # If the `-h` option is provided, call the `_usage` function to display usage information and exit.
         :) echo "Option -${OPTARG} requires an argument" ; _usage ;;  # Handle the case where an option requires an argument but none is provided.
         *) echo "bad option -${OPTARG}" ; _usage ;;   # Handle any invalid options by displaying an error message and calling `_usage`.
@@ -210,6 +217,13 @@ _maketemp(){
         # If the temporary file creation fails, an error message is displayed, and the script exits.
         echo "${0}: ${ERROR}Can't create temp file, exiting...${RESET}"
         exit 1
+    fi
+}
+
+_temprm(){
+    RM_FILE="${1}"
+    if [[ -f "${RM_FILE}" ]] ; then
+        rm "${RM_FILE}"
     fi
 }
 
@@ -418,8 +432,35 @@ if [[ "$MKVINFO" == "Y" ]] ; then
         echo "Global tag report for: ${INPUT_FILE}"
         echo "---------------------|---------------------"
         mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "Tags/Tag[not(Targets) or count(Targets/*)=0]" -m Simple  -v Name -o $'\t' -v String -o $'\037' | awk -v RS=$'\037' -F'\t' '{n = split($2, lines, /\r?\n/); printf "%-21s %s\n", $1, lines[1]; for(i=2; i<=n; i++) printf "%-21s %s\n", "", lines[i]; }' 
+        mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "Tags/Tag[not(Targets) or count(Targets/*)=0]" -o "Tag:" -n  -m Simple -o " " -v Name -o "=(" -v String -o ")" -n 
         echo
     done
+    exit
+fi
+
+if [[ "$MKVGLOBALRM" == "Y" ]] ; then
+    INPUT_FILES=("$@")
+    echo "This process will delete all the global tags in all the input files. Are you sure? Type 'Y' to proceed, anything else to quit."
+    read -p "Really? " DELETE_CHOICE
+    if [[ "${DELETE_CHOICE}" =~ ^[Yy]$ ]] ; then
+        while [[ "${@}" != "" ]] ; do
+            # get context about the input
+            INPUT_FILE="${1}"
+            shift
+            echo "Deleting global tags for ${INPUT_FILE}..."
+            # save the ffmpeg global tags
+            TEMP_XML="$(_maketemp).xml"
+            mkvextract tags out2.mkv | xmlstarlet ed -d "//Tag[Targets/*]" -d '//Simple[Name != "ENCODER"]' > "${TEMP_XML}"
+            # remove global tags
+            mkvpropedit --tags "global:" "${INPUT_FILE}"
+            # put the ffmpeg global tags back in
+            mkvpropedit --tags "global:${TEMP_XML}" "${INPUT_FILE}"
+        done
+        _temprm "${TEMP_XML}"
+        echo "Thx. Global tags are gone now from $(basename "${INPUT_FILE}")."
+    else
+        echo "np"
+    fi
     exit
 fi
 
