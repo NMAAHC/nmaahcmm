@@ -184,6 +184,7 @@ SELECTED_TAG_SET=()        # This array will store the tags associated with the 
 # The options are `-p` for selecting a profile and `-h` for displaying help.
 
 OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
+while getopts ":cihp:" opt ; do
 while getopts ":cidhp:" opt ; do
     case "${opt}" in
         p) SELECTED_PROFILE="${OPTARG}" ;;   # If the `-p` option is provided, set the selected profile to the argument passed with `-p`.
@@ -429,6 +430,8 @@ if [[ "$MKVINFO" == "Y" ]] ; then
         INPUT_FILE="${1}"
         shift
         echo "Global tag report for: ${INPUT_FILE}"
+        echo "---------------------|---------------------"
+        mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "Tags/Tag[not(Targets) or count(Targets/*)=0]" -m Simple  -v Name -o $'\t' -v String -o $'\037' | awk -v RS=$'\037' -F'\t' '{n = split($2, lines, /\r?\n/); printf "%-21s %s\n", $1, lines[1]; for(i=2; i<=n; i++) printf "%-21s %s\n", "", lines[i]; }' 
         mkvextract tags "${INPUT_FILE}" | xmlstarlet sel -t -m "Tags/Tag[not(Targets) or count(Targets/*)=0]" -o "Tag:" -n  -m Simple -o " " -v Name -o "=(" -v String -o ")" -n 
         echo
     done
