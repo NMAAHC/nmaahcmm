@@ -373,12 +373,42 @@ if [[ "$MKVGLOBALRM" == "Y" ]] ; then
     exit
 fi
 
+_get_attachments() {
+    local INPUT_FILE="$1"
+    local ATTACHMENT_INFO
+    
+    # Try to get attachment info using mkvextract
+    ATTACHMENT_INFO=$(mkvextract attachments "${INPUT_FILE}" 2>/dev/null | grep "^File name:" | cut -d: -f2- | sed 's/^ *//')
+    
+    # If mkvextract doesn't work or no attachments found, try mediainfo
+    if [[ -z "${ATTACHMENT_INFO}" ]]; then
+        ATTACHMENT_INFO=$(mediainfo --Output="General;%Attachments%" "${INPUT_FILE}" 2>/dev/null)
+    fi
+    
+    # Parse and format attachment names
+    if [[ -n "${ATTACHMENT_INFO}" && "${ATTACHMENT_INFO}" != "N/A" ]]; then
+        # Handle different formats - mediainfo uses " / " separator
+        if echo "${ATTACHMENT_INFO}" | grep -q " / "; then
+            echo "${ATTACHMENT_INFO}" | sed 's/ \/ / ; /g'
+        else
+            # Handle newline-separated format from mkvextract
+            echo "${ATTACHMENT_INFO}" | tr '\n' ';' | sed 's/;$//; s/;/ ; /g'
+        fi
+    else
+        echo "none"
+    fi
+}
+
 EXISTING_TAGS="$(_maketemp).txt"
 EXTRACTED_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
 
 mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
 xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -n "${EXTRACTED_TAGS}" >> "${EXISTING_TAGS}"
+
+ATTACHMENT_LIST=$(_get_attachments "${INPUT_FILE}")
+ATTACHMENT_FILE="$(_maketemp).txt"
+echo "${ATTACHMENT_LIST}" > "${ATTACHMENT_FILE}"
 
 _make_field() {
     local KEY="${1}" VALUE_FILE="${2}" MULTI="${3}" RO="${4}"
@@ -448,12 +478,17 @@ for TAG in "${RO_TAGS[@]}"; do
     LIST_OF_KEYS+=("$TAG")
 done
 
+# Add ATTACHMENTS field manually
+RO_FIELDS+="$(_make_field "ATTACHMENTS" "$ATTACHMENT_FILE" "no" "yes")"
+LIST_OF_KEYS+=("ATTACHMENTS")
+
 [[ -n "$RO_FIELDS" ]] && READ_ONLY_LIST+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Technical and Hashes</span></b>\"</label></text>${RO_FIELDS}"
 
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     _in_list "${EXISTING_KEY}" "${RO_TAGS[@]}" && continue
     _in_list "${EXISTING_KEY}" "${MKV_TAG_SET_NMAAHC[@]}" && continue
+    [[ "$EXISTING_KEY" == "ATTACHMENTS" ]] && continue
     TEMP_DIALOG_VALUE="$(_maketemp).txt"
     xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
     LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
