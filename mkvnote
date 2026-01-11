@@ -1,20 +1,5 @@
 #!/bin/bash
 
-MKV_TAG_SET_JPC=(
-    "COLLECTION"             # The collection to which the video belongs.
-    "TITLE"                  # The title of the video, likely matching the archive's system (e.g., ASpace).
-    "CATALOG_NUMBER"         # Unique identifier or catalog number for the video, often the filename.
-    "DESCRIPTION"            # Brief description of the video's content.
-    "DATE_DIGITIZED"         # The date when the video was digitized, in yyyy-mm-dd format.
-    "ENCODER_SETTINGS"       # Details about the encoding process, including hardware and software used.
-    "ENCODED_BY"             # Information about the entity or person who encoded the video.
-    "ORIGINAL_MEDIA_TYPE"    # The original format of the media before digitization.
-    "DATE_TAGGED"            # The date when these tags were applied or updated.
-    "TERMS_OF_USE"           # Legal or usage terms associated with the video.
-    "_TECHNICAL_NOTES"       # Any technical notes related to the video or digitization process.
-    "_ORIGINAL_FPS"          # The original frames per second for motion picture film, if applicable.
-)
-
 MKV_TAG_SET_NMAAHC=(
     "COLLECTION"
     "TITLE"
@@ -44,38 +29,24 @@ _usage(){
 
     This application will embed key:value pairs ("tags") into a Matroska file.
    
-    Usage: $(basename "${0}") [-p|--profile <profile>] /path/to/file
+    Usage: $(basename "${0}") /path/to/file
 
-    Tag keys are pre-defined in sets: JPC or NMAAHC
+    Tag keys are pre-defined:
 
-    JPC:
-        "COLLECTION"
-        "TITLE"
-        "CATALOG_NUMBER"
-        "DESCRIPTION"
-        "DATE_DIGITIZED"
-        "ENCODER_SETTINGS"
-        "ENCODED_BY"
-        "ORIGINAL_MEDIA_TYPE"
-        "DATE_TAGGED"
-        "TERMS_OF_USE"
-        "_TECHNICAL_NOTES"
-        "_ORIGINAL_FPS"
-
-    NMAAHC:
-        "COLLECTION"
-        "TITLE"
-        "CATALOG_NUMBER"
-        "DESCRIPTION"
-        "DATE_DIGITIZED"
-        "ENCODER_SETTINGS"
-        "ENCODED_BY"
-        "ORIGINAL_MEDIA_TYPE"
-        "DATE_TAGGED"
-        "TERMS_OF_USE"
-        "_TECHNICAL_NOTES"
-        "_ORIGINAL_FPS"
-        "_TAGTAG"
+        COLLECTION
+        TITLE
+        CATALOG_NUMBER
+        DESCRIPTION
+        DATE_DIGITIZED
+        ENCODER_SETTINGS
+        ENCODED_BY
+        ORIGINAL_MEDIA_TYPE
+        DATE_TAGGED
+        _TAGGED_BY
+        TERMS_OF_USE
+        _PRE_TRANSFER_NOTES
+        _TRANSFER_NOTES
+        _ORIGINAL_FPS
 
     The filename should be the full path of the file.
 
@@ -131,15 +102,9 @@ _check_dependencies(){
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
-
-SELECTED_PROFILE=""        # This variable will hold the name of the profile selected by the user (either 'jpc' or 'nmaahc').
-SELECTED_TAG_SET=()        # This array will store the tags associated with the selected profile.
-
-
 OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
-while getopts ":cidhp:" opt ; do
+while getopts ":cidh:" opt ; do
     case "${opt}" in
-        p) SELECTED_PROFILE="${OPTARG}" ;;   # If the `-p` option is provided, set the selected profile to the argument passed with `-p`.
         c) MKV2CSV="Y" ;;                    # If the `-p` option is provided, then mkvnote will make a csv from an input list of Matroska files.
         i) MKVINFO="Y" ;;                    # If the `-i` option is provided, the mkvnote will provide a report about the global tags in each input Matroska file.
         d) MKVGLOBALRM="Y" ;;                # If the `-d` option is provided, mkvnote will remove all global tags from the mkv inputs. Warning this is a destructive process.
@@ -355,54 +320,6 @@ if [[ "$MKVGLOBALRM" == "Y" ]] ; then
     exit
 fi
 
-if [[ "${SELECTED_PROFILE}" == "jpc" ]] ; then
-    SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")     # If the profile is 'jpc', use the `MKV_TAG_SET_JPC` array.
-elif [[ "${SELECTED_PROFILE}" == "nmaahc" ]] ; then
-    SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")  # If the profile is 'nmaahc', use the `MKV_TAG_SET_NMAAHC` array.
-else
-    unset SELECTED_PROFILE # If an invalid profile is specified or none is provided, unset the profile variable.
-    echo -e "${BOLD}${ERROR}\nNote: Invalid profile or no profile specified with -p. You will be prompted to select a profile.${RESET}"
-fi
-
-if [ -z "${SELECTED_PROFILE}" ]; then
-    echo -e "${GB}\nAvailable tag profiles and their respective tags:${RESET}"
-    echo -e "${BOLD}\n1) JPC profile tags:${RESET}"
-    for TAG in "${MKV_TAG_SET_JPC[@]}"; do
-        echo -e "    - $TAG"
-    done
-    echo -e "${BOLD}\n2) NMAAHC profile tags:${RESET}"
-    for TAG in "${MKV_TAG_SET_NMAAHC[@]}"; do
-        echo -e "    - $TAG"
-    done
-
-    while true; do
-        echo -e "${GB}${BOLD}\nYou must select a tag profile."
-        echo -e "Press 1 for JPC, 2 for NMAAHC, or 0 to exit.\n"
-        read -p "Enter your choice: ${RESET}" choice
-        case "$choice" in
-            1)
-                SELECTED_TAG_SET=("${MKV_TAG_SET_JPC[@]}")
-                SELECTED_PROFILE="jpc"
-                break # Exit the loop after selection
-                ;;
-            2)
-                SELECTED_TAG_SET=("${MKV_TAG_SET_NMAAHC[@]}")
-                SELECTED_PROFILE="nmaahc"
-                break # Exit the loop after selection
-                ;;
-            0)
-                echo -e "${ERROR}\nExiting...${RESET}"
-                exit 0
-                ;;
-            *)
-                echo "Invalid choice. Please try again."
-                ;;
-        esac
-    done
-fi
-
-
-
 EXISTING_TAGS="$(_maketemp).txt"
 EXTRACTED_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
@@ -412,11 +329,11 @@ xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTyp
 
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
-    if [[ ! ${SELECTED_TAG_SET[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
+    if [[ ! ${MKV_TAG_SET_NMAAHC[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
         xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
         LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
-        if [[ ! " ${SELECTED_TAG_SET[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
+        if [[ ! " ${MKV_TAG_SET_NMAAHC[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
             KEY_LABEL="${EXISTING_KEY}*"
         else
             KEY_LABEL="${EXISTING_KEY}"
@@ -459,20 +376,20 @@ while read EXISTING_KEY ; do
     
 done < "${EXISTING_TAGS}"
 
-for PROFILE_TAG in "${SELECTED_TAG_SET[@]}" ; do
-    PROFILE_KEY="${PROFILE_TAG%%=*}"
-    if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${PROFILE_TAG}[[:space:]] ]] ; then
-        LIST_OF_KEYS+=("${PROFILE_TAG}")
-        DIALOG_LIST_PROFILE+="
+for TAG in "${MKV_TAG_SET_NMAAHC[@]}" ; do
+    KEY="${TAG%%=*}"
+    if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${TAG}[[:space:]] ]] ; then
+        LIST_OF_KEYS+=("${TAG}")
+        DIALOG_LIST_SET+="
                 <hbox>
                     <hbox width-request=\"200\">
                         <text xalign=\"0\">
-                            <label>${PROFILE_KEY}</label>
+                            <label>${KEY}</label>
                         </text>
                     </hbox>
                     <hbox width-request=\"800\">
                         <entry width=\"700\">
-                            <variable>${PROFILE_KEY}</variable>
+                            <variable>${KEY}</variable>
                         </entry>
                     </hbox>
                 </hbox>"
@@ -510,13 +427,13 @@ cat << EOF > "${DIALOG_FORM}"
         </text>
         <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
             <text xalign="0" width-request="1000">
-                <label>Metadata tags already embedded. (* for part of the ${SELECTED_PROFILE} profile)</label>
+                <label>Metadata tags already embedded.</label>
             </text>
             ${DIALOG_LIST_EMBEDDED}
             <text xalign="0" width-request="1000">
-                <label>Yet unused metadata tags from the ${SELECTED_PROFILE} profile.</label>
+                <label>Yet unused metadata tags.</label>
             </text>
-            ${DIALOG_LIST_PROFILE}
+            ${DIALOG_LIST_SET}
         </vbox>
         <hbox space-expand="false" space-fill="false">
             <button>
