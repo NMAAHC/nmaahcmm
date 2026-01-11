@@ -272,11 +272,6 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
 
     exit
-
-    DIALOG_FORM="$(_maketemp).xml"
-    DIALOG_RESULT="$(dialog --jsonfile "${DIALOG_FORM}")"
-    echo $DIALOG_RESULT
-    exit
 fi
 
 if [[ "${MKV2CSV}" == "Y" ]] ; then
