@@ -519,6 +519,12 @@ _make_field() {
         INPUT_CMD=""
     fi
 
+    MULTI=$(_in_list "${KEY}" "${MULTILINE_TAGS[@]}" && echo "yes" || echo "${MULTI}")
+    if [[ -s "${VALUE_FILE}" && "${MULTI}" == "if" ]] ; then
+        LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${VALUE_FILE}")"
+        [[ "${LINE_COUNT}" -lt "2" ]] && MULTI="no" || MULTI="yes"
+    fi
+
     if [[ "${RO}" == "yes" ]]; then
         echo "<hbox>
             <hbox width-request=\"200\"><text xalign=\"0\"><label>${KEY_LABEL} [RO]</label></text></hbox>
@@ -580,14 +586,8 @@ while read EXISTING_KEY ; do
     [[ "${EXISTING_KEY}" == "ATTACHMENTS" ]] && continue
     TEMP_DIALOG_VALUE="$(_maketemp).txt"
     xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
-    LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
-    
     LIST_OF_KEYS+=("${EXISTING_KEY}")
-    if [[ "${LINE_COUNT}" -lt "2" ]] ; then
-        DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "no"  "no")"
-    else
-        DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
-    fi
+    DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "if" "no")"
 done < "${EXISTING_TAGS}"
 
 while read EXTRA_KEY ; do
@@ -597,14 +597,8 @@ while read EXTRA_KEY ; do
     [[ "${EXTRA_KEY}" == "ATTACHMENTS" ]] && continue
     TEMP_DIALOG_VALUE="$(_maketemp).txt"
     xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXTRA_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
-    LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
-    
     LIST_OF_KEYS+=("${EXTRA_KEY}")
-    if [[ "${LINE_COUNT}" -lt "2" ]] ; then
-        DIALOG_LIST_EXTRA+="$(_make_field "${EXTRA_KEY}" "${TEMP_DIALOG_VALUE}" "no"  "no")"
-    else
-        DIALOG_LIST_EXTRA+="$(_make_field "${EXTRA_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
-    fi
+    DIALOG_LIST_EXTRA+="$(_make_field "${EXTRA_KEY}" "${TEMP_DIALOG_VALUE}" "if" "no")"
 done < "${EXISTING_TAGS}"
 
 for TAG in "${MKV_TAG_SET_NMAAHC[@]}" ; do
