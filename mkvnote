@@ -136,26 +136,11 @@ exit
 }
 
 _check_dependencies(){
-    DEPS_OK=YES
-    while [ "${*}" != "" ] ; do
-        DEPENDENCY="${1}"
-        if [ ! $(which "${DEPENDENCY}") ] ; then
-            echo "This script requires ${DEPENDENCY} to run but it is not installed"
-            echo "If you are running ubuntu or debian you might be able to install ${DEPENDENCY} with the following command"
-            echo "sudo apt-get install ${DEPENDENCY}"
-            echo "If you are running mac you might be able to install ${DEPENDENCY} with the following command"
-            echo "brew install ${DEPENDENCY}"
-            DEPS_OK=NO
-        fi
-        shift
+    local DEPS_OK=YES
+    for DEP in "$@"; do
+        command -v "${DEP}" >/dev/null 2>&1 || { echo "${ERROR}✗${RESET} Missing: ${BOLD}${DEP}${RESET}"; DEPS_OK=NO; }
     done
-    if [[ "${DEPS_OK}" = "NO" ]]; then
-        echo "Unmet dependencies"
-        echo "Exiting!"
-        exit 1
-    else
-        return 0
-    fi
+    [[ "${DEPS_OK}" = "NO" ]] && { echo "${ERROR}Installation required. Exiting...${RESET}"; exit 1; }
 }
 
 _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
