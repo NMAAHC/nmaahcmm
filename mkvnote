@@ -137,7 +137,6 @@ SELECTED_TAG_SET=()        # This array will store the tags associated with the 
 
 
 OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
-while getopts ":cihp:" opt ; do
 while getopts ":cidhp:" opt ; do
     case "${opt}" in
         p) SELECTED_PROFILE="${OPTARG}" ;;   # If the `-p` option is provided, set the selected profile to the argument passed with `-p`.
