@@ -454,17 +454,16 @@ while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     _in_list "${EXISTING_KEY}" "${RO_TAGS[@]}" && continue
     _in_list "${EXISTING_KEY}" "${MKV_TAG_SET_NMAAHC[@]}" && continue
-        TEMP_DIALOG_VALUE="$(_maketemp).txt"
-        xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
-        LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
-        
-        LIST_OF_KEYS+=("${EXISTING_KEY}")
-        if [[ "${LINE_COUNT}" -lt "2" ]] ; then
-            DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "no"  "no")"
-        else
-            DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
-        fi
+    TEMP_DIALOG_VALUE="$(_maketemp).txt"
+    xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
+    LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
     
+    LIST_OF_KEYS+=("${EXISTING_KEY}")
+    if [[ "${LINE_COUNT}" -lt "2" ]] ; then
+        DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "no"  "no")"
+    else
+        DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
+    fi
 done < "${EXISTING_TAGS}"
 
 for TAG in "${MKV_TAG_SET_NMAAHC[@]}" ; do
