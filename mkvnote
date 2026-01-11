@@ -193,6 +193,7 @@ _check_dependencies(){
 # Section 4.2: File and Text Processing Utilities
 # ================================
 _maketemp(){ mktemp -q -t "$(basename "$0")" || { echo "${ERROR}Can't create temp file${RESET}"; exit 1; }; }
+_escape_xml(){ perl -pe 's/&/&amp;/g; s/</&lt;/g; s/>/&gt;/g; s/'"'"'/&apos;/g; s/"/&quot;/g'; }
 _temprm(){ RM_FILE="${1}" ; if [[ -f "${RM_FILE}" ]] ; then rm "${RM_FILE}" ; fi }
 _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
 
@@ -483,11 +484,22 @@ ATTACHMENT_LIST=$(_get_attachments "${INPUT_FILE}")
 ATTACHMENT_FILE="$(_maketemp).txt"
 echo "${ATTACHMENT_LIST}" > "${ATTACHMENT_FILE}"
 
+_needs_file_input() {
+    local VALUE="${1}"
+    # Is it multilined?
+    [[ "${VALUE}" == *$'\n'* || "${VALUE}" == *$'\r'* ]] && return 0
+    # Does it use special characters?
+    [[ "${VALUE}" =~ [[:cntrl:]] ]] && return 0
+    return 1
+}
+
 _make_field() {
     local KEY="${1}" VALUE_FILE="${2}" MULTI="${3}" RO="${4}"
 
     # Get custom height if defined, otherwise use default
     local HEIGHT="${FIELD_HEIGHTS[$KEY]:-100}"
+    local VALUE=""
+    local INPUT_CMD=""
 
     if [[ ! " ${MKV_TAG_SET_NMAAHC[*]} " =~ [[:space:]]${KEY}[[:space:]] ]] ; then
         KEY_LABEL="${KEY}*"
@@ -495,8 +507,14 @@ _make_field() {
         KEY_LABEL="${KEY}"
     fi
 
-    if [[ -n "${VALUE_FILE}" ]] && [[ -s "${VALUE_FILE}" ]]; then
-        INPUT_CMD="<input file>${VALUE_FILE}</input>"
+    if [[ -n "${VALUE_FILE}" && -s "${VALUE_FILE}" ]]; then
+        VALUE="$(cat "$VALUE_FILE")"
+        if _needs_file_input "${VALUE}"; then
+            INPUT_CMD="<input file>${VALUE_FILE}</input>"
+        else
+            VALUE="$(printf '%s' "${VALUE}" | _escape_xml)"
+            INPUT_CMD="<default>${VALUE}</default>"
+        fi
     else
         INPUT_CMD=""
     fi
