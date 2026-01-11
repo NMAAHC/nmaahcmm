@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 MKV_TAG_SET_NMAAHC=(
     "COLLECTION"
