@@ -685,6 +685,7 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
 
     for ((i=0; i<TO_BE_PARSED; i++)); do
         TAG_NAME=${SORTED_KEYS[$i]}
+        [[ "${TAG_NAME}" == "ATTACHMENTS" ]] && continue
         if ((i+1 < TO_BE_PARSED)); then
             NEXT_TAG=${SORTED_KEYS[$i+1]}
         else
