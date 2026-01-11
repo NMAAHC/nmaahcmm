@@ -509,8 +509,7 @@ LIST_OF_KEYS+=("ATTACHMENTS")
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     _in_list "${EXISTING_KEY}" "${RO_TAGS[@]}" && continue
-    _in_list "${EXISTING_KEY}" "${MKV_TAG_SET_NMAAHC[@]}" && continue
-    [[ "$EXISTING_KEY" == "ATTACHMENTS" ]] && continue
+    [[ "${EXISTING_KEY}" == "ATTACHMENTS" ]] && continue
     TEMP_DIALOG_VALUE="$(_maketemp).txt"
     xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
     LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
@@ -520,6 +519,23 @@ while read EXISTING_KEY ; do
         DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "no"  "no")"
     else
         DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
+    fi
+done < "${EXISTING_TAGS}"
+
+while read EXTRA_KEY ; do
+    DIALOG_LIST+="${EXTRA_KEY} "
+    _in_list "${EXTRA_KEY}" "${RO_TAGS[@]}" && continue
+    _in_list "${EXTRA_KEY}" "${MKV_TAG_SET_NMAAHC[@]}" && continue
+    [[ "${EXTRA_KEY}" == "ATTACHMENTS" ]] && continue
+    TEMP_DIALOG_VALUE="$(_maketemp).txt"
+    xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXTRA_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
+    LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
+    
+    LIST_OF_KEYS+=("${EXTRA_KEY}")
+    if [[ "${LINE_COUNT}" -lt "2" ]] ; then
+        DIALOG_LIST_EXTRA+="$(_make_field "${EXTRA_KEY}" "${TEMP_DIALOG_VALUE}" "no"  "no")"
+    else
+        DIALOG_LIST_EXTRA+="$(_make_field "${EXTRA_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
     fi
 done < "${EXISTING_TAGS}"
 
@@ -566,9 +582,13 @@ cat > "${DIALOG_FORM}" <<EOF
             </text>
             ${READ_ONLY_LIST}
             <text xalign="0" width-request="1000">
-                <label>Metadata tags already embedded.</label>
+                <label>Profile metadata tags already embedded.</label>
             </text>
             ${DIALOG_LIST_EMBEDDED}
+            <text xalign="0" width-request="1000">
+                <label>Non-profile metadata tags already embedded.</label>
+            </text>
+            ${DIALOG_LIST_EXTRA}
             <text xalign="0" width-request="1000">
                 <label>Yet unused metadata tags.</label>
             </text>
