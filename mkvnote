@@ -418,12 +418,11 @@ widget_class "*.GtkLabel" style "fgWhite"
 export GTK2_RC_FILES=/tmp/gtkrc_mono
 
 DIALOG_FORM="$(_maketemp).xml"
-
-cat << EOF > "${DIALOG_FORM}"
-<window title="Welcome to mkvnote!" default-width="1100" name="mkvnotemain">
+cat > "${DIALOG_FORM}" <<EOF
+<window title="Welcome to NMAAHC mkvnote - Matroska Metadata Editor!" default-width="1100" default-height="700" name="mkvnotemain">
     <vbox>
         <text xalign="0" width-request="1000">
-            <label>These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other sort of piece of the file. Empty tags will be ignored. If you edit exisitng tags here they will be overwritten when saved.</label>
+            <label>Edit metadata tags. These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other piece of the file. Empty tags will be ignored. If you edit existing tags here, they will be overwritten when saved.</label>
         </text>
         <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
             <text xalign="0" width-request="1000">
