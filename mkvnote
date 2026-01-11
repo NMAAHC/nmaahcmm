@@ -560,6 +560,7 @@ LIST_OF_KEYS+=("ATTACHMENTS")
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     _in_list "${EXISTING_KEY}" "${RO_TAGS[@]}" && continue
+    _in_list "${EXISTING_KEY}" "${MKV_TAG_SET_NMAAHC[@]}" || continue
     [[ "${EXISTING_KEY}" == "ATTACHMENTS" ]] && continue
     TEMP_DIALOG_VALUE="$(_maketemp).txt"
     xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
