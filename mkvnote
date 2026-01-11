@@ -145,6 +145,7 @@ _check_dependencies(){
 }
 
 _maketemp(){ mktemp -q -t "$(basename "$0")" || { echo "${ERROR}Can't create temp file${RESET}"; exit 1; }; }
+_temprm(){ RM_FILE="${1}" ; if [[ -f "${RM_FILE}" ]] ; then rm "${RM_FILE}" ; fi }
 _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
@@ -197,13 +198,6 @@ fi
 
 INPUT_FILE="${1}"
 EXTENSION="${INPUT_FILE##*.}"
-
-_temprm(){
-    RM_FILE="${1}"
-    if [[ -f "${RM_FILE}" ]] ; then
-        rm "${RM_FILE}"
-    fi
-}
 
 if [[ "${EXTENSION}" == "csv" ]] ; then
     CSV_XML="$(_maketemp).xml"
