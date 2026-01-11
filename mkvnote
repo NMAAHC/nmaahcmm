@@ -17,10 +17,10 @@ MKV_TAG_SET_NMAAHC=(
     "_ORIGINAL_FPS"
 )
 
-BOLD=$(tput bold)          # Sets text style to bold for emphasis.
-RESET=$(tput sgr0)         # Resets text style to the default, removing any bold or color.
-GB=$(tput setaf 38)        # Sets the text color to greenish-blue for regular output.
-ERROR=$(tput setaf 1)      # Sets the text color to red for error messages.
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+GB=$(tput setaf 38)
+ERROR=$(tput setaf 1)
 
 _usage(){
     cat <<EOF
@@ -102,18 +102,18 @@ _check_dependencies(){
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
-OPTIND=1                   # Initialize the option index to 1, the first command-line argument.
 while getopts ":cidh:" opt ; do
+OPTIND=1
     case "${opt}" in
-        c) MKV2CSV="Y" ;;                    # If the `-p` option is provided, then mkvnote will make a csv from an input list of Matroska files.
-        i) MKVINFO="Y" ;;                    # If the `-i` option is provided, the mkvnote will provide a report about the global tags in each input Matroska file.
-        d) MKVGLOBALRM="Y" ;;                # If the `-d` option is provided, mkvnote will remove all global tags from the mkv inputs. Warning this is a destructive process.
-        h) _usage ;;                         # If the `-h` option is provided, call the `_usage` function to display usage information and exit.
-        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;  # Handle the case where an option requires an argument but none is provided.
-        *) echo "bad option -${OPTARG}" ; _usage ;;   # Handle any invalid options by displaying an error message and calling `_usage`.
+        c) MKV2CSV="Y" ;;
+        i) MKVINFO="Y" ;;
+        d) MKVGLOBALRM="Y" ;;
+        h) _usage ;;
+        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;
+        *) echo "bad option -${OPTARG}" ; _usage ;;
     esac
 done
-shift "$((OPTIND-1))"      # Shift the positional parameters so that `$1` points to the first non-option argument.
+shift "$((OPTIND-1))"
 
 if [[ "${#}" -eq 0 ]]; then
     _usage
@@ -142,17 +142,17 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
     CSV_XML="$(_maketemp).xml"
     csvprintf -X -f "${INPUT_FILE}" > "${CSV_XML}"
     ELEMENT_LIST="$(xmlstarlet sel -t -m "/csv/row[1]/*" -v "name()" -n "${CSV_XML}")"
-    FILENAME_FOUND=0    # Initialize a flag to check if the 'filename' column is present in the CSV.
+    FILENAME_FOUND=0
     echo "Examining the csv: ${CSV_XML}."
     while read ELEMENT_VALUE ; do
         if [[ "${ELEMENT_VALUE//_}" == "filename" ]] ; then
             FILENAME_COLUMN_NAME="${ELEMENT_VALUE}"
             ELEMENT_VALUE="filename"
         fi
-        echo "Found ${ELEMENT_VALUE}."  # Output the name of each element found.
-        ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"   # Append each element name to `ADDITIONAL_COLUMNS` with an underscore prefix.
+        echo "Found ${ELEMENT_VALUE}."
+        ADDITIONAL_COLUMNS+="_${ELEMENT_VALUE}"
         if [[ "${ELEMENT_VALUE}" == "filename" ]] ; then
-            FILENAME_FOUND=1   # If the element name is 'filename', set the flag to indicate its presence.
+            FILENAME_FOUND=1
         fi
     done < <(echo "${ELEMENT_LIST}")
 
@@ -161,7 +161,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         exit
     fi
 
-    MISSING_FILE=0    # Initialize a flag to track missing files listed in the CSV.
+    MISSING_FILE=0
     REPEATED_FILENAMES="$(xmlstarlet sel -t -m "/csv/row/___filename" -v . -n  "${CSV_XML}" | sort | uniq -c | grep -v "^ *1 ")"
     if [[ -n "${REPEATED_FILENAMES}" ]] ; then
         echo "${BOLD}${ERROR}Error, ${INPUT_FILE} contains multiple iterations of the same filename.${RESET}"
@@ -169,7 +169,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         echo "${BOLD}${ERROR}Comee back when it's fixed.${RESET}"
         exit 1
     fi
-    ROW_COUNTER=1 # just a counter for when we need to communicate what row we're processing while going through the csv
+    ROW_COUNTER=1
     while read FILE_IN_CSV ; do
         ((ROW_COUNTER++))
         if [[ -z "${FILE_IN_CSV}" ]] ; then
@@ -177,7 +177,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         elif [[ ! -f "${FILE_IN_CSV}" ]] ; then
             echo "${BOLD}${ERROR}Error, $(basename "${FILE_IN_CSV}") is referenced in the csv but not found.${RESET}"
             MISSING_FILE=1
-            MISSING_FILE_LIST+="${FILE_IN_CSV} "  # Append the missing file name to the list of missing files.
+            MISSING_FILE_LIST+="${FILE_IN_CSV} "
         fi
     done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
     if [[ -z "${FILENAME_COLUMN_NAME}" ]] ; then
@@ -227,9 +227,7 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
             echo "$TAG_VALUE" | sed '1n; s/^/                      /'
 
         done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -n "${CSV_XML}")
-
-
-        echo  # Add an empty line for better readability in the output.
+        echo
 
         mkvpropedit --tags "all:${XML_DRAFT}" "${FILE_IN_CSV}"
 
@@ -303,7 +301,6 @@ if [[ "$MKVGLOBALRM" == "Y" ]] ; then
     read -p "Really? " DELETE_CHOICE
     if [[ "${DELETE_CHOICE}" =~ ^[Yy]$ ]] ; then
         while [[ "${@}" != "" ]] ; do
-            # get context about the input
             INPUT_FILE="${1}"
             shift
             echo "Deleting global tags for ${INPUT_FILE}..."
