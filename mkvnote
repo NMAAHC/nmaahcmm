@@ -555,8 +555,6 @@ done
 RO_FIELDS+="$(_make_field "ATTACHMENTS" "$ATTACHMENT_FILE" "no" "yes")"
 LIST_OF_KEYS+=("ATTACHMENTS")
 
-[[ -n "$RO_FIELDS" ]] && READ_ONLY_LIST+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Technical and Hashes</span></b>\"</label></text>${RO_FIELDS}"
-
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     _in_list "${EXISTING_KEY}" "${RO_TAGS[@]}" && continue
@@ -621,6 +619,11 @@ widget_class "*.GtkLabel" style "fgWhite"
 ' > /tmp/gtkrc_mono
 export GTK2_RC_FILES=/tmp/gtkrc_mono
 
+[[ -n "$RO_FIELDS" ]] && READ_ONLY_LIST+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Technical and Hashes</span></b>\"</label></text>${RO_FIELDS}"
+[[ -n "${DIALOG_LIST_EMBEDDED}" ]] && EMBEDDED_PROFILE_LIST="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>NMAAHC Tags</span></b>\"</label></text>${DIALOG_LIST_EMBEDDED}"
+[[ -n "${DIALOG_LIST_SET}" ]] && NONEMBEDDED_PROFILE_LIST="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Empty NMAAHC Tags</span></b>\"</label></text>${DIALOG_LIST_SET}"
+[[ -n "${DIALOG_LIST_EXTRA}" ]] && EXTRA_TAG_LIST="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Extra Existing Tags</span></b>\"</label></text>${DIALOG_LIST_EXTRA}"
+
 DIALOG_FORM="$(_maketemp).xml"
 cat > "${DIALOG_FORM}" <<EOF
 <window title="Welcome to NMAAHC mkvnote - Matroska Metadata Editor!" default-width="1100" default-height="700" name="mkvnotemain">
@@ -629,22 +632,10 @@ cat > "${DIALOG_FORM}" <<EOF
             <label>Edit metadata tags. These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other piece of the file. Empty tags will be ignored. If you edit existing tags here, they will be overwritten when saved.</label>
         </text>
         <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
-            <text xalign="0" width-request="1000">
-                <label>Read-only tags.</label>
-            </text>
             ${READ_ONLY_LIST}
-            <text xalign="0" width-request="1000">
-                <label>Profile metadata tags already embedded.</label>
-            </text>
-            ${DIALOG_LIST_EMBEDDED}
-            <text xalign="0" width-request="1000">
-                <label>Non-profile metadata tags already embedded.</label>
-            </text>
-            ${DIALOG_LIST_EXTRA}
-            <text xalign="0" width-request="1000">
-                <label>Yet unused metadata tags.</label>
-            </text>
-            ${DIALOG_LIST_SET}
+            ${EMBEDDED_PROFILE_LIST}
+            ${NONEMBEDDED_PROFILE_LIST}
+            ${EXTRA_TAG_LIST}
         </vbox>
         <hbox space-expand="false" space-fill="false">
             <button>
