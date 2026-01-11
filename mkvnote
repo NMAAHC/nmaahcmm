@@ -30,6 +30,7 @@ BOLD=$(tput bold); RESET=$(tput sgr0); DIM=$(tput dim)
 ERROR=$(tput setaf 1); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
 BLUE=$(tput setaf 4); MAGENTA=$(tput setaf 5); CYAN=$(tput setaf 6); WHITE=$(tput setaf 7)
 
+VERSION="1.0.0"
 SCRIPT_NAME=$(basename "$0")
 
 _show_help() {
@@ -57,6 +58,7 @@ ${BOLD}USAGE${RESET}
 
 ${BOLD}OPTIONS${RESET}
     ${CYAN}-h, --help${RESET}            Show this help message and exit
+    ${CYAN}-v, --version${RESET}         Show version information and exit
 
 ${BOLD}TAG CATEGORIES${RESET}
     ${MAGENTA}Read-Only (Technical):${RESET}
@@ -106,6 +108,11 @@ ${BOLD}ABOUT${RESET}
     ${DIM}https://github.com/NMAAHC/nmaahcmm${RESET}
 
 EOF
+}
+
+_show_version() {
+    echo "${SCRIPT_NAME} version ${VERSION}"
+    echo "Matroska Metadata Editor for NMAAHC archival standards"
 }
 
 _show_usage(){
