@@ -17,6 +17,7 @@ MKV_TAG_SET_NMAAHC=(
     "_ORIGINAL_FPS"
 )
 
+RO_TAGS=("ENCODER" "VIDEO_STREAM_HASH" "AUDIO_STREAM_HASH")
 MULTILINE_TAGS=("DESCRIPTION" "ENCODER_SETTINGS" "_PRE_TRANSFER_NOTES" "_TRANSFER_NOTES")
 
 declare -A FIELD_HEIGHTS=(
@@ -415,9 +416,26 @@ _make_field() {
     fi
 }
 
+# Read-Only tags
+RO_FIELDS=""
+for TAG in "${RO_TAGS[@]}"; do
+    TEMP_DIALOG_VALUE="$(_maketemp).txt"
+    xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${TAG}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
+    LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
+    if [[ "${LINE_COUNT}" -lt "2" ]] ; then
+        RO_FIELDS+="$(_make_field "${TAG}" "${TEMP_DIALOG_VALUE}" "no"  "yes")"
+    else
+        RO_FIELDS+="$(_make_field "${TAG}" "${TEMP_DIALOG_VALUE}" "yes" "yes")"
+    fi
+    LIST_OF_KEYS+=("$TAG")
+done
+
+[[ -n "$RO_FIELDS" ]] && READ_ONLY_LIST+="<text use-markup=\"true\"><label>\"<b><span foreground='purple'>Technical and Hashes</span></b>\"</label></text>${RO_FIELDS}"
+
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
-    if [[ ! ${MKV_TAG_SET_NMAAHC[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
+    _in_list "${EXISTING_KEY}" "${RO_TAGS[@]}" && continue
+    _in_list "${EXISTING_KEY}" "${MKV_TAG_SET_NMAAHC[@]}" && continue
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
         xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
         LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
@@ -428,7 +446,6 @@ while read EXISTING_KEY ; do
         else
             DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
         fi
-    fi
     
 done < "${EXISTING_TAGS}"
 
@@ -470,6 +487,10 @@ cat > "${DIALOG_FORM}" <<EOF
             <label>Edit metadata tags. These tags semantically are intended to describe the file as a whole and not intended to specifically refer to a particular track or attachment or other piece of the file. Empty tags will be ignored. If you edit existing tags here, they will be overwritten when saved.</label>
         </text>
         <vbox scrollable="true" height="600" space-expand="true" space-fill="true">
+            <text xalign="0" width-request="1000">
+                <label>Read-only tags.</label>
+            </text>
+            ${READ_ONLY_LIST}
             <text xalign="0" width-request="1000">
                 <label>Metadata tags already embedded.</label>
             </text>
