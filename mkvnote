@@ -150,6 +150,13 @@ _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && r
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
+# Handle no arguments
+if [[ $# -eq 0 ]]; then
+    echo "${ERROR}✗ No input file provided${RESET}"
+    _show_usage
+    exit 1
+fi
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -198,6 +205,21 @@ fi
 
 INPUT_FILE="${1}"
 EXTENSION="${INPUT_FILE##*.}"
+
+if [[ -z "${INPUT_FILE}" ]]; then
+    echo "${ERROR}✗ No input file provided${RESET}"
+    _show_usage
+    exit 1
+fi
+
+if [[ ! -f "${INPUT_FILE}" ]]; then
+    echo "${ERROR}✗ File not found: ${INPUT_FILE}${RESET}"
+    exit 1
+fi
+
+if [[ ! "${INPUT_FILE}" =~ \.[Mm][Kk][Vv]$ && ! "${MKV2CSV}" = "Y" ]]; then
+    echo "${YELLOW}! Warning: File does not have .mkv extension${RESET}"
+fi
 
 if [[ "${EXTENSION}" == "csv" ]] ; then
     CSV_XML="$(_maketemp).xml"
