@@ -681,7 +681,7 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
 
     DATA_TO_PARSE="$(echo "${DIALOG_RESULT}" | grep -v "^EXIT=")"
 
-    SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | sort))
+    SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | LC_COLLATE=C sort))
 
     for ((i=0; i<TO_BE_PARSED; i++)); do
         TAG_NAME=${SORTED_KEYS[$i]}
