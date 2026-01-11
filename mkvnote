@@ -102,8 +102,8 @@ _check_dependencies(){
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
-while getopts ":cidh:" opt ; do
 OPTIND=1
+while getopts ":cidh" opt ; do
     case "${opt}" in
         c) MKV2CSV="Y" ;;
         i) MKVINFO="Y" ;;
