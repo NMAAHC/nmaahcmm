@@ -17,6 +17,15 @@ MKV_TAG_SET_NMAAHC=(
     "_ORIGINAL_FPS"
 )
 
+MULTILINE_TAGS=("DESCRIPTION" "ENCODER_SETTINGS" "_PRE_TRANSFER_NOTES" "_TRANSFER_NOTES")
+
+declare -A FIELD_HEIGHTS=(
+    ["DESCRIPTION"]="105"
+    ["ENCODER_SETTINGS"]="90"
+    ["_PRE_TRANSFER_NOTES"]="30"
+    ["_TRANSFER_NOTES"]="30"
+)
+
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 GB=$(tput setaf 38)
@@ -142,6 +151,8 @@ _check_dependencies(){
         return 0
     fi
 }
+
+_in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
@@ -367,50 +378,72 @@ XML_DRAFT="$(_maketemp).xml"
 mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
 xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -n "${EXTRACTED_TAGS}" >> "${EXISTING_TAGS}"
 
+_make_field() {
+    local KEY="${1}" VALUE_FILE="${2}" MULTI="${3}" RO="${4}"
+
+    # Get custom height if defined, otherwise use default
+    local HEIGHT="${FIELD_HEIGHTS[$KEY]:-100}"
+
+    if [[ ! " ${MKV_TAG_SET_NMAAHC[*]} " =~ [[:space:]]${KEY}[[:space:]] ]] ; then
+        KEY_LABEL="${KEY}*"
+    else
+        KEY_LABEL="${KEY}"
+    fi
+
+    if [[ -n "${VALUE_FILE}" ]] && [[ -s "${VALUE_FILE}" ]]; then
+        INPUT_CMD="<input file>${VALUE_FILE}</input>"
+    else
+        INPUT_CMD=""
+    fi
+
+    if [[ "${RO}" == "yes" ]]; then
+        echo "<hbox>
+            <hbox width-request=\"200\"><text xalign=\"0\"><label>${KEY_LABEL} [RO]</label></text></hbox>
+            <hbox width-request=\"800\">
+                <hbox width-request=\"800\">
+                    <entry editable=\"false\" sensitive=\"false\">
+                        <variable>${KEY}</variable>${INPUT_CMD}
+                    </entry>
+                </hbox>
+            </hbox>
+        </hbox>"
+    elif [[ "${MULTI}" == "yes" ]]; then
+        echo "<hbox>
+            <hbox width-request=\"200\"><text xalign=\"0\"><label>${KEY_LABEL}</label></text></hbox>
+            <hbox width-request=\"800\">
+                <vbox height-request=\"${HEIGHT}\" width-request=\"800\">
+                    <edit wrap-mode=\"1\">
+                        <variable>${KEY}</variable>${INPUT_CMD}
+                    </edit>
+                </vbox>
+            </hbox>
+        </hbox>"
+    else
+        echo "<hbox>
+            <hbox width-request=\"200\"><text xalign=\"0\"><label>${KEY_LABEL}</label></text></hbox>
+            <hbox width-request=\"800\">
+                <hbox width-request=\"800\">
+                    <entry>
+                        <variable>${KEY}</variable>${INPUT_CMD}
+                    </entry>
+                </hbox>
+            </hbox>
+        </hbox>"
+    fi
+}
+
 while read EXISTING_KEY ; do
     DIALOG_LIST+="${EXISTING_KEY} "
     if [[ ! ${MKV_TAG_SET_NMAAHC[*]} =~ "\"${EXISTING_KEY}\"" ]] ; then
         TEMP_DIALOG_VALUE="$(_maketemp).txt"
         xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple[Name='${EXISTING_KEY}']" -v "String" "${EXTRACTED_TAGS}" > "${TEMP_DIALOG_VALUE}"
         LINE_COUNT="$(awk 'BEGIN{count=0} {count++} END{print count}' < "${TEMP_DIALOG_VALUE}")"
-        if [[ ! " ${MKV_TAG_SET_NMAAHC[*]} " =~ [[:space:]]${EXISTING_KEY}[[:space:]] ]] ; then
-            KEY_LABEL="${EXISTING_KEY}*"
-        else
-            KEY_LABEL="${EXISTING_KEY}"
-        fi
+        
         LIST_OF_KEYS+=("${EXISTING_KEY}")
         if [[ "${LINE_COUNT}" -lt "2" ]] ; then
-            DIALOG_LIST_EMBEDDED+="
-                    <hbox>
-                        <hbox width-request=\"200\">
-                            <text xalign=\"0\">
-                                <label>${KEY_LABEL}</label>
-                            </text>
-                        </hbox>
-                        <hbox width-request=\"800\">
-                            <entry width=\"700\">
-                                <variable>${EXISTING_KEY}</variable>
-                                <input file>${TEMP_DIALOG_VALUE}</input>
-                                <action signal=\"show\">refresh:${EXISTING_KEY}</action>
-                            </entry>
-                        </hbox>
-                    </hbox>"
+            DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "no"  "no")"
         else
-            DIALOG_LIST_EMBEDDED+="
-                <hbox>
-                    <hbox width-request=\"200\">
-                        <text xalign=\"0\">
-                            <label>${KEY_LABEL}</label>
-                        </text>
-                    </hbox>
-                    <hbox width-request=\"800\">
-                        <edit width=\"700\" wrap-mode=\"1\">
-                            <variable>${EXISTING_KEY}</variable>
-                            <input file>${TEMP_DIALOG_VALUE}</input>
-                            <action signal=\"show\">refresh:${EXISTING_KEY}</action>
-                        </edit>
-                    </hbox>
-                </hbox>"
+            DIALOG_LIST_EMBEDDED+="$(_make_field "${EXISTING_KEY}" "${TEMP_DIALOG_VALUE}" "yes" "no")"
         fi
     fi
     
@@ -418,21 +451,10 @@ done < "${EXISTING_TAGS}"
 
 for TAG in "${MKV_TAG_SET_NMAAHC[@]}" ; do
     KEY="${TAG%%=*}"
+    MULTI=$(_in_list "$TAG" "${MULTILINE_TAGS[@]}" && echo "yes" || echo "no")
     if [[ ! " ${DIALOG_LIST[*]} " =~ [[:space:]]${TAG}[[:space:]] ]] ; then
         LIST_OF_KEYS+=("${TAG}")
-        DIALOG_LIST_SET+="
-                <hbox>
-                    <hbox width-request=\"200\">
-                        <text xalign=\"0\">
-                            <label>${KEY}</label>
-                        </text>
-                    </hbox>
-                    <hbox width-request=\"800\">
-                        <entry width=\"700\">
-                            <variable>${KEY}</variable>
-                        </entry>
-                    </hbox>
-                </hbox>"
+        DIALOG_LIST_SET+="$(_make_field "${TAG}" "" "${MULTI}"  "no")"
     fi 
 done
 
