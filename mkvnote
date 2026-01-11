@@ -81,20 +81,20 @@ ${BOLD}EXAMPLES${RESET}
 
 ${BOLD}ADDITIONAL OPTIONS${RESET}
 
-${CYAN}-c${RESET} matroska input and csv output
+${CYAN}-c|--csv${RESET} matroska input and csv output
 
     To produce a csv output from a list of mkv files:
     ${GREEN}\$${RESET} ${SCRIPT_NAME} -c file1.mkv file2.mkv file3.mkv > my.csv
 
     The output can then be edited to write back into the source files with "$(basename "${0}") my.csv"
 
-${CYAN}-i${RESET} print info about each file
+${CYAN}-i|--info${RESET} print info about each file
 
     To print information about the global tags in each matroska file:
 
     ${GREEN}\$${RESET} ${SCRIPT_NAME} -i file1.mkv file2.mkv file3.mkv
 
-${CYAN}-d${RESET} delete the global tags
+${CYAN}-d|--drop${RESET} delete the global tags
 
     This option is mostly used for debugging. It will remove all global tags (except the ffmpeg ENCODER
     tag) from all input mkv files. Warning this is a destructive, irreversible process.
@@ -149,18 +149,47 @@ _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && r
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
 
-OPTIND=1
-while getopts ":cidh" opt ; do
-    case "${opt}" in
-        c) MKV2CSV="Y" ;;
-        i) MKVINFO="Y" ;;
-        d) MKVGLOBALRM="Y" ;;
-        h) _show_help ;;
-        :) echo "Option -${OPTARG} requires an argument" ; _show_usage ;;
-        *) echo "bad option -${OPTARG}" ; _show_usage ;;
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            _show_help
+            exit 0
+            ;;
+        -v|--version)
+            _show_version
+            exit 0
+            ;;
+        -c|--csv)
+            MKV2CSV="Y"
+            MULTI_INPUT_OK="yes"
+            ;;
+        -i|--info)
+            MKVINFO="Y"
+            MULTI_INPUT_OK="yes"
+            ;;
+        -d|--drop)
+            MKVGLOBALRM="Y"
+            MULTI_INPUT_OK="yes"
+            ;;
+        -*)
+            echo "${ERROR}✗ Unknown option: $1${RESET}"
+            _show_usage
+            exit 1
+            ;;
+        *)
+            # If extra options, let's check to make sure they're files
+            if [[ ! -f "${1}" ]]; then
+                echo "${ERROR}✗ ${1} is expected to be a file, but it's not.${RESET}"
+                _show_usage
+                exit 1
+            else
+                break
+            fi
+            ;;
     esac
+    shift
 done
-shift "$((OPTIND-1))"
 
 if [[ "${#}" -eq 0 ]]; then
     _show_usage
