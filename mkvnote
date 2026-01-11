@@ -143,6 +143,7 @@ _check_dependencies(){
     [[ "${DEPS_OK}" = "NO" ]] && { echo "${ERROR}Installation required. Exiting...${RESET}"; exit 1; }
 }
 
+_maketemp(){ mktemp -q -t "$(basename "$0")" || { echo "${ERROR}Can't create temp file${RESET}"; exit 1; }; }
 _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
 
 _check_dependencies csvprintf xmlstarlet mkvpropedit mkvextract xml2csv
@@ -166,15 +167,6 @@ fi
 
 INPUT_FILE="${1}"
 EXTENSION="${INPUT_FILE##*.}"
-
-_maketemp(){
-    mktemp -q -t "$(basename "${0}")"    # Creates a temporary file with a name based on the script's name.
-    if [ "${?}" -ne 0 ]; then            # Checks if the `mktemp` command failed (non-zero exit status).
-        # If the temporary file creation fails, an error message is displayed, and the script exits.
-        echo "${0}: ${ERROR}Can't create temp file, exiting...${RESET}"
-        exit 1
-    fi
-}
 
 _temprm(){
     RM_FILE="${1}"
