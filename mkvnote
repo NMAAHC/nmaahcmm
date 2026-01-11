@@ -26,10 +26,9 @@ declare -A FIELD_HEIGHTS=(
     ["_TRANSFER_NOTES"]="30"
 )
 
-BOLD=$(tput bold)
-RESET=$(tput sgr0)
-GB=$(tput setaf 38)
-ERROR=$(tput setaf 1)
+BOLD=$(tput bold); RESET=$(tput sgr0); DIM=$(tput dim)
+ERROR=$(tput setaf 1); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4); MAGENTA=$(tput setaf 5); CYAN=$(tput setaf 6); WHITE=$(tput setaf 7)
 
 SCRIPT_NAME=$(basename "$0")
 
