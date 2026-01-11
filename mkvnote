@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+# ================================
+# Script: mkvnote
+# Purpose: GUI tool for editing MKV metadata tags
+# Focus: NMAAHC archival standards
+# ================================
+
+# ================================
+# Section 1: Configuration and Constants
+# ================================
+
+# ================================
+# Section 1.1: Tag Set Definitions
+# ================================
 MKV_TAG_SET_NMAAHC=(
     "COLLECTION"
     "TITLE"
@@ -17,9 +30,15 @@ MKV_TAG_SET_NMAAHC=(
     "_ORIGINAL_FPS"
 )
 
+# ================================
+# Section 1.2: Read Only and Special Tag Configuration
+# ================================
 RO_TAGS=("ENCODER" "VIDEO_STREAM_HASH" "AUDIO_STREAM_HASH")
 MULTILINE_TAGS=("DESCRIPTION" "ENCODER_SETTINGS" "_PRE_TRANSFER_NOTES" "_TRANSFER_NOTES")
 
+# ================================
+# Section 1.3: GUI Field Height Configuration
+# ================================
 declare -A FIELD_HEIGHTS=(
     ["DESCRIPTION"]="105"
     ["ENCODER_SETTINGS"]="90"
@@ -27,13 +46,26 @@ declare -A FIELD_HEIGHTS=(
     ["_TRANSFER_NOTES"]="30"
 )
 
+# ================================
+# Section 2: Terminal Color Definitions
+# ================================
 BOLD=$(tput bold); RESET=$(tput sgr0); DIM=$(tput dim)
 ERROR=$(tput setaf 1); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
 BLUE=$(tput setaf 4); MAGENTA=$(tput setaf 5); CYAN=$(tput setaf 6); WHITE=$(tput setaf 7)
 
+# ================================
+# Section 3: Help and Usage Functions
+# ================================
+
+# ================================
+# Section 3.1: Version Information
+# ================================
 VERSION="1.0.0"
 SCRIPT_NAME=$(basename "$0")
 
+# ================================
+# Section 3.3: Help Menu Function
+# ================================
 _show_help() {
     cat << EOF
 
@@ -111,11 +143,17 @@ ${BOLD}ABOUT${RESET}
 EOF
 }
 
+# ================================
+# Section 3.4: Version Function
+# ================================
 _show_version() {
     echo "${SCRIPT_NAME} version ${VERSION}"
     echo "Matroska Metadata Editor for NMAAHC archival standards"
 }
 
+# ================================
+# Section 3.5: Usage Function (Brief)
+# ================================
 _show_usage(){
     cat <<EOF
 
@@ -136,6 +174,13 @@ EOF
 exit
 }
 
+# ================================
+# Section 4: Core Utility Functions
+# ================================
+
+# ================================
+# Section 4.1: Dependency Validation
+# ================================
 _check_dependencies(){
     local DEPS_OK=YES
     for DEP in "$@"; do
@@ -144,6 +189,9 @@ _check_dependencies(){
     [[ "${DEPS_OK}" = "NO" ]] && { echo "${ERROR}Installation required. Exiting...${RESET}"; exit 1; }
 }
 
+# ================================
+# Section 4.2: File and Text Processing Utilities
+# ================================
 _maketemp(){ mktemp -q -t "$(basename "$0")" || { echo "${ERROR}Can't create temp file${RESET}"; exit 1; }; }
 _temprm(){ RM_FILE="${1}" ; if [[ -f "${RM_FILE}" ]] ; then rm "${RM_FILE}" ; fi }
 _in_list(){ local item="$1"; shift; for x in "$@"; do [[ "$x" == "$item" ]] && return 0; done; return 1; }
@@ -395,6 +443,9 @@ if [[ "$MKVGLOBALRM" == "Y" ]] ; then
     exit
 fi
 
+# ================================
+# Section 4.3: Attachment Processing
+# ================================
 _get_attachments() {
     local INPUT_FILE="$1"
     local ATTACHMENT_INFO
