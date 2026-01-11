@@ -22,57 +22,100 @@ RESET=$(tput sgr0)
 GB=$(tput setaf 38)
 ERROR=$(tput setaf 1)
 
-_usage(){
+SCRIPT_NAME=$(basename "$0")
+
+_show_help() {
+    cat << EOF
+
+${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════════════════════╗
+║                    mkvnote - Matroska Metadata Editor                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝${RESET}
+
+${BOLD}DESCRIPTION${RESET}
+    GUI tool for editing MKV file metadata tags according to NMAAHC archival
+    standards. Provides a GTK interface for viewing and modifying tags embedded
+    in Matroska video files.
+
+    mkvnote accepts either a <mkv_file> or <csv_file> as an input. If an mkv file
+    is used then a data entry GUI window will open. If a csv is used, the mkvnote
+    will embed the metadata of the csv into the associated mkv files. Note that
+    with a csv input the first column must be 'filename' and contain a path to
+    the associated mkv file.
+
+${BOLD}USAGE${RESET}
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} [-c|-i|-d] <mkv_file>
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} <csv_file>
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} [options]
+
+${BOLD}OPTIONS${RESET}
+    ${CYAN}-h, --help${RESET}            Show this help message and exit
+
+${BOLD}TAG CATEGORIES${RESET}
+    ${MAGENTA}Read-Only (Technical):${RESET}
+        ENCODER, VIDEO_STREAM_HASH, AUDIO_STREAM_HASH, ATTACHMENTS
+
+    ${MAGENTA}NMAAHC Standard Tags:${RESET}
+        COLLECTION, TITLE, CATALOG_NUMBER, DESCRIPTION, DATE_DIGITIZED,
+        ENCODER_SETTINGS, ENCODED_BY, ORIGINAL_MEDIA_TYPE, DATE_TAGGED,
+        _TAGGED_BY, TERMS_OF_USE, _PRE_TRANSFER_NOTES, _TRANSFER_NOTES,
+        _ORIGINAL_FPS
+
+${BOLD}OUTPUT${RESET}
+    On save, creates a JSON sidecar file: ${CYAN}<filename>_mkvnote_tags.json${RESET}
+
+${BOLD}EXAMPLES${RESET}
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} video.mkv
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} /path/to/archive/preservation_master.mkv
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} --help
+
+${BOLD}ADDITIONAL OPTIONS${RESET}
+
+${CYAN}-c${RESET} matroska input and csv output
+
+    To produce a csv output from a list of mkv files:
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} -c file1.mkv file2.mkv file3.mkv > my.csv
+
+    The output can then be edited to write back into the source files with "$(basename "${0}") my.csv"
+
+${CYAN}-i${RESET} print info about each file
+
+    To print information about the global tags in each matroska file:
+
+    ${GREEN}\$${RESET} ${SCRIPT_NAME} -i file1.mkv file2.mkv file3.mkv
+
+${CYAN}-d${RESET} delete the global tags
+
+    This option is mostly used for debugging. It will remove all global tags (except the ffmpeg ENCODER
+    tag) from all input mkv files. Warning this is a destructive, irreversible process.
+
+${BOLD}DEPENDENCIES${RESET}
+    Required: mkvtoolnix (mkvpropedit, mkvextract), gtkdialog, xmlstarlet,
+              mediainfo, perl
+    macOS:    XQuartz (for GTK display)
+
+${BOLD}ABOUT${RESET}
+    Developed by Smithsonian NMAAHC in collaboration with Dave Rice
+    ${DIM}https://github.com/NMAAHC/nmaahcmm${RESET}
+
+EOF
+}
+
+_show_usage(){
     cat <<EOF
 
-    $(basename "${0}")
+    ${SCRIPT_NAME}
 
     This application will embed key:value pairs ("tags") into a Matroska file.
    
-    Usage: $(basename "${0}") /path/to/file
+    "${BOLD}Usage:${RESET} ${SCRIPT_NAME} <mkv_file>"
 
-    Tag keys are pre-defined:
+    To open a metadata editor GUI for the mkv_file, or
 
-        COLLECTION
-        TITLE
-        CATALOG_NUMBER
-        DESCRIPTION
-        DATE_DIGITIZED
-        ENCODER_SETTINGS
-        ENCODED_BY
-        ORIGINAL_MEDIA_TYPE
-        DATE_TAGGED
-        _TAGGED_BY
-        TERMS_OF_USE
-        _PRE_TRANSFER_NOTES
-        _TRANSFER_NOTES
-        _ORIGINAL_FPS
+    "${BOLD}Usage:${RESET} ${SCRIPT_NAME} <my_csv_of_metadata.csv>"
 
-    The filename should be the full path of the file.
+    to batch-embed metadata from a csv into a set of files (the first column of the csv must be 'filename' and contain the path to the mkv file)
 
-    Usage: $(basename "${0}") mycsv.csv
-
-    Other options:
-
-    -c) matroska input and csv output
-
-        To produce a csv output from a list of mkv files:
-        $(basename "${0}") -c file1.mkv file2.mkv file3.mkv > my.csv
-
-        The output can then be edited to write back into the source files with "$(basename "${0}") my.csv"
-
-    -i) print info about each file
-
-        To print information about the global tags in each matroska file:
-
-        $(basename "${0}") -i file1.mkv file2.mkv file3.mkv
-
-    -d) delete the global tags
-
-        This option is mostly used for debugging. It will remove all global tags (except the ffmpeg ENCODER
-        tag) from all input mkv files. Warning this is a destructive, irreversible process.
-
-
+    ${DIM}Use -h or --help for detailed information and additional options${RESET}
 EOF
 exit
 }
@@ -108,15 +151,15 @@ while getopts ":cidh" opt ; do
         c) MKV2CSV="Y" ;;
         i) MKVINFO="Y" ;;
         d) MKVGLOBALRM="Y" ;;
-        h) _usage ;;
-        :) echo "Option -${OPTARG} requires an argument" ; _usage ;;
-        *) echo "bad option -${OPTARG}" ; _usage ;;
+        h) _show_help ;;
+        :) echo "Option -${OPTARG} requires an argument" ; _show_usage ;;
+        *) echo "bad option -${OPTARG}" ; _show_usage ;;
     esac
 done
 shift "$((OPTIND-1))"
 
 if [[ "${#}" -eq 0 ]]; then
-    _usage
+    _show_usage
 fi
 
 INPUT_FILE="${1}"
