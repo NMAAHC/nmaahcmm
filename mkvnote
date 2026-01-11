@@ -449,8 +449,7 @@ cat > "${DIALOG_FORM}" <<EOF
                 <label>Tag-On!</label>
                 <input file stock="gtk-media-record"></input>
             </button>
-            <button cancel>
-            </button>
+            <button cancel></button>
         </hbox>
     </vbox>
 </window>
