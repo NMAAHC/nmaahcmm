@@ -64,6 +64,37 @@ VERSION="1.0.0"
 SCRIPT_NAME=$(basename "$0")
 
 # ================================
+# Section 3.2: Logging Functions
+# ================================
+LOG_FILE=""
+
+_init_log() {
+    local INPUT="$1"
+    LOG_FILE="${INPUT%.mkv}_mkvnote_tags.log"
+    echo "# mkvnote log - $(date -u +"%Y-%m-%dT%H:%M:%SZ")" > "${LOG_FILE}"
+    echo "# Version: ${VERSION}" >> "${LOG_FILE}"
+    echo "# Input: ${INPUT}" >> "${LOG_FILE}"
+    echo "# ========================================" >> "${LOG_FILE}"
+}
+
+_log() {
+    local LEVEL="$1"
+    local MESSAGE="$2"
+    [[ -n "${LOG_FILE}" ]] && echo "[$(date +"%H:%M:%S")] [${LEVEL}] ${MESSAGE}" >> "${LOG_FILE}"
+}
+
+_log_xml() {
+    local XML_FILE="$1"
+    [[ -n "${LOG_FILE}" ]] && {
+        echo "" >> "${LOG_FILE}"
+        echo "# ======== XML CONTENT ========" >> "${LOG_FILE}"
+        cat "${XML_FILE}" >> "${LOG_FILE}"
+        echo "" >> "${LOG_FILE}"
+        echo "# ======== END XML ========" >> "${LOG_FILE}"
+    }
+}
+
+# ================================
 # Section 3.3: Help Menu Function
 # ================================
 _show_help() {
@@ -104,7 +135,11 @@ ${BOLD}TAG CATEGORIES${RESET}
         _ORIGINAL_FPS
 
 ${BOLD}OUTPUT${RESET}
-    On save, creates a JSON sidecar file: ${CYAN}<filename>_mkvnote_tags.json${RESET}
+    When tags are written (GUI or CSV mode), mkvnote creates a log file:
+    ${CYAN}<filename>_mkvnote_tags.log${RESET}
+
+    The log records timestamps, tag values, the XML written to the file,
+    and mkvpropedit results — useful for auditing or debugging.
 
 ${BOLD}EXAMPLES${RESET}
     ${GREEN}\$${RESET} ${SCRIPT_NAME} video.mkv
@@ -352,12 +387,20 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         echo "${BOLD}Nice. All files from the csv are found. Let's tag.${RESET}"
     fi
     while read FILE_IN_CSV ; do
+        # Initialize log for each MKV file
+        _init_log "${FILE_IN_CSV}"
+        _log "INFO" "CSV batch mode - tagging from ${INPUT_FILE}"
+        
         XML_DRAFT="$(_maketemp).xml"
         mkvextract tags "${FILE_IN_CSV}" > "${XML_DRAFT}"
         EXISTING_TAGS="$(xmlstarlet sel -t -m '/Tags/Tag[not(Targets) or count(Targets/*)=0]/Simple/Name' -v . -n "${XML_DRAFT}" | awk '!seen[$0]++')"
+        _log "INFO" "Extracting existing tags"
+        _log "DEBUG" "Temp XML file: ${XML_DRAFT}"
+        
         echo "${BOLD}Tagging ${FILE_IN_CSV} with: ${RESET}"
         echo "---------------------|---------------------"
 
+        TAG_COUNT=0
         while read TAG_NAME ; do
             TAG_VALUE="$(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/${TAG_NAME}" -v "." -n "${CSV_XML}")"
             if [[ "${TAG_NAME//_}" == "filename" ]] ; then
@@ -370,9 +413,12 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
                 -s '/Tags/Tag[last()]' -t elem -n 'Targets' \
                 "${XML_DRAFT}"
               echo "Added a new <Tag> with empty <Targets> with ${FILE_IN_CSV}."
+              _log "DEBUG" "Added new Tag element with empty Targets"
             fi
 
             if [[ -n "${TAG_VALUE// /}" && "${TAG_NAME//_}" != "filename" ]] ; then
+                ((TAG_COUNT++))
+                _log "INFO" "Setting tag: ${TAG_NAME}"
                 if echo "${EXISTING_TAGS}" | grep -Fxq "${TAG_NAME}"; then
                     xml ed --omit-decl -P --inplace \
                         --update "(/Tags/Tag[Simple/Name='${TAG_NAME}'])[last()]/Simple[Name='${TAG_NAME}']/String" -v "${TAG_VALUE}" \
@@ -391,7 +437,22 @@ if [[ "${EXTENSION}" == "csv" ]] ; then
         done < <(xmlstarlet sel -t -m "/csv/row[${FILENAME_COLUMN_NAME}='${FILE_IN_CSV}']/*[normalize-space(.) != '']" -v "name()" -n "${CSV_XML}")
         echo
 
-        mkvpropedit --tags "all:${XML_DRAFT}" "${FILE_IN_CSV}"
+        _log "INFO" "XML build complete with ${TAG_COUNT} tags"
+        _log_xml "${XML_DRAFT}"
+        
+        _log "INFO" "Writing tags to MKV file"
+        MKVPROPEDIT_OUTPUT=$(mkvpropedit --tags "all:${XML_DRAFT}" "${FILE_IN_CSV}" 2>&1)
+        MKVPROPEDIT_STATUS=$?
+        _log "DEBUG" "mkvpropedit exit status: ${MKVPROPEDIT_STATUS}"
+        _log "DEBUG" "mkvpropedit output: ${MKVPROPEDIT_OUTPUT}"
+        
+        if [[ ${MKVPROPEDIT_STATUS} -eq 0 ]]; then
+            _log "INFO" "Tags written successfully"
+            _log "INFO" "mkvnote completed successfully"
+        else
+            _log "ERROR" "mkvpropedit failed with status ${MKVPROPEDIT_STATUS}"
+            _log "ERROR" "Output: ${MKVPROPEDIT_OUTPUT}"
+        fi
 
     done < <(xmlstarlet sel -t -m "/csv/row/${FILENAME_COLUMN_NAME}" -v . -n "${CSV_XML}")
 
@@ -508,12 +569,19 @@ _get_attachments() {
     fi
 }
 
+# Initialize logging for GUI mode
+_init_log "${INPUT_FILE}"
+_log "INFO" "GUI mode started"
+_log "INFO" "Input file: ${INPUT_FILE}"
+
 EXISTING_TAGS="$(_maketemp).txt"
 EXTRACTED_TAGS="$(_maketemp).txt"
 XML_DRAFT="$(_maketemp).xml"
 
+_log "INFO" "Extracting existing tags"
 mkvextract tags "${INPUT_FILE}" > "${EXTRACTED_TAGS}"
 xmlstarlet sel -t -m "/Tags/Tag[Targets='' or not(Targets) or (Targets/TargetTypeValue='50' and not(Targets/TrackUID))]/Simple" -v "Name" -n "${EXTRACTED_TAGS}" >> "${EXISTING_TAGS}"
+_log "DEBUG" "Temp XML file: ${EXTRACTED_TAGS}"
 
 ATTACHMENT_LIST=$(_get_attachments "${INPUT_FILE}")
 ATTACHMENT_FILE="$(_maketemp).txt"
@@ -705,13 +773,17 @@ cat > "${DIALOG_FORM}" <<EOF
 </window>
 EOF
 
+_log "INFO" "Launching GTK dialog"
 DIALOG_RESULT="$(export MAIN_DIALOG="$(cat "${DIALOG_FORM}")" ; gtkdialog --center --program MAIN_DIALOG)"
 EXIT_STATUS="$(echo "${DIALOG_RESULT}" | grep "^EXIT=" | cut -d= -f2- | sed 's/^"//g;s/"$//g')"
+_log "INFO" "Dialog closed with status: ${EXIT_STATUS}"
 
 if [[ "${EXIT_STATUS}" == "Cancel" ]] ; then
+    _log "INFO" "User cancelled operation"
     echo "Nevermind then o_o ${EXISTING_TAGS}"
     exit
 elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
+    _log "INFO" "Processing tags for XML generation"
     echo "<Tags><Tag></Tag></Tags>" > "${XML_DRAFT}"
 
     READ_MULTILINE=0
@@ -722,6 +794,7 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
 
     SORTED_KEYS=($(echo "${LIST_OF_KEYS[@]}" | tr ' ' '\n' | LC_COLLATE=C sort))
 
+    TAG_COUNT=0
     for ((i=0; i<TO_BE_PARSED; i++)); do
         TAG_NAME=${SORTED_KEYS[$i]}
         [[ "${TAG_NAME}" == "ATTACHMENTS" ]] && continue
@@ -737,12 +810,32 @@ elif [[ "${EXIT_STATUS}" == "Tag-On!" ]] ; then
         fi
 
         if [[ -n "${TAG_VALUE// /}" ]] ; then
+            ((TAG_COUNT++))
+            _log "INFO" "Setting tag: ${TAG_NAME}"
             echo "${TAG_NAME} ... (${TAG_VALUE})"
             xml ed --omit-decl --inplace --subnode "/Tags/Tag[not(Simple/Name='${TAG_NAME}')]" --type elem -n "Simple" --subnode "/Tags/Tag/Simple[not(Name)]" --type elem -n "Name" -v "${TAG_NAME}" --subnode "/Tags/Tag/Simple[not(String)]" --type elem -n "String" -v "$(echo -e "${TAG_VALUE}")" "${XML_DRAFT}"
         fi
     done
 
-    mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}"
-
-    cowsay "Cool. Done. Enjoy. Tag-on. ${INPUT_FILE}.${RESET}"
+    _log "INFO" "XML build complete with ${TAG_COUNT} tags"
+    _log_xml "${XML_DRAFT}"
+    
+    _log "INFO" "Writing tags to MKV file"
+    MKVPROPEDIT_OUTPUT=$(mkvpropedit --tags "global:${XML_DRAFT}" "${INPUT_FILE}" 2>&1)
+    MKVPROPEDIT_STATUS=$?
+    _log "DEBUG" "mkvpropedit exit status: ${MKVPROPEDIT_STATUS}"
+    _log "DEBUG" "mkvpropedit output: ${MKVPROPEDIT_OUTPUT}"
+    
+    if [[ ${MKVPROPEDIT_STATUS} -eq 0 ]]; then
+        _log "INFO" "Tags written successfully"
+        _log "INFO" "mkvnote completed successfully"
+        cowsay "Cool. Done. Enjoy. Tag-on. ${INPUT_FILE}.${RESET}"
+    else
+        _log "ERROR" "mkvpropedit failed with status ${MKVPROPEDIT_STATUS}"
+        _log "ERROR" "Output: ${MKVPROPEDIT_OUTPUT}"
+        echo "${ERROR}✗ Error writing tags${RESET}"
+        echo "  ${DIM}${MKVPROPEDIT_OUTPUT}${RESET}"
+        echo "  ${DIM}See log file for details: ${LOG_FILE}${RESET}"
+        exit 1
+    fi
 fi
