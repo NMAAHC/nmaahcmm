@@ -58,28 +58,44 @@ class Format:
     label: str         # human-readable name shown in the form
     folder: str        # subdirectory created under the session dir
     slug: str          # used in the notes filename (folder != slug for V8 only)
-    media_type: str    # "film" or "tape" — drives template verb choice
+    media_type: str    # "film" / "tape" / "optical" — drives template verb choice
     description: str   # used in the notes-file template (e.g. "35mm films")
+    category: str      # "film" / "video" / "audio" — drives form section grouping
 
 
 FORMATS: list[Format] = [
-    Format("35mm",                       "35mm",                                  "35mm",                "35mm",                "film", "35mm films"),
-    Format("16mm",                       "16mm",                                  "16mm",                "16mm",                "film", "16mm films"),
-    Format("R8",                         "Regular 8mm (R8)",                      "Regular8mm",          "Regular8mm",          "film", "Regular 8mm films"),
-    Format("S8",                         "Super 8 (S8)",                          "Super8",              "Super8",              "film", "Super 8 films"),
-    Format("VHS",                        "VHS",                                   "VHS",                 "VHS",                 "tape", "VHS tapes"),
-    Format("MiniDV",                     "MiniDV",                                "MiniDV",              "MiniDV",              "tape", "MiniDV tapes"),
-    Format("V8",                         "Video8 (V8)",                           "Video8",              "V8",                  "tape", "Video8 tapes"),
-    Format("Hi8",                        "Hi8",                                   "Hi8",                 "Hi8",                 "tape", "Hi8 tapes"),
-    Format("D8",                         "Digital8 (D8)",                         "Digital8",            "Digital8",            "tape", "Digital8 tapes"),
-    Format("U-matic",                    "U-matic",                               "Umatic",              "Umatic",              "tape", "U-matic tapes"),
-    Format("Betacam",                    "Betacam (Beta)",                        "Betacam",             "Betacam",             "tape", "Betacam tapes"),
-    Format("BetacamSP",                  "BetacamSP (BetaSP)",                    "BetacamSP",           "BetacamSP",           "tape", "BetacamSP tapes"),
-    Format("DigiBeta",                   "Digital Betacam (DigiBeta)",            "DigiBeta",            "DigiBeta",            "tape", "Digital Betacam tapes"),
-    Format("OneInchVideo",               '1" Video (TypeC)',                      "OneInchVideo",        "OneInchVideo",        "tape", "1-inch Video tapes"),
-    Format("HalfInchVideo",              '1/2" Open-Reel Video (EIAJ)',           "HalfInchVideo",       "HalfInchVideo",       "tape", "1/2-inch Video tapes"),
-    Format("CompactAudioCassette",       "Compact Audio Cassette (CAC)",          "AudioCassette",       "AudioCassette",       "tape", "Compact Audio Cassette tapes"),
-    Format("QuarterInchOpenReelAudio",   '1/4" Reel-To-Reel Audio (QinA)',        "QuarterInchOpenReel", "QuarterInchOpenReel", "tape", "1/4-inch open reel tapes"),
+    # --- Film (alphabetical by label) ---
+    Format("16mm",                       "16mm",                                  "16mm",                "16mm",                "film",    "16mm films",                   "film"),
+    Format("35mm",                       "35mm",                                  "35mm",                "35mm",                "film",    "35mm films",                   "film"),
+    Format("R8",                         "Regular 8mm (R8)",                      "Regular8mm",          "Regular8mm",          "film",    "Regular 8mm films",            "film"),
+    Format("S8",                         "Super 8 (S8)",                          "Super8",              "Super8",              "film",    "Super 8 films",                "film"),
+    # --- Video (alphabetical by label) ---
+    Format("OneInchVideo",               '1" Video (TypeC)',                      "OneInchVideo",        "OneInchVideo",        "tape",    "1-inch Video tapes",           "video"),
+    Format("HalfInchVideo",              '1/2" Open-Reel Video (EIAJ)',           "HalfInchVideo",       "HalfInchVideo",       "tape",    "1/2-inch Video tapes",         "video"),
+    Format("Betacam",                    "Betacam (Beta)",                        "Betacam",             "Betacam",             "tape",    "Betacam tapes",                "video"),
+    Format("BetacamSP",                  "BetacamSP (BetaSP)",                    "BetacamSP",           "BetacamSP",           "tape",    "BetacamSP tapes",              "video"),
+    Format("Betamax",                    "Betamax",                               "Betamax",             "Betamax",             "tape",    "Betamax tapes",                "video"),
+    Format("DigiBeta",                   "Digital Betacam (DigiBeta)",            "DigiBeta",            "DigiBeta",            "tape",    "Digital Betacam tapes",        "video"),
+    Format("D8",                         "Digital8 (D8)",                         "Digital8",            "Digital8",            "tape",    "Digital8 tapes",               "video"),
+    Format("DVD",                        "DVD",                                   "DVD",                 "DVD",                 "optical", "DVDs",                         "video"),
+    Format("Hi8",                        "Hi8",                                   "Hi8",                 "Hi8",                 "tape",    "Hi8 tapes",                    "video"),
+    Format("MiniDV",                     "MiniDV",                                "MiniDV",              "MiniDV",              "tape",    "MiniDV tapes",                 "video"),
+    Format("U-matic",                    "U-matic",                               "Umatic",              "Umatic",              "tape",    "U-matic tapes",                "video"),
+    Format("VHS",                        "VHS",                                   "VHS",                 "VHS",                 "tape",    "VHS tapes",                    "video"),
+    Format("VHS-C",                      "VHS-C",                                 "VHSC",                "VHSC",                "tape",    "VHS-C tapes",                  "video"),
+    Format("V8",                         "Video8 (V8)",                           "Video8",              "V8",                  "tape",    "Video8 tapes",                 "video"),
+    # --- Audio (alphabetical by label) ---
+    Format("QuarterInchOpenReelAudio",   '1/4" Reel-To-Reel Audio (QinA)',        "QuarterInchOpenReel", "QuarterInchOpenReel", "tape",    "1/4-inch open reel tapes",     "audio"),
+    Format("CD",                         "CD",                                    "CD",                  "CD",                  "optical", "CDs",                          "audio"),
+    Format("CompactAudioCassette",       "Compact Audio Cassette (CAC)",          "AudioCassette",       "AudioCassette",       "tape",    "Compact Audio Cassette tapes", "audio"),
+]
+
+# Display order + label for the form's format-section headers and CLI grouping.
+# Used by render_form() to emit one grid per section.
+FORMAT_SECTIONS: list[tuple[str, str]] = [
+    ("film",  "Film"),
+    ("video", "Video"),
+    ("audio", "Audio"),
 ]
 
 FORMATS_BY_ID: dict[str, Format] = {f.id: f for f in FORMATS}
@@ -99,9 +115,9 @@ FORMAT_NOTES_TEMPLATE = (
     "initial inspection and {verb_noun}, not content of the {medium}.\n"
 )
 
-VERB_PAST = {"film": "scanned", "tape": "digitized"}
-VERB_NOUN = {"film": "scanning", "tape": "digitization"}
-MEDIUM    = {"film": "films",   "tape": "tapes"}
+VERB_PAST = {"film": "scanned",  "tape": "digitized",   "optical": "digitized"}
+VERB_NOUN = {"film": "scanning", "tape": "digitization", "optical": "digitization"}
+MEDIUM    = {"film": "films",    "tape": "tapes",        "optical": "discs"}
 
 
 # --- Session data + filesystem actions -----------------------------------------
@@ -347,6 +363,13 @@ input[type=text] {{
 .row > button {{ flex: 0 0 auto; }}
 .formats {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0.4em 1.2em; }}
 .formats label {{ display: flex; align-items: center; gap: 0.5em; margin: 0; cursor: pointer; }}
+.format-section {{
+  margin: 1.1em 0 0.5em; padding: 0 0 0.2em;
+  font-size: 0.82em; font-weight: 600; color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.08em; text-transform: uppercase;
+}}
+.format-section:first-of-type {{ margin-top: 0; }}
 .helptext {{ color: var(--muted); font-size: 0.88em; margin-top: 0.3em; }}
 .errors {{
   background: var(--errbg); border: 1px solid var(--err);
@@ -408,9 +431,7 @@ profile's last and first names.</p>
 
   <fieldset>
     <legend>Formats to digitize this session *</legend>
-    <div class="formats">
-      {format_checkboxes}
-    </div>
+    {format_sections}
     <div class="helptext">Each selected format gets an <code>ACCESS/</code> + <code>PRESERVATION/</code>
     pair and a pre-filled <code>&lt;format&gt;_Notes.txt</code> for the TBM preservationist to expound upon.</div>
   </fieldset>
@@ -682,14 +703,26 @@ def render_form(defaults: dict, errors: list[str] | None = None) -> str:
         errors_html = f'<div class="errors"><strong>Please fix:</strong><ul>{items}</ul></div>'
 
     selected = set(defaults.get("formats", []))
-    checkboxes = []
-    for f in FORMATS:
-        checked = " checked" if f.id in selected else ""
-        checkboxes.append(
-            f'<label><input type="checkbox" name="fmt_{f.id}" value="1"{checked}>'
-            f'<span>{f.label}</span></label>'
+    # Emit one <h4> + grid per category so the form visually groups Film /
+    # Video / Audio. FORMATS is already ordered film -> video -> audio with
+    # alphabetical entries within each section, so we don't re-sort here —
+    # the on-disk order is the display order.
+    sections_html: list[str] = []
+    for cat_id, header_label in FORMAT_SECTIONS:
+        cat_formats = [f for f in FORMATS if f.category == cat_id]
+        if not cat_formats:
+            continue
+        items = "".join(
+            f'<label><input type="checkbox" name="fmt_{f.id}" value="1"'
+            f'{" checked" if f.id in selected else ""}>'
+            f'<span>{html.escape(f.label)}</span></label>'
+            for f in cat_formats
         )
-    format_checkboxes = "\n".join(checkboxes)
+        sections_html.append(
+            f'<h4 class="format-section">{html.escape(header_label)}</h4>'
+            f'<div class="formats">{items}</div>'
+        )
+    format_sections = "\n".join(sections_html)
 
     return FORM_HTML.format(
         logo_html=LOGO_HTML,
@@ -700,7 +733,7 @@ def render_form(defaults: dict, errors: list[str] | None = None) -> str:
         appointment_date=html.escape(defaults.get("appointment_date", date_hyphen())),
         scn=html.escape(defaults.get("study_collection_number", "SC.0001")),
         gm_dir=html.escape(defaults.get("gm_dir", "")),
-        format_checkboxes=format_checkboxes,
+        format_sections=format_sections,
     )
 
 
@@ -972,7 +1005,12 @@ def run_cli_form() -> dict:
 
     print("\nFormats to digitize this session (mark each y/N):")
     selected: list[str] = []
+    last_cat: str | None = None
     for f in FORMATS:
+        # Print a subtle section divider when we cross from film -> video -> audio.
+        if f.category != last_cat:
+            print(f"\n  --- {f.category.upper()} ---")
+            last_cat = f.category
         if _ask_yn(f"  {f.label}", default=False):
             selected.append(f.id)
     if not selected:
