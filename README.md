@@ -1,5 +1,3 @@
-# bleakleymm
-
 Digital time-based-media (audio/video) processing tools. Five small tools,
 each shipped in two flavors — `tools/<name>.sh` and `tools/<name>.py` — that
 accept the same flags and write the same output files. Use whichever
