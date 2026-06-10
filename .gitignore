@@ -12,6 +12,3 @@ venv/
 # Logs and local configs
 *.log
 *.conf
-
-# Claude / agent state
-.claude/
