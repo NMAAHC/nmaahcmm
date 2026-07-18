@@ -22,7 +22,7 @@ SUPPORTED_ALGOS=(md5 sha1 sha256 sha512 crc32)
 _usage() {
     cat <<EOF
 ${BOLD}${BLUE}USAGE:${RESET}
-  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [options]
+  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...] [options]
 
 Run ${GREEN}fixity.sh${RESET} ${CYAN}-h${RESET} for detailed help.
 EOF
@@ -34,11 +34,11 @@ ${BOLD}${BLUE}NAME${RESET}
   ${GREEN}fixity.sh${RESET} — make or verify hash sidecars for files
 
 ${BOLD}${BLUE}USAGE${RESET}
-  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${CYAN}-a${RESET} ${YELLOW}ALGO${RESET}] [${CYAN}-p${RESET}] [${CYAN}-r${RESET}|${CYAN}-A${RESET}] [${CYAN}-n${RESET}]   ${DIM}# make (default)${RESET}
-  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${CYAN}-a${RESET} ${YELLOW}ALGO${RESET}] ${CYAN}--verify${RESET}                   ${DIM}# verify${RESET}
+  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...] [${CYAN}-a${RESET} ${YELLOW}ALGO${RESET}] [${CYAN}-p${RESET}] [${CYAN}-r${RESET}|${CYAN}-A${RESET}] [${CYAN}-n${RESET}]   ${DIM}# make (default)${RESET}
+  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...] [${CYAN}-a${RESET} ${YELLOW}ALGO${RESET}] ${CYAN}--verify${RESET}                   ${DIM}# verify${RESET}
 
 ${BOLD}${BLUE}OPTIONS${RESET}
-  ${CYAN}-i${RESET} ${YELLOW}PATH${RESET}                File or directory (directory is recursed)
+  ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...]     One or more files or directories (directories are recursed)
   ${CYAN}-a${RESET}, ${CYAN}--algorithm${RESET} ${YELLOW}ALGO${RESET}   Hash algorithm: ${YELLOW}md5${RESET} (default), ${YELLOW}sha1${RESET}, ${YELLOW}sha256${RESET}, ${YELLOW}sha512${RESET}, ${YELLOW}crc32${RESET}
   ${CYAN}-c${RESET}, ${CYAN}--verify${RESET}            Verify existing sidecars (auto-detects combined or per-file)
   ${CYAN}-p${RESET}, ${CYAN}--per-file${RESET}          Directory input: write a sidecar per source file
@@ -50,6 +50,9 @@ ${BOLD}${BLUE}OPTIONS${RESET}
 ${BOLD}${BLUE}EXAMPLES${RESET}
   ${DIM}# MD5 sidecar for a single file${RESET}
   ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} /Volumes/archive/<file>
+
+  ${DIM}# MD5 sidecars for several files at once${RESET}
+  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} a.mp3 b.mp3 c.mp3
 
   ${DIM}# One combined MD5 manifest for a directory (default)${RESET}
   ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} /Volumes/archive/<dir>
@@ -222,7 +225,7 @@ do_verify_per_file() {
         fi
     done < <(_iter_source_files "$input")
     tbm_info "verify: $ok ok, $failed failed, $missing missing (algorithm: $algo, per-file)"
-    [[ $failed -eq 0 ]] || exit 1
+    [[ $failed -eq 0 ]] || return 1
 }
 
 do_verify_combined() {
@@ -252,7 +255,7 @@ do_verify_combined() {
         fi
     done < "$manifest"
     tbm_info "verify: $ok ok, $failed failed, $missing missing (algorithm: $algo, manifest: $manifest)"
-    [[ $failed -eq 0 ]] || exit 1
+    [[ $failed -eq 0 ]] || return 1
 }
 
 do_verify_auto() {
@@ -274,11 +277,21 @@ do_verify_auto() {
 
 main() {
     if [[ $# -eq 0 ]]; then _usage; exit 0; fi
-    local input="" algo="md5" dry=0 verify=0 per_file=0 rel=0 abs=0
+    local inputs=() algo="md5" dry=0 verify=0 per_file=0 rel=0 abs=0
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -i) input="${2:-}"; shift 2 ;;
-            -a|--algorithm) algo="${2:-}"; shift 2 ;;
+            -i)
+                shift
+                if [[ $# -eq 0 || "$1" == -* ]]; then
+                    tbm_error "-i requires at least one PATH"; _usage >&2; exit 2
+                fi
+                while [[ $# -gt 0 && "$1" != -* ]]; do
+                    inputs+=("$1"); shift
+                done
+                ;;
+            -a|--algorithm)
+                [[ $# -ge 2 ]] || { tbm_error "$1 requires an ALGO argument"; _usage >&2; exit 2; }
+                algo="$2"; shift 2 ;;
             -c|--verify) verify=1; shift ;;
             -n|--dry-run) dry=1; shift ;;
             -p|--per-file) per_file=1; shift ;;
@@ -288,26 +301,35 @@ main() {
             *) tbm_error "Unknown arg: $1"; _usage >&2; exit 2 ;;
         esac
     done
-    [[ -n "$input" ]] || { tbm_error "-i INPUT required"; _usage >&2; exit 2; }
+    (( ${#inputs[@]} > 0 )) || { tbm_error "-i PATH required"; _usage >&2; exit 2; }
     _algo_valid "$algo" || { tbm_error "Unsupported algorithm: $algo (supported: ${SUPPORTED_ALGOS[*]})"; exit 2; }
     (( rel && abs )) && { tbm_error "--relative and --absolute are mutually exclusive"; exit 2; }
+    (( per_file && (rel || abs) )) && { tbm_error "--relative/--absolute don't apply to --per-file mode"; exit 2; }
+    (( verify && dry )) && { tbm_error "--dry-run is not valid with --verify"; exit 2; }
 
-    if [[ -d "$input" ]]; then
-        input="$(cd "$input" && pwd -P)"
-    fi
+    # Validate every input up front so a bad path can't abort a half-finished run.
+    local input
+    for input in "${inputs[@]}"; do
+        if [[ ! -f "$input" && ! -d "$input" ]]; then
+            tbm_error "Not a file or directory: $input"
+            exit 2
+        fi
+        if [[ -f "$input" ]] && (( rel || abs )); then
+            tbm_error "--relative/--absolute only apply to directory input: $input"
+            exit 2
+        fi
+    done
 
-    if (( verify )); then
-        (( dry )) && { tbm_error "--dry-run is not valid with --verify"; exit 2; }
-        do_verify_auto "$input" "$algo"
-        return
-    fi
-
-    if [[ -f "$input" ]]; then
-        (( rel || abs )) && { tbm_error "--relative/--absolute only apply to directory input"; exit 2; }
-        do_make_per_file "$input" "$algo" "$dry"
-    elif [[ -d "$input" ]]; then
-        if (( per_file )); then
-            (( rel || abs )) && { tbm_error "--relative/--absolute don't apply to --per-file mode"; exit 2; }
+    local status=0
+    for input in "${inputs[@]}"; do
+        if [[ -d "$input" ]]; then
+            input="$(cd "$input" && pwd -P)"
+        fi
+        if (( verify )); then
+            do_verify_auto "$input" "$algo" || status=1
+        elif [[ -f "$input" ]]; then
+            do_make_per_file "$input" "$algo" "$dry"
+        elif (( per_file )); then
             do_make_per_file "$input" "$algo" "$dry"
         else
             local mode="basename"
@@ -315,10 +337,8 @@ main() {
             (( abs )) && mode="absolute"
             do_make_combined "$input" "$algo" "$dry" "$mode"
         fi
-    else
-        tbm_error "Not a file or directory: $input"
-        exit 2
-    fi
+    done
+    exit "$status"
 }
 
 main "$@"
