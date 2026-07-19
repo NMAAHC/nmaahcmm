@@ -35,17 +35,17 @@ def print_help():
 
 {BOLD}{BLUE}USAGE{RESET}
   {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...] [{CYAN}-a{RESET} {YELLOW}ALGO{RESET}] [{CYAN}-p{RESET}] [{CYAN}-r{RESET}|{CYAN}-A{RESET}] [{CYAN}-n{RESET}]   {DIM}# make (default){RESET}
-  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...] [{CYAN}-a{RESET} {YELLOW}ALGO{RESET}] {CYAN}--verify{RESET}                   {DIM}# verify{RESET}
+  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...] [{CYAN}-a{RESET} {YELLOW}ALGO{RESET}] {CYAN}--verify{RESET}            {DIM}# verify{RESET}
 
 {BOLD}{BLUE}OPTIONS{RESET}
-  {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...]     One or more files or directories (directories are recursed)
-  {CYAN}-a{RESET}, {CYAN}--algorithm{RESET} {YELLOW}ALGO{RESET}   Hash algorithm: {YELLOW}md5{RESET} (default), {YELLOW}sha1{RESET}, {YELLOW}sha256{RESET}, {YELLOW}sha512{RESET}, {YELLOW}crc32{RESET}
-  {CYAN}-c{RESET}, {CYAN}--verify{RESET}            Verify existing sidecars (auto-detects combined or per-file)
-  {CYAN}-p{RESET}, {CYAN}--per-file{RESET}          Directory input: write a sidecar per source file
-  {CYAN}-r{RESET}, {CYAN}--relative{RESET}          Combined mode: store paths relative to the input dir
-  {CYAN}-A{RESET}, {CYAN}--absolute{RESET}          Combined mode: store absolute paths
-  {CYAN}-n{RESET}, {CYAN}--dry-run{RESET}           Print planned actions, write nothing
-  {CYAN}-h{RESET}, {CYAN}--help{RESET}              Show this help
+  {CYAN}-i{RESET}, {CYAN}--input{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...]   One or more files or directories (directories are recursed)
+  {CYAN}-a{RESET}, {CYAN}--algorithm{RESET} {YELLOW}ALGO{RESET}          Hash algorithm: {YELLOW}md5{RESET} (default), {YELLOW}sha1{RESET}, {YELLOW}sha256{RESET}, {YELLOW}sha512{RESET}, {YELLOW}crc32{RESET}
+  {CYAN}-c{RESET}, {CYAN}--verify{RESET}                  Verify existing sidecars (auto-detects combined or per-file)
+  {CYAN}-p{RESET}, {CYAN}--per-file{RESET}                Directory input: write a sidecar per source file
+  {CYAN}-r{RESET}, {CYAN}--relative{RESET}                Combined mode: store paths relative to the input dir
+  {CYAN}-A{RESET}, {CYAN}--absolute{RESET}                Combined mode: store absolute paths
+  {CYAN}-n{RESET}, {CYAN}--dry-run{RESET}                 Print planned actions, write nothing
+  {CYAN}-h{RESET}, {CYAN}--help{RESET}                    Show this help
 
 {BOLD}{BLUE}EXAMPLES{RESET}
   {DIM}# MD5 sidecar for a single file{RESET}

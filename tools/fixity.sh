@@ -35,17 +35,17 @@ ${BOLD}${BLUE}NAME${RESET}
 
 ${BOLD}${BLUE}USAGE${RESET}
   ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...] [${CYAN}-a${RESET} ${YELLOW}ALGO${RESET}] [${CYAN}-p${RESET}] [${CYAN}-r${RESET}|${CYAN}-A${RESET}] [${CYAN}-n${RESET}]   ${DIM}# make (default)${RESET}
-  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...] [${CYAN}-a${RESET} ${YELLOW}ALGO${RESET}] ${CYAN}--verify${RESET}                   ${DIM}# verify${RESET}
+  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...] [${CYAN}-a${RESET} ${YELLOW}ALGO${RESET}] ${CYAN}--verify${RESET}            ${DIM}# verify${RESET}
 
 ${BOLD}${BLUE}OPTIONS${RESET}
-  ${CYAN}-i${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...]     One or more files or directories (directories are recursed)
-  ${CYAN}-a${RESET}, ${CYAN}--algorithm${RESET} ${YELLOW}ALGO${RESET}   Hash algorithm: ${YELLOW}md5${RESET} (default), ${YELLOW}sha1${RESET}, ${YELLOW}sha256${RESET}, ${YELLOW}sha512${RESET}, ${YELLOW}crc32${RESET}
-  ${CYAN}-c${RESET}, ${CYAN}--verify${RESET}            Verify existing sidecars (auto-detects combined or per-file)
-  ${CYAN}-p${RESET}, ${CYAN}--per-file${RESET}          Directory input: write a sidecar per source file
-  ${CYAN}-r${RESET}, ${CYAN}--relative${RESET}          Combined mode: store paths relative to the input dir
-  ${CYAN}-A${RESET}, ${CYAN}--absolute${RESET}          Combined mode: store absolute paths
-  ${CYAN}-n${RESET}, ${CYAN}--dry-run${RESET}           Print planned actions, write nothing
-  ${CYAN}-h${RESET}, ${CYAN}--help${RESET}              Show this help
+  ${CYAN}-i${RESET}, ${CYAN}--input${RESET} ${YELLOW}PATH${RESET} [${YELLOW}PATH${RESET} ...]   One or more files or directories (directories are recursed)
+  ${CYAN}-a${RESET}, ${CYAN}--algorithm${RESET} ${YELLOW}ALGO${RESET}          Hash algorithm: ${YELLOW}md5${RESET} (default), ${YELLOW}sha1${RESET}, ${YELLOW}sha256${RESET}, ${YELLOW}sha512${RESET}, ${YELLOW}crc32${RESET}
+  ${CYAN}-c${RESET}, ${CYAN}--verify${RESET}                  Verify existing sidecars (auto-detects combined or per-file)
+  ${CYAN}-p${RESET}, ${CYAN}--per-file${RESET}                Directory input: write a sidecar per source file
+  ${CYAN}-r${RESET}, ${CYAN}--relative${RESET}                Combined mode: store paths relative to the input dir
+  ${CYAN}-A${RESET}, ${CYAN}--absolute${RESET}                Combined mode: store absolute paths
+  ${CYAN}-n${RESET}, ${CYAN}--dry-run${RESET}                 Print planned actions, write nothing
+  ${CYAN}-h${RESET}, ${CYAN}--help${RESET}                    Show this help
 
 ${BOLD}${BLUE}EXAMPLES${RESET}
   ${DIM}# MD5 sidecar for a single file${RESET}
@@ -277,13 +277,14 @@ do_verify_auto() {
 
 main() {
     if [[ $# -eq 0 ]]; then _usage; exit 0; fi
-    local inputs=() algo="md5" dry=0 verify=0 per_file=0 rel=0 abs=0
+    local inputs=() algo="md5" dry=0 verify=0 per_file=0 rel=0 abs=0 flag=""
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -i)
+            -i|--input)
+                flag="$1"
                 shift
                 if [[ $# -eq 0 || "$1" == -* ]]; then
-                    tbm_error "-i requires at least one PATH"; _usage >&2; exit 2
+                    tbm_error "${flag} requires at least one PATH"; _usage >&2; exit 2
                 fi
                 while [[ $# -gt 0 && "$1" != -* ]]; do
                     inputs+=("$1"); shift
