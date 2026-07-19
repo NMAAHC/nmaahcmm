@@ -155,7 +155,15 @@ _entry_path() {
 
 do_make_per_file() {
     local input="$1" algo="$2" dry="$3"
-    local count=0 skipped=0 f sidecar
+    local count=0 skipped=0 f sidecar hash file_list
+    file_list="$(mktemp "${TMPDIR:-/tmp}/fixity.XXXXXX")" || { tbm_error "cannot create temp file"; return 1; }
+    # List first and check the listing's exit status: a find error (e.g. an
+    # unreadable subdirectory) must not let a partial run pass as success.
+    if ! _iter_source_files "$input" > "$file_list"; then
+        rm -f "$file_list"
+        tbm_error "could not list all files under $input"
+        return 1
+    fi
     while IFS= read -r f; do
         sidecar="${f}.${algo}.txt"
         if [[ -f "$sidecar" ]]; then
@@ -166,17 +174,27 @@ do_make_per_file() {
         if (( dry )); then
             tbm_info "[dry-run] would write: $sidecar"
         else
-            printf '%s  %s\n' "$(_hash_only "$f" "$algo")" "$(basename "$f")" > "$sidecar"
+            if ! hash="$(_hash_only "$f" "$algo")"; then
+                tbm_error "failed to hash: $f"
+                rm -f "$file_list"
+                return 1
+            fi
+            printf '%s  %s\n' "$hash" "$(basename "$f")" > "$sidecar"
             tbm_ok "wrote $sidecar"
         fi
         count=$((count+1))
-    done < <(_iter_source_files "$input")
+    done < "$file_list"
+    rm -f "$file_list"
+    if (( count + skipped == 0 )); then
+        tbm_error "no source files found in $input"
+        return 1
+    fi
     tbm_info "done: $count processed, $skipped skipped (algorithm: $algo, per-file)"
 }
 
 do_make_combined() {
     local input="$1" algo="$2" dry="$3" mode="$4"
-    local name manifest tmp_manifest count=0 entry f hash
+    local name manifest tmp_manifest count=0 entry f hash file_list
     local lines=()
     name="$(basename "$input")"
     manifest="${input%/}/${name}.${algo}.txt"
@@ -185,28 +203,46 @@ do_make_combined() {
         tbm_warn "manifest exists, overwriting: $manifest"
     fi
 
+    file_list="$(mktemp "${TMPDIR:-/tmp}/fixity.XXXXXX")" || { tbm_error "cannot create temp file"; return 1; }
+    # List first and check the listing's exit status: a find error (e.g. an
+    # unreadable subdirectory) must not let a partial manifest pass as complete.
+    if ! _iter_source_files "$input" > "$file_list"; then
+        rm -f "$file_list"
+        tbm_error "could not list all files under $input"
+        return 1
+    fi
     while IFS= read -r f; do
         entry="$(_entry_path "$f" "$input" "$mode")"
         if (( dry )); then
             tbm_info "[dry-run] would hash: $entry"
         else
-            hash="$(_hash_only "$f" "$algo")"
+            if ! hash="$(_hash_only "$f" "$algo")"; then
+                tbm_error "failed to hash: $f"
+                rm -f "$file_list"
+                return 1
+            fi
             lines+=("${hash}  ${entry}")
             tbm_info "hashed: $entry"
         fi
         count=$((count+1))
-    done < <(_iter_source_files "$input")
+    done < "$file_list"
+    rm -f "$file_list"
+
+    if (( count == 0 )); then
+        tbm_error "no source files found in $input"
+        return 1
+    fi
 
     if (( dry )); then
         tbm_info "[dry-run] would write manifest: $manifest ($count entries)"
     else
-        # Write to a temp file and rename so an existing manifest is only
-        # replaced once every hash has succeeded.
-        tmp_manifest="${manifest}.tmp.$$"
-        : > "$tmp_manifest"
-        if (( ${#lines[@]} )); then
-            printf '%s\n' "${lines[@]}" >> "$tmp_manifest"
-        fi
+        # mktemp creates the file exclusively, so a stale temp or pre-planted
+        # symlink can't redirect the write; the rename replaces the manifest
+        # only after every hash has succeeded. mktemp files are 0600, so
+        # restore what a plain umask-honoring write would have produced.
+        tmp_manifest="$(mktemp "${manifest}.XXXXXX")" || { tbm_error "cannot create temp manifest"; return 1; }
+        printf '%s\n' "${lines[@]}" > "$tmp_manifest"
+        chmod "$(printf '%o' $(( 0666 & ~0$(umask) )))" "$tmp_manifest"
         mv "$tmp_manifest" "$manifest"
         tbm_ok "wrote $manifest ($count entries, path-mode: $mode)"
     fi
@@ -214,7 +250,13 @@ do_make_combined() {
 
 do_verify_per_file() {
     local input="$1" algo="$2"
-    local ok=0 failed=0 missing=0 f sidecar expected actual
+    local ok=0 failed=0 missing=0 f sidecar expected actual file_list
+    file_list="$(mktemp "${TMPDIR:-/tmp}/fixity.XXXXXX")" || { tbm_error "cannot create temp file"; return 1; }
+    if ! _iter_source_files "$input" > "$file_list"; then
+        rm -f "$file_list"
+        tbm_error "could not list all files under $input"
+        return 1
+    fi
     while IFS= read -r f; do
         sidecar="${f}.${algo}.txt"
         if [[ ! -f "$sidecar" ]]; then
@@ -223,7 +265,11 @@ do_verify_per_file() {
             continue
         fi
         expected="$(awk 'NR==1{print $1}' "$sidecar")"
-        actual="$(_hash_only "$f" "$algo")"
+        if ! actual="$(_hash_only "$f" "$algo")"; then
+            tbm_error "MISMATCH: $f (cannot read file)"
+            failed=$((failed+1))
+            continue
+        fi
         if [[ "$expected" == "$actual" ]]; then
             tbm_ok "match: $f"
             ok=$((ok+1))
@@ -231,7 +277,8 @@ do_verify_per_file() {
             tbm_error "MISMATCH: $f (expected $expected, got $actual)"
             failed=$((failed+1))
         fi
-    done < <(_iter_source_files "$input")
+    done < "$file_list"
+    rm -f "$file_list"
     tbm_info "verify: $ok ok, $failed failed, $missing missing (algorithm: $algo, per-file)"
     if (( ok + failed + missing == 0 )); then
         tbm_error "nothing to verify: no source files found in $input"
@@ -262,7 +309,11 @@ do_verify_combined() {
             missing=$((missing+1))
             continue
         fi
-        actual="$(_hash_only "$file" "$algo")"
+        if ! actual="$(_hash_only "$file" "$algo")"; then
+            tbm_error "MISMATCH: $file (cannot read file)"
+            failed=$((failed+1))
+            continue
+        fi
         if [[ "$hash" == "$actual" ]]; then
             tbm_ok "match: $file"
             ok=$((ok+1))
@@ -349,14 +400,12 @@ main() {
         fi
         if (( verify )); then
             do_verify_auto "$input" "$algo" || status=1
-        elif [[ -f "$input" ]]; then
-            do_make_per_file "$input" "$algo" "$dry"
-        elif (( per_file )); then
-            do_make_per_file "$input" "$algo" "$dry"
+        elif [[ -f "$input" ]] || (( per_file )); then
+            do_make_per_file "$input" "$algo" "$dry" || status=1
         else
             local mode="relative"
             (( abs )) && mode="absolute"
-            do_make_combined "$input" "$algo" "$dry" "$mode"
+            do_make_combined "$input" "$algo" "$dry" "$mode" || status=1
         fi
     done
     exit "$status"

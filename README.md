@@ -51,6 +51,8 @@ Default on a directory: one combined manifest at `<dir>/<dirname>.<algo>.txt`
 with paths relative to the directory. Use `-p` for per-file sidecars, `-A` for
 absolute paths. `--verify` auto-detects combined vs per-file and exits non-zero
 if anything is mismatched, missing, or malformed — not just on bad hashes.
+Make writes a manifest only when every file could be listed and hashed: an
+empty or partially readable directory is an error, never a silent success.
 
 ### metadata
 

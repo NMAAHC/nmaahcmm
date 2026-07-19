@@ -139,6 +139,67 @@ run_suite() {
     fi
     chmod 644 "$WORK/pkg/unreadable.txt"
 
+    ### make refuses success when it cannot see or hash everything
+    fresh
+    mkdir -p "$WORK/empty"
+    expect "empty dir make fails" 1 "$TOOL" -i "$WORK/empty"
+    check  "no manifest written for empty dir" ! -f "$WORK/empty/empty.md5.txt"
+
+    fresh
+    mkdir -p "$WORK/pkg"
+    echo x > "$WORK/pkg/x.txt"
+    "$TOOL" -i "$WORK/pkg" >/dev/null 2>&1
+    cp "$WORK/pkg/pkg.md5.txt" "$WORK/before.txt"
+    rm "$WORK/pkg/x.txt"
+    expect "re-make on emptied dir fails" 1 "$TOOL" -i "$WORK/pkg"
+    if cmp -s "$WORK/before.txt" "$WORK/pkg/pkg.md5.txt"; then
+        _pass "emptied dir re-make keeps previous manifest"
+    else
+        _fail "emptied dir re-make keeps previous manifest"
+    fi
+
+    if [[ "$(id -u)" -eq 0 ]]; then
+        _pass "unreadable-content tests (skipped: running as root)"
+    else
+        fresh
+        mkdir -p "$WORK/tree/open" "$WORK/tree/locked"
+        echo a > "$WORK/tree/open/a.txt"
+        echo b > "$WORK/tree/locked/b.txt"
+        chmod 000 "$WORK/tree/locked"
+        echo ok > "$WORK/ok.mp3"
+        expect "unreadable subdir make fails" 1 "$TOOL" -i "$WORK/tree"
+        check  "no partial manifest on traversal failure" ! -f "$WORK/tree/tree.md5.txt"
+        expect "make continues past failing input" 1 "$TOOL" -i "$WORK/tree" "$WORK/ok.mp3"
+        check  "later input still processed" -f "$WORK/ok.mp3.md5.txt"
+        expect "unreadable subdir fails per-file verify" 1 "$TOOL" -i "$WORK/tree" --verify
+        chmod 755 "$WORK/tree/locked"
+
+        fresh
+        echo x > "$WORK/f.mp3"
+        chmod 000 "$WORK/f.mp3"
+        expect "unreadable file make fails" 1 "$TOOL" -i "$WORK/f.mp3"
+        check  "no sidecar written for unreadable file" ! -f "$WORK/f.mp3.md5.txt"
+        chmod 644 "$WORK/f.mp3"
+
+        fresh
+        echo x > "$WORK/f.mp3"
+        "$TOOL" -i "$WORK/f.mp3" >/dev/null 2>&1
+        chmod 000 "$WORK/f.mp3"
+        expect "unreadable file fails verify" 1 "$TOOL" -i "$WORK/f.mp3" --verify
+        chmod 644 "$WORK/f.mp3"
+    fi
+
+    ### manifest permissions follow the umask like a plain write
+    fresh
+    mkdir -p "$WORK/pkg"
+    echo x > "$WORK/pkg/x.txt"
+    ( umask 022; "$TOOL" -i "$WORK/pkg" >/dev/null 2>&1 )
+    if python3 -c 'import os, sys; sys.exit(0 if (os.stat(sys.argv[1]).st_mode & 0o777) == 0o644 else 1)' "$WORK/pkg/pkg.md5.txt"; then
+        _pass "manifest written 0644 under umask 022"
+    else
+        _fail "manifest written 0644 under umask 022"
+    fi
+
     ### argument handling
     fresh
     echo one > "$WORK/a.mp3"
