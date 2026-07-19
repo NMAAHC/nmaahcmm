@@ -42,8 +42,8 @@ ${BOLD}${BLUE}OPTIONS${RESET}
   ${CYAN}-a${RESET}, ${CYAN}--algorithm${RESET} ${YELLOW}ALGO${RESET}          Hash algorithm: ${YELLOW}md5${RESET} (default), ${YELLOW}sha1${RESET}, ${YELLOW}sha256${RESET}, ${YELLOW}sha512${RESET}, ${YELLOW}crc32${RESET}
   ${CYAN}-c${RESET}, ${CYAN}--verify${RESET}                  Verify existing sidecars (auto-detects combined or per-file)
   ${CYAN}-p${RESET}, ${CYAN}--per-file${RESET}                Directory input: write a sidecar per source file
-  ${CYAN}-r${RESET}, ${CYAN}--relative${RESET}                Combined mode: store paths relative to the input dir
-  ${CYAN}-A${RESET}, ${CYAN}--absolute${RESET}                Combined mode: store absolute paths
+  ${CYAN}-r${RESET}, ${CYAN}--relative${RESET}                Combined mode: relative paths in the manifest (default)
+  ${CYAN}-A${RESET}, ${CYAN}--absolute${RESET}                Combined mode: absolute paths in the manifest
   ${CYAN}-n${RESET}, ${CYAN}--dry-run${RESET}                 Print planned actions, write nothing
   ${CYAN}-h${RESET}, ${CYAN}--help${RESET}                    Show this help
 
@@ -60,8 +60,8 @@ ${BOLD}${BLUE}EXAMPLES${RESET}
   ${DIM}# Per-file SHA-256 sidecars inside a directory${RESET}
   ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} /Volumes/archive/<dir> ${CYAN}-a${RESET} sha256 ${CYAN}-p${RESET}
 
-  ${DIM}# Combined manifest with relative paths${RESET}
-  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} /Volumes/archive/<dir> ${CYAN}-r${RESET}
+  ${DIM}# Combined manifest with absolute paths${RESET}
+  ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} /Volumes/archive/<dir> ${CYAN}-A${RESET}
 
   ${DIM}# Verify (auto-detects combined or per-file)${RESET}
   ${GREEN}fixity.sh${RESET} ${CYAN}-i${RESET} /Volumes/archive/<dir> ${CYAN}--verify${RESET}
@@ -74,7 +74,7 @@ ${BOLD}${BLUE}SIDECAR FORMAT${RESET}
   Combined (directory input, default):
     One manifest inside the directory: ${YELLOW}<dir>/<dirname>.<algo>.txt${RESET}
     One line per file: ${YELLOW}<hash>  <path>${RESET}
-    Path is the basename by default, relative with ${CYAN}-r${RESET}, absolute with ${CYAN}-A${RESET}.
+    Paths are relative to the input dir by default (${CYAN}-r${RESET}); absolute with ${CYAN}-A${RESET}.
 EOF
 }
 
@@ -146,11 +146,11 @@ _iter_source_files() {
 
 _entry_path() {
     local f="$1" root="$2" mode="$3"
-    case "$mode" in
-        absolute) printf '%s\n' "$f" ;;
-        relative) printf '%s\n' "${f#${root}/}" ;;
-        *)        basename "$f" ;;
-    esac
+    if [[ "$mode" == "absolute" ]]; then
+        printf '%s\n' "$f"
+    else
+        printf '%s\n' "${f#${root}/}"
+    fi
 }
 
 do_make_per_file() {
@@ -176,14 +176,14 @@ do_make_per_file() {
 
 do_make_combined() {
     local input="$1" algo="$2" dry="$3" mode="$4"
-    local name manifest count=0 entry f hash
+    local name manifest tmp_manifest count=0 entry f hash
+    local lines=()
     name="$(basename "$input")"
     manifest="${input%/}/${name}.${algo}.txt"
 
     if [[ -f "$manifest" ]] && (( ! dry )); then
         tbm_warn "manifest exists, overwriting: $manifest"
     fi
-    (( dry )) || : > "$manifest"
 
     while IFS= read -r f; do
         entry="$(_entry_path "$f" "$input" "$mode")"
@@ -191,7 +191,7 @@ do_make_combined() {
             tbm_info "[dry-run] would hash: $entry"
         else
             hash="$(_hash_only "$f" "$algo")"
-            printf '%s  %s\n' "$hash" "$entry" >> "$manifest"
+            lines+=("${hash}  ${entry}")
             tbm_info "hashed: $entry"
         fi
         count=$((count+1))
@@ -200,6 +200,14 @@ do_make_combined() {
     if (( dry )); then
         tbm_info "[dry-run] would write manifest: $manifest ($count entries)"
     else
+        # Write to a temp file and rename so an existing manifest is only
+        # replaced once every hash has succeeded.
+        tmp_manifest="${manifest}.tmp.$$"
+        : > "$tmp_manifest"
+        if (( ${#lines[@]} )); then
+            printf '%s\n' "${lines[@]}" >> "$tmp_manifest"
+        fi
+        mv "$tmp_manifest" "$manifest"
         tbm_ok "wrote $manifest ($count entries, path-mode: $mode)"
     fi
 }
@@ -225,14 +233,23 @@ do_verify_per_file() {
         fi
     done < <(_iter_source_files "$input")
     tbm_info "verify: $ok ok, $failed failed, $missing missing (algorithm: $algo, per-file)"
-    [[ $failed -eq 0 ]] || return 1
+    if (( ok + failed + missing == 0 )); then
+        tbm_error "nothing to verify: no source files found in $input"
+        return 1
+    fi
+    [[ $failed -eq 0 && $missing -eq 0 ]] || return 1
 }
 
 do_verify_combined() {
     local manifest="$1" input="$2" algo="$3"
-    local ok=0 failed=0 missing=0 line hash entry file actual
+    local ok=0 failed=0 missing=0 malformed=0 line hash entry file actual
     while IFS= read -r line; do
         [[ -z "$line" ]] && continue
+        if [[ "$line" != *"  "* ]]; then
+            tbm_warn "malformed manifest line: $line"
+            malformed=$((malformed+1))
+            continue
+        fi
         hash="${line%%  *}"
         entry="${line#*  }"
         if [[ "$entry" = /* ]]; then
@@ -254,8 +271,12 @@ do_verify_combined() {
             failed=$((failed+1))
         fi
     done < "$manifest"
-    tbm_info "verify: $ok ok, $failed failed, $missing missing (algorithm: $algo, manifest: $manifest)"
-    [[ $failed -eq 0 ]] || return 1
+    tbm_info "verify: $ok ok, $failed failed, $missing missing, $malformed malformed (algorithm: $algo, manifest: $manifest)"
+    if (( ok + failed + missing + malformed == 0 )); then
+        tbm_error "manifest has no entries: $manifest"
+        return 1
+    fi
+    [[ $failed -eq 0 && $missing -eq 0 && $malformed -eq 0 ]] || return 1
 }
 
 do_verify_auto() {
@@ -333,8 +354,7 @@ main() {
         elif (( per_file )); then
             do_make_per_file "$input" "$algo" "$dry"
         else
-            local mode="basename"
-            (( rel )) && mode="relative"
+            local mode="relative"
             (( abs )) && mode="absolute"
             do_make_combined "$input" "$algo" "$dry" "$mode"
         fi

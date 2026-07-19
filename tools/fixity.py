@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import sys
 import zlib
 from pathlib import Path
@@ -42,8 +43,8 @@ def print_help():
   {CYAN}-a{RESET}, {CYAN}--algorithm{RESET} {YELLOW}ALGO{RESET}          Hash algorithm: {YELLOW}md5{RESET} (default), {YELLOW}sha1{RESET}, {YELLOW}sha256{RESET}, {YELLOW}sha512{RESET}, {YELLOW}crc32{RESET}
   {CYAN}-c{RESET}, {CYAN}--verify{RESET}                  Verify existing sidecars (auto-detects combined or per-file)
   {CYAN}-p{RESET}, {CYAN}--per-file{RESET}                Directory input: write a sidecar per source file
-  {CYAN}-r{RESET}, {CYAN}--relative{RESET}                Combined mode: store paths relative to the input dir
-  {CYAN}-A{RESET}, {CYAN}--absolute{RESET}                Combined mode: store absolute paths
+  {CYAN}-r{RESET}, {CYAN}--relative{RESET}                Combined mode: relative paths in the manifest (default)
+  {CYAN}-A{RESET}, {CYAN}--absolute{RESET}                Combined mode: absolute paths in the manifest
   {CYAN}-n{RESET}, {CYAN}--dry-run{RESET}                 Print planned actions, write nothing
   {CYAN}-h{RESET}, {CYAN}--help{RESET}                    Show this help
 
@@ -60,8 +61,8 @@ def print_help():
   {DIM}# Per-file SHA-256 sidecars inside a directory{RESET}
   {GREEN}fixity.py{RESET} {CYAN}-i{RESET} /Volumes/archive/<dir> {CYAN}-a{RESET} sha256 {CYAN}-p{RESET}
 
-  {DIM}# Combined manifest with relative paths{RESET}
-  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} /Volumes/archive/<dir> {CYAN}-r{RESET}
+  {DIM}# Combined manifest with absolute paths{RESET}
+  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} /Volumes/archive/<dir> {CYAN}-A{RESET}
 
   {DIM}# Verify (auto-detects combined or per-file){RESET}
   {GREEN}fixity.py{RESET} {CYAN}-i{RESET} /Volumes/archive/<dir> {CYAN}--verify{RESET}
@@ -74,7 +75,7 @@ def print_help():
   Combined (directory input, default):
     One manifest inside the directory: {YELLOW}<dir>/<dirname>.<algo>.txt{RESET}
     One line per file: {YELLOW}<hash>  <path>{RESET}
-    Path is the basename by default, relative with {CYAN}-r{RESET}, absolute with {CYAN}-A{RESET}.""")
+    Paths are relative to the input dir by default ({CYAN}-r{RESET}); absolute with {CYAN}-A{RESET}.""")
 
 
 def _hash_only(path: Path, algo: str) -> str:
@@ -106,9 +107,7 @@ def _iter_source_files(root: Path) -> list[Path]:
 def _entry_path(file: Path, root: Path, mode: str) -> str:
     if mode == "absolute":
         return str(file)
-    if mode == "relative":
-        return str(file.relative_to(root))
-    return file.name
+    return str(file.relative_to(root))
 
 
 def do_make_per_file(input_: Path, algo: str, dry_run: bool) -> int:
@@ -151,7 +150,11 @@ def do_make_combined(input_: Path, algo: str, dry_run: bool, path_mode: str) -> 
     if dry_run:
         log.info(f"[dry-run] would write manifest: {manifest} ({count} entries)")
     else:
-        manifest.write_text("".join(lines))
+        # Write to a temp file and rename so an existing manifest is only
+        # replaced once every hash has succeeded.
+        tmp = manifest.with_name(f"{manifest.name}.tmp.{os.getpid()}")
+        tmp.write_text("".join(lines))
+        tmp.replace(manifest)
         log.info(f"wrote {manifest} ({count} entries, path-mode: {path_mode})")
     return 0
 
@@ -178,17 +181,21 @@ def do_verify_per_file(input_: Path, algo: str) -> int:
             log.error(f"MISMATCH: {f} (expected {expected}, got {actual})")
             failed += 1
     log.info(f"verify: {ok} ok, {failed} failed, {missing} missing (algorithm: {algo}, per-file)")
-    return 1 if failed else 0
+    if ok + failed + missing == 0:
+        log.error(f"nothing to verify: no source files found in {input_}")
+        return 1
+    return 1 if (failed or missing) else 0
 
 
 def do_verify_combined(manifest: Path, input_: Path, algo: str) -> int:
-    ok = failed = missing = 0
+    ok = failed = missing = malformed = 0
     for line in manifest.read_text().splitlines():
         if not line.strip():
             continue
         parts = line.split("  ", 1)
         if len(parts) != 2:
-            log.warning(f"skipping malformed line: {line}")
+            log.warning(f"malformed manifest line: {line}")
+            malformed += 1
             continue
         h, entry = parts
         file = Path(entry) if Path(entry).is_absolute() else (input_ / entry)
@@ -203,8 +210,11 @@ def do_verify_combined(manifest: Path, input_: Path, algo: str) -> int:
         else:
             log.error(f"MISMATCH: {file} (expected {h}, got {actual})")
             failed += 1
-    log.info(f"verify: {ok} ok, {failed} failed, {missing} missing (algorithm: {algo}, manifest: {manifest})")
-    return 1 if failed else 0
+    log.info(f"verify: {ok} ok, {failed} failed, {missing} missing, {malformed} malformed (algorithm: {algo}, manifest: {manifest})")
+    if ok + failed + missing + malformed == 0:
+        log.error(f"manifest has no entries: {manifest}")
+        return 1
+    return 1 if (failed or missing or malformed) else 0
 
 
 def do_verify_auto(input_: Path, algo: str) -> int:
@@ -276,7 +286,7 @@ def main() -> int:
         elif path.is_file() or args.per_file:
             rc = do_make_per_file(path, args.algorithm, args.dry_run)
         else:
-            mode = "relative" if args.relative else "absolute" if args.absolute else "basename"
+            mode = "absolute" if args.absolute else "relative"
             rc = do_make_combined(path, args.algorithm, args.dry_run, mode)
         if rc:
             status = 1

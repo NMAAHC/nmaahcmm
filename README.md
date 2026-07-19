@@ -35,7 +35,7 @@ All tools follow the same conventions:
 
 - Run with no args → short usage
 - Run with `-h` / `--help` → detailed colored help
-- `-i PATH` is the input file or directory
+- `-i PATH` is the input file or directory (fixity accepts more than one)
 - `-n` / `--dry-run` previews without writing (where applicable)
 
 ## Tools
@@ -43,13 +43,14 @@ All tools follow the same conventions:
 ### fixity
 
 ```sh
-tools/fixity.sh -i PATH [-a ALGO] [-p] [-r|-A] [-n]     # make (default)
-tools/fixity.sh -i PATH [-a ALGO] --verify              # verify
+tools/fixity.sh -i PATH [PATH ...] [-a ALGO] [-p] [-r|-A] [-n]   # make (default)
+tools/fixity.sh -i PATH [PATH ...] [-a ALGO] --verify            # verify
 ```
 
 Default on a directory: one combined manifest at `<dir>/<dirname>.<algo>.txt`
-with basenames as paths. Use `-p` for per-file sidecars, `-r` for relative
-paths, `-A` for absolute paths. `--verify` auto-detects combined vs per-file.
+with paths relative to the directory. Use `-p` for per-file sidecars, `-A` for
+absolute paths. `--verify` auto-detects combined vs per-file and exits non-zero
+if anything is mismatched, missing, or malformed — not just on bad hashes.
 
 ### metadata
 
