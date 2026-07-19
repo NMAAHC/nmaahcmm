@@ -24,7 +24,7 @@ else:
 
 def print_usage(to=sys.stdout):
     print(f"{BOLD}{BLUE}USAGE:{RESET}", file=to)
-    print(f"  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [options]", file=to)
+    print(f"  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...] [options]", file=to)
     print(file=to)
     print(f"Run {GREEN}fixity.py{RESET} {CYAN}-h{RESET} for detailed help.", file=to)
 
@@ -34,11 +34,11 @@ def print_help():
   {GREEN}fixity.py{RESET} — make or verify hash sidecars for files
 
 {BOLD}{BLUE}USAGE{RESET}
-  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{CYAN}-a{RESET} {YELLOW}ALGO{RESET}] [{CYAN}-p{RESET}] [{CYAN}-r{RESET}|{CYAN}-A{RESET}] [{CYAN}-n{RESET}]   {DIM}# make (default){RESET}
-  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{CYAN}-a{RESET} {YELLOW}ALGO{RESET}] {CYAN}--verify{RESET}                   {DIM}# verify{RESET}
+  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...] [{CYAN}-a{RESET} {YELLOW}ALGO{RESET}] [{CYAN}-p{RESET}] [{CYAN}-r{RESET}|{CYAN}-A{RESET}] [{CYAN}-n{RESET}]   {DIM}# make (default){RESET}
+  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...] [{CYAN}-a{RESET} {YELLOW}ALGO{RESET}] {CYAN}--verify{RESET}                   {DIM}# verify{RESET}
 
 {BOLD}{BLUE}OPTIONS{RESET}
-  {CYAN}-i{RESET} {YELLOW}PATH{RESET}                File or directory (directory is recursed)
+  {CYAN}-i{RESET} {YELLOW}PATH{RESET} [{YELLOW}PATH{RESET} ...]     One or more files or directories (directories are recursed)
   {CYAN}-a{RESET}, {CYAN}--algorithm{RESET} {YELLOW}ALGO{RESET}   Hash algorithm: {YELLOW}md5{RESET} (default), {YELLOW}sha1{RESET}, {YELLOW}sha256{RESET}, {YELLOW}sha512{RESET}, {YELLOW}crc32{RESET}
   {CYAN}-c{RESET}, {CYAN}--verify{RESET}            Verify existing sidecars (auto-detects combined or per-file)
   {CYAN}-p{RESET}, {CYAN}--per-file{RESET}          Directory input: write a sidecar per source file
@@ -50,6 +50,9 @@ def print_help():
 {BOLD}{BLUE}EXAMPLES{RESET}
   {DIM}# MD5 sidecar for a single file{RESET}
   {GREEN}fixity.py{RESET} {CYAN}-i{RESET} /Volumes/archive/<file>
+
+  {DIM}# MD5 sidecars for several files at once{RESET}
+  {GREEN}fixity.py{RESET} {CYAN}-i{RESET} a.mp3 b.mp3 c.mp3
 
   {DIM}# One combined MD5 manifest for a directory (default){RESET}
   {GREEN}fixity.py{RESET} {CYAN}-i{RESET} /Volumes/archive/<dir>
@@ -161,7 +164,12 @@ def do_verify_per_file(input_: Path, algo: str) -> int:
             log.warning(f"no {algo} sidecar: {f}")
             missing += 1
             continue
-        expected = sidecar.read_text().split()[0]
+        fields = sidecar.read_text().split()
+        if not fields:
+            log.error(f"MISMATCH: {f} (sidecar is empty: {sidecar})")
+            failed += 1
+            continue
+        expected = fields[0]
         actual = _hash_only(f, algo)
         if expected == actual:
             log.info(f"match: {f}")
@@ -217,7 +225,7 @@ def main() -> int:
         return 0
 
     p = argparse.ArgumentParser(add_help=False)
-    p.add_argument("-i", "--input")
+    p.add_argument("-i", "--input", nargs="+")
     p.add_argument("-a", "--algorithm", default="md5", choices=SUPPORTED_ALGOS)
     p.add_argument("-c", "--verify", action="store_true")
     p.add_argument("-n", "--dry-run", action="store_true")
@@ -235,40 +243,44 @@ def main() -> int:
         print_help()
         return 0
     if not args.input:
-        log.error("-i INPUT required")
+        log.error("-i PATH required")
         print_usage(to=sys.stderr)
         return 2
     if args.relative and args.absolute:
         log.error("--relative and --absolute are mutually exclusive")
         return 2
+    if args.per_file and (args.relative or args.absolute):
+        log.error("--relative/--absolute don't apply to --per-file mode")
+        return 2
+    if args.verify and args.dry_run:
+        log.error("--dry-run is not valid with --verify")
+        return 2
 
-    path = Path(args.input)
-    if path.is_dir():
-        path = path.resolve()
+    inputs = [Path(i) for i in args.input]
 
-    if args.verify:
-        if args.dry_run:
-            log.error("--dry-run is not valid with --verify")
+    # Validate every input up front so a bad path can't abort a half-finished run.
+    for path in inputs:
+        if not path.is_file() and not path.is_dir():
+            log.error(f"Not a file or directory: {path}")
             return 2
-        return do_verify_auto(path, args.algorithm)
-
-    if path.is_file():
-        if args.relative or args.absolute:
-            log.error("--relative/--absolute only apply to directory input")
+        if path.is_file() and (args.relative or args.absolute):
+            log.error(f"--relative/--absolute only apply to directory input: {path}")
             return 2
-        return do_make_per_file(path, args.algorithm, args.dry_run)
 
-    if path.is_dir():
-        if args.per_file:
-            if args.relative or args.absolute:
-                log.error("--relative/--absolute don't apply to --per-file mode")
-                return 2
-            return do_make_per_file(path, args.algorithm, args.dry_run)
-        mode = "relative" if args.relative else "absolute" if args.absolute else "basename"
-        return do_make_combined(path, args.algorithm, args.dry_run, mode)
-
-    log.error(f"Not a file or directory: {path}")
-    return 2
+    status = 0
+    for path in inputs:
+        if path.is_dir():
+            path = path.resolve()
+        if args.verify:
+            rc = do_verify_auto(path, args.algorithm)
+        elif path.is_file() or args.per_file:
+            rc = do_make_per_file(path, args.algorithm, args.dry_run)
+        else:
+            mode = "relative" if args.relative else "absolute" if args.absolute else "basename"
+            rc = do_make_combined(path, args.algorithm, args.dry_run, mode)
+        if rc:
+            status = 1
+    return status
 
 
 if __name__ == "__main__":
