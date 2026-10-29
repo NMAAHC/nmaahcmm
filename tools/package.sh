@@ -57,7 +57,7 @@ ${BOLD}${BLUE}WHAT MOVES${RESET}
 
 ${BOLD}${BLUE}WHAT STAYS${RESET}
   Source files, checksum sidecars (${YELLOW}*.md5.txt${RESET}, ${YELLOW}*.sha256.txt${RESET}, ...) and access
-  copies (${YELLOW}*.access.mp4${RESET}) stay flat at the top level.
+  copies (${YELLOW}*_access.mp4${RESET}) stay flat at the top level.
 
 ${BOLD}${BLUE}SCOPE${RESET}
   Operates at the top level of ${YELLOW}DIR${RESET} only (no recursion). Running twice is

@@ -41,9 +41,9 @@ def print_help():
 {BOLD}{BLUE}OPTIONS{RESET}
   {CYAN}-i{RESET} {YELLOW}PATH{RESET}            File or directory (directory is recursed)
   {CYAN}-o{RESET} {YELLOW}OUTPUT{RESET}          Output file path (single file input only).
-                     Default: sibling file {YELLOW}<file>.access.mp4{RESET}.
+                     Default: sibling file {YELLOW}<file>_access.mp4{RESET} (source extension dropped).
   {CYAN}-n{RESET}, {CYAN}--dry-run{RESET}       Print the ffmpeg command, don't run it
-  {CYAN}--force{RESET}             Overwrite existing {YELLOW}.access.mp4{RESET} outputs
+  {CYAN}--force{RESET}             Overwrite existing {YELLOW}_access.mp4{RESET} outputs
   {CYAN}-h{RESET}, {CYAN}--help{RESET}          Show this help
 
 {BOLD}{BLUE}ENCODER{RESET}
@@ -65,7 +65,8 @@ def print_help():
   {GREEN}transcode.py{RESET} {CYAN}-i{RESET} /Volumes/archive/<dir> {CYAN}-n{RESET}
 
 {BOLD}{BLUE}OUTPUT{RESET}
-  Per source file: {YELLOW}<file>.access.mp4{RESET} next to the source.
+  Per source file: {YELLOW}<file>_access.mp4{RESET} next to the source, where {YELLOW}<file>{RESET}
+  is the source name without its extension (master.mov -> master_access.mp4).
   Existing outputs are skipped unless {CYAN}--force{RESET} is given.""")
 
 
@@ -151,7 +152,7 @@ def main() -> int:
     total = failed = 0
     for f in _iter_source_files(in_path):
         total += 1
-        out = Path(args.output) if args.output else f.with_name(f.name + ".access.mp4")
+        out = Path(args.output) if args.output else f.with_name(f.stem + "_access.mp4")
         if not transcode_one(f, out, args.dry_run, args.force):
             failed += 1
 

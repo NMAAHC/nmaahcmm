@@ -80,7 +80,8 @@ TBM_SIDECAR_SUFFIXES = (
     ".sha384.txt", ".sha512.txt", ".crc32.txt", ".framemd5",
     ".mediainfo.txt", ".mediainfo.json", ".mediatrace.xml",
     ".ffprobe.json", ".exiftool.txt", ".exiftool.json",
-    ".access.mp4",
+    "_access.mp4",
+    ".access.mp4",  # legacy access-copy name, kept so old outputs are still skipped
 )
 
 

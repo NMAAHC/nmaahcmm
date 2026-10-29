@@ -42,9 +42,9 @@ ${BOLD}${BLUE}USAGE${RESET}
 ${BOLD}${BLUE}OPTIONS${RESET}
   ${CYAN}-i${RESET} ${YELLOW}PATH${RESET}            File or directory (directory is recursed)
   ${CYAN}-o${RESET} ${YELLOW}OUTPUT${RESET}          Output file path (single file input only).
-                     Default: sibling file ${YELLOW}<file>.access.mp4${RESET}.
+                     Default: sibling file ${YELLOW}<file>_access.mp4${RESET} (source extension dropped).
   ${CYAN}-n${RESET}, ${CYAN}--dry-run${RESET}       Print the ffmpeg command, don't run it
-  ${CYAN}--force${RESET}             Overwrite existing ${YELLOW}.access.mp4${RESET} outputs
+  ${CYAN}--force${RESET}             Overwrite existing ${YELLOW}_access.mp4${RESET} outputs
   ${CYAN}-h${RESET}, ${CYAN}--help${RESET}          Show this help
 
 ${BOLD}${BLUE}ENCODER${RESET}
@@ -66,7 +66,8 @@ ${BOLD}${BLUE}EXAMPLES${RESET}
   ${GREEN}transcode.sh${RESET} ${CYAN}-i${RESET} /Volumes/archive/<dir> ${CYAN}-n${RESET}
 
 ${BOLD}${BLUE}OUTPUT${RESET}
-  Per source file: ${YELLOW}<file>.access.mp4${RESET} next to the source.
+  Per source file: ${YELLOW}<file>_access.mp4${RESET} next to the source, where ${YELLOW}<file>${RESET}
+  is the source name without its extension (master.mov -> master_access.mp4).
   Existing outputs are skipped unless ${CYAN}--force${RESET} is given.
 EOF
 }
@@ -137,13 +138,16 @@ main() {
 
     tbm_require ffmpeg
 
-    local total=0 failed=0 f out
+    local total=0 failed=0 f out base
     while IFS= read -r f; do
         total=$((total+1))
         if [[ -n "$output" ]]; then
             out="$output"
         else
-            out="${f}.access.mp4"
+            # Strip the extension from the basename only, so a dot in a
+            # directory name can't truncate the path.
+            base="$(basename "$f")"
+            out="$(dirname "$f")/${base%.*}_access.mp4"
         fi
         _transcode_one "$f" "$out" "$dry" "$force" || failed=$((failed+1))
     done < <(_iter_source_files "$input")

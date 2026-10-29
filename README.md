@@ -86,7 +86,7 @@ exits non-zero if any file fails.
 tools/transcode.sh -i PATH [-o OUTPUT] [-n] [--force]
 ```
 
-Produces `<file>.access.mp4` next to each source using
+Produces `<file>_access.mp4` (source extension dropped) next to each source using
 `libx265 -crf 28 -preset medium -tag:v hvc1` + AAC 192k with `+faststart`.
 The `hvc1` tag makes the file play in QuickTime and Safari. Skips existing
 outputs unless `--force`.
