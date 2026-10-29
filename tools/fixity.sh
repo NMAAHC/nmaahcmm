@@ -133,6 +133,12 @@ _iter_source_files() {
     if [[ -f "$root" ]]; then
         printf '%s\n' "$root"
     elif [[ -d "$root" ]]; then
+        # The file list and the manifest are both line-oriented, so a newline
+        # inside a filename cannot be represented - refuse rather than corrupt.
+        if find "$root" -name $'*\n*' -print -quit | grep -q .; then
+            tbm_error "unsupported filename (contains a newline) under: $root"
+            return 1
+        fi
         local args=(-type f) suf
         for suf in "${TBM_SIDECAR_SUFFIXES[@]}"; do
             args+=(! -name "*${suf}")
@@ -179,7 +185,11 @@ do_make_per_file() {
                 rm -f "$file_list"
                 return 1
             fi
-            printf '%s  %s\n' "$hash" "$(basename "$f")" > "$sidecar"
+            if ! printf '%s  %s\n' "$hash" "$(basename "$f")" > "$sidecar"; then
+                tbm_error "failed to write: $sidecar"
+                rm -f "$sidecar" "$file_list"
+                return 1
+            fi
             tbm_ok "wrote $sidecar"
         fi
         count=$((count+1))
@@ -241,9 +251,13 @@ do_make_combined() {
         # only after every hash has succeeded. mktemp files are 0600, so
         # restore what a plain umask-honoring write would have produced.
         tmp_manifest="$(mktemp "${manifest}.XXXXXX")" || { tbm_error "cannot create temp manifest"; return 1; }
-        printf '%s\n' "${lines[@]}" > "$tmp_manifest"
-        chmod "$(printf '%o' $(( 0666 & ~0$(umask) )))" "$tmp_manifest"
-        mv "$tmp_manifest" "$manifest"
+        if ! printf '%s\n' "${lines[@]}" > "$tmp_manifest" ||
+           ! chmod "$(printf '%o' $(( 0666 & ~0$(umask) )))" "$tmp_manifest" ||
+           ! mv "$tmp_manifest" "$manifest"; then
+            rm -f "$tmp_manifest"
+            tbm_error "failed to write manifest: $manifest"
+            return 1
+        fi
         tbm_ok "wrote $manifest ($count entries, path-mode: $mode)"
     fi
 }
@@ -383,6 +397,10 @@ main() {
     # Validate every input up front so a bad path can't abort a half-finished run.
     local input
     for input in "${inputs[@]}"; do
+        if [[ "$input" == *$'\n'* ]]; then
+            tbm_error "unsupported path (contains a newline)"
+            exit 2
+        fi
         if [[ ! -f "$input" && ! -d "$input" ]]; then
             tbm_error "Not a file or directory: $input"
             exit 2

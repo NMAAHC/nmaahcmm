@@ -200,6 +200,32 @@ run_suite() {
         _fail "manifest written 0644 under umask 022"
     fi
 
+    ### newline-containing filenames are rejected, not misrepresented
+    fresh
+    mkdir -p "$WORK/pkg"
+    echo x > "$WORK/pkg/ok.txt"
+    printf y > "$WORK/pkg/"$'bad\nname.txt'
+    expect "newline filename fails combined make" 1 "$TOOL" -i "$WORK/pkg"
+    check  "no manifest when a newline filename is present" ! -f "$WORK/pkg/pkg.md5.txt"
+    expect "newline filename fails per-file make" 1 "$TOOL" -i "$WORK/pkg" -p
+    check  "no sidecars either" ! -f "$WORK/pkg/ok.txt.md5.txt"
+    expect "newline input path exits 2" 2 "$TOOL" -i "$WORK/pkg/"$'bad\nname.txt'
+
+    ### write failures must not be reported as success
+    if [[ "$(id -u)" -eq 0 ]]; then
+        _pass "write-failure tests (skipped: running as root)"
+    else
+        fresh
+        mkdir -p "$WORK/ro"
+        echo x > "$WORK/ro/x.mp3"
+        chmod 555 "$WORK/ro"
+        expect "per-file make into unwritable dir fails" 1 "$TOOL" -i "$WORK/ro/x.mp3"
+        expect "combined make into unwritable dir fails" 1 "$TOOL" -i "$WORK/ro"
+        chmod 755 "$WORK/ro"
+        check  "no sidecar left in unwritable dir" ! -f "$WORK/ro/x.mp3.md5.txt"
+        check  "no manifest left in unwritable dir" ! -f "$WORK/ro/ro.md5.txt"
+    fi
+
     ### argument handling
     fresh
     echo one > "$WORK/a.mp3"

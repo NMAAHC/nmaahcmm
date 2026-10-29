@@ -108,6 +108,11 @@ def _iter_source_files(root: Path) -> list[Path]:
             for name in filenames:
                 p = Path(dirpath) / name
                 if p.is_file() and not is_sidecar(name):
+                    # The file list and the manifest are both line-oriented, so
+                    # a newline inside a filename cannot be represented -
+                    # refuse rather than corrupt.
+                    if "\n" in str(p):
+                        raise OSError(f"unsupported filename (contains a newline): {p!r}")
                     files.append(p)
         return sorted(files)
     log.error(f"Not a file or directory: {root}")
@@ -319,6 +324,9 @@ def main() -> int:
 
     # Validate every input up front so a bad path can't abort a half-finished run.
     for path in inputs:
+        if "\n" in str(path):
+            log.error("unsupported path (contains a newline)")
+            return 2
         if not path.is_file() and not path.is_dir():
             log.error(f"Not a file or directory: {path}")
             return 2
